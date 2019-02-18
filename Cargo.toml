@@ -1,0 +1,5 @@
+[workspace]
+members = [
+    "micropolis_core",
+    "micropolis_quicksilver",
+]
