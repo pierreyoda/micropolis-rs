@@ -1,4 +1,4 @@
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum GameLevelDifficulty {
     Easy,
     Normal,
@@ -6,13 +6,35 @@ pub enum GameLevelDifficulty {
 }
 
 impl GameLevelDifficulty {
-    pub starting_funds(&self) -> u32 {
+    pub fn starting_funds(&self) -> u32 {
         match self {
             Easy => 20000,
             Normal => 10000,
             Hard => 5000,
         }
     }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum GameScenario {
+    /// Free play.
+    None,
+    /// Dullsville (boredom).
+    Dullsville,
+    /// San Francisco (earthquake).
+    SanFrancisco,
+    /// Hamburg (fire bombs).
+    Hamburg,
+    /// Bern (traffic).
+    Bern,
+    /// Tokyo (scary monster).
+    Tokyo,
+    /// Detroit (crime).
+    Detroit,
+    /// Boston (nuclear meltdown).
+    Boston,
+    /// Rio (flooding).
+    Rio,
 }
 
 #[derive(Clone, Debug)]
@@ -26,8 +48,12 @@ pub struct GameSpeed {
 }
 
 impl GameSpeed {
-    pub fn get_animations_delay(&self) -> u32 { self.animations_delay }
-    pub fn get_sim_steps_per_update(&self) -> u32 { self.sim_steps_per_update }
+    pub fn get_animations_delay(&self) -> u32 {
+        self.animations_delay
+    }
+    pub fn get_sim_steps_per_update(&self) -> u32 {
+        self.sim_steps_per_update
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -39,14 +65,29 @@ pub enum GameSpeedPreset {
     SuperFast,
 }
 
-impl Into<GameSpeed> for GameSpeedPreset {
-    fn from(preset: GameSpeedPreset): GameSpeed {
+impl From<GameSpeedPreset> for GameSpeed {
+    fn from(preset: GameSpeedPreset) -> GameSpeed {
         match preset {
-            Paused => GameSpeed { animations_delay: 999, sim_steps_per_update: 0 },
-            Paused => GameSpeed { animations_delay: 625, sim_steps_per_update: 1 },
-            Paused => GameSpeed { animations_delay: 125, sim_steps_per_update: 1 },
-            Paused => GameSpeed { animations_delay: 25,  sim_steps_per_update: 1 },
-            Paused => GameSpeed { animations_delay: 25,  sim_steps_per_update: 5 },
+            Paused => GameSpeed {
+                animations_delay: 999,
+                sim_steps_per_update: 0,
+            },
+            Slow => GameSpeed {
+                animations_delay: 625,
+                sim_steps_per_update: 1,
+            },
+            Normal => GameSpeed {
+                animations_delay: 125,
+                sim_steps_per_update: 1,
+            },
+            Fast => GameSpeed {
+                animations_delay: 25,
+                sim_steps_per_update: 1,
+            },
+            SuperFast => GameSpeed {
+                animations_delay: 25,
+                sim_steps_per_update: 5,
+            },
         }
     }
 }
