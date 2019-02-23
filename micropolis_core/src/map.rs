@@ -28,10 +28,8 @@ impl Map {
         dimensions: &MapRectangle,
         uniform_type: TileType,
     ) -> Result<Self, String> {
-        let tilemap = vec![
-            vec![Tile::from_type(uniform_type)?; dimensions.get_width()];
-            dimensions.get_height()
-        ];
+        let tilemap =
+            vec![vec![Tile::from_type(uniform_type)?; dimensions.height]; dimensions.width];
         Ok(Map { tilemap })
     }
 
@@ -48,8 +46,8 @@ impl Map {
 
     pub fn bounds(&self) -> MapRectangle {
         MapRectangle {
-            height: self.tilemap.len(),
-            width: match self.tilemap.first() {
+            width: self.tilemap.len(),
+            height: match self.tilemap.first() {
                 Some(first) => first.len(),
                 None => 0,
             },

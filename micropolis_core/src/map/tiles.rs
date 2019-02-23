@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
+use super::tiles_type::{TileType, WOODS_HIGH, WOODS_LOW};
 use super::MapRectangle;
-use super::TileType;
 
 #[derive(Clone, Debug)]
 pub struct BuildingInfo {
@@ -122,6 +122,11 @@ impl Tile {
         let status_raw = self.raw | TILE_STATUS_MASK;
         self.raw = status_raw & type_raw_filtered;
         self.tile_type = TileType::from_u16(type_raw_filtered);
+    }
+
+    pub fn is_tree(&self) -> bool {
+        let type_raw = self.get_type_raw();
+        WOODS_LOW <= type_raw && type_raw <= WOODS_HIGH
     }
 }
 

@@ -4,8 +4,8 @@ use crate::map::tiles_type::TileType;
 /// Default radius of an island.
 pub const ISLAND_RADIUS: usize = 10;
 
-pub const SMOOTH_RIVER_DX: [i32; 4] = [-1, 0, 1, 0];
-pub const SMOOTH_RIVER_DY: [i32; 4] = [0, 1, 0, -1];
+pub const SMOOTH_TILES_DX: [i32; 4] = [-1, 0, 1, 0];
+pub const SMOOTH_TILES_DY: [i32; 4] = [0, 1, 0, -1];
 pub const SMOOTH_RIVER_EDGES_TABLE: [u16; 16] = [
     13 | TILE_BULL_BIT,
     13 | TILE_BULL_BIT,
@@ -23,6 +23,24 @@ pub const SMOOTH_RIVER_EDGES_TABLE: [u16; 16] = [
     9 | TILE_BULL_BIT,
     5 | TILE_BULL_BIT,
     TileType::River as u16,
+];
+pub const SMOOTH_FOREST_EDGES_TABLE: [u16; 16] = [
+    TileType::Dirt as u16,
+    TileType::Dirt as u16,
+    TileType::Dirt as u16,
+    34,
+    TileType::Dirt as u16,
+    TileType::Dirt as u16,
+    36,
+    35,
+    TileType::Dirt as u16,
+    32,
+    TileType::Dirt as u16,
+    33,
+    30,
+    31,
+    29,
+    TileType::Woods as u16,
 ];
 
 pub const BLOB_RIVER_SMALL: [[TileType; 6]; 6] = [

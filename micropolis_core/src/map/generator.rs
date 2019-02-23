@@ -99,7 +99,7 @@ impl MapGenerator {
             self.make_lakes(rng, &mut terrain);
         }
 
-        self.smooth_rivers(rng, &mut terrain)?;
+        Self::smooth_rivers(rng, &mut terrain)?;
 
         // plant some trees
         if self.level_trees != 0 {
@@ -111,7 +111,7 @@ impl MapGenerator {
 
     fn make_island<R: Rng>(&self, rng: &mut R, dimensions: &MapRectangle) -> Result<Map, String> {
         let mut terrain = self.make_naked_island(rng, dimensions);
-        self.smooth_rivers(rng, &mut terrain)?;
+        Self::smooth_rivers(rng, &mut terrain)?;
         self.make_forests(rng, &mut terrain);
         Ok(terrain)
     }
@@ -293,8 +293,7 @@ impl MapGenerator {
         last_local_direction
     }
 
-    fn smooth_rivers<R: Rng>(&self, rng: &mut R, terrain: &mut Map) -> Result<(), String> {
-        return Ok(());
+    fn smooth_rivers<R: Rng>(rng: &mut R, terrain: &mut Map) -> Result<(), String> {
         let map_size = terrain.bounds();
         let dirt_type_raw = TileType::Dirt
             .to_u16()
@@ -306,8 +305,19 @@ impl MapGenerator {
             for y in 0..map_size.height {
                 {
                     // avoid immutable / mutable borrow conflict
-                    // TODO: better way
-                    let tile = terrain.tilemap.get(x).unwrap().get(y).unwrap();
+                    // TODO: find better way
+                    let tile = terrain
+                        .tilemap
+                        .get(x)
+                        .ok_or(format!(
+                            "MapGenerator.smooth_rivers map X overflow at {}",
+                            x
+                        ))?
+                        .get(y)
+                        .ok_or(format!(
+                            "MapGenerator.smooth_rivers map Y overflow at {}",
+                            y
+                        ))?;
                     if tile.get_type() != &Some(TileType::RiverEdge) {
                         continue;
                     }
@@ -316,8 +326,8 @@ impl MapGenerator {
                 for i in 0..4 {
                     bit_index = bit_index << 1;
                     let temp_position = MapPosition {
-                        x: x as i32 + constants::SMOOTH_RIVER_DX[i],
-                        y: y as i32 + constants::SMOOTH_RIVER_DY[i],
+                        x: x as i32 + constants::SMOOTH_TILES_DX[i],
+                        y: y as i32 + constants::SMOOTH_TILES_DY[i],
                     };
                     if !map_size.is_inside(&temp_position) {
                         continue;
@@ -325,9 +335,15 @@ impl MapGenerator {
                     let temp_tile_type_raw = terrain
                         .tilemap
                         .get(temp_position.x as usize)
-                        .unwrap()
+                        .ok_or(format!(
+                            "MapGenerator.smooth_rivers map X overflow at temp X={}",
+                            temp_position.x
+                        ))?
                         .get(temp_position.y as usize)
-                        .unwrap()
+                        .ok_or(format!(
+                            "MapGenerator.smooth_rivers map Y overflow at temp Y={}",
+                            temp_position.y
+                        ))?
                         .get_type_raw();
                     if temp_tile_type_raw == dirt_type_raw {
                         continue;
@@ -337,17 +353,17 @@ impl MapGenerator {
                     }
                 }
                 let tile = terrain.tilemap.get_mut(x).unwrap().get_mut(y).unwrap();
-                let mut tile_type_raw = constants::SMOOTH_RIVER_EDGES_TABLE[bit_index & 0x000F];
-                if tile_type_raw != river_type_raw && rng.gen_ratio(1, 2) {
-                    tile_type_raw += 1;
+                let mut tile_raw = constants::SMOOTH_RIVER_EDGES_TABLE[bit_index & 0x000F];
+                if tile_raw != river_type_raw && rng.gen_ratio(1, 2) {
+                    tile_raw += 1;
                 }
-                tile.set_type_raw(tile_type_raw);
+                tile.set_raw(tile_raw);
             }
         }
         Ok(())
     }
 
-    fn make_forests<R: Rng>(&self, rng: &mut R, terrain: &mut Map) {
+    fn make_forests<R: Rng>(&self, rng: &mut R, terrain: &mut Map) -> Result<(), String> {
         let amount: i32 = match self.level_trees {
             level if level < 0 => 50 + Self::random_in_range(rng, 0, 100),
             level => 3 + level,
@@ -359,8 +375,9 @@ impl MapGenerator {
             self.splash_trees(rng, terrain, &MapPosition { x, y });
         }
 
-        self.smooth_trees(terrain);
-        self.smooth_trees(terrain);
+        Self::smooth_trees(terrain)?;
+        Self::smooth_trees(terrain)?; // TODO: why the repetition ?
+        Ok(())
     }
 
     /// Splash a bunch of trees near the given position.
@@ -394,7 +411,69 @@ impl MapGenerator {
         }
     }
 
-    fn smooth_trees(&self, terrain: &mut Map) {}
+    fn smooth_trees(terrain: &mut Map) -> Result<(), String> {
+        let map_size = terrain.bounds();
+        let dirt_type_raw = TileType::Dirt
+            .to_u16()
+            .ok_or("Dirt tile type raw conversion error")?;
+        let woods_type_raw = TileType::Woods
+            .to_u16()
+            .ok_or("Woods tile type raw conversion error")?;
+        for x in 0..map_size.width {
+            for y in 0..map_size.height {
+                {
+                    // avoid immutable / mutable borrow conflict
+                    // TODO: find better way
+                    let tile = terrain
+                        .tilemap
+                        .get_mut(x)
+                        .ok_or(format!("MapGenerator.smooth_trees map overflow at X={}", x,))?
+                        .get_mut(y)
+                        .ok_or(format!("MapGenerator.smooth_trees map overflow at Y={}", y))?;
+                    if !tile.is_tree() {
+                        continue;
+                    }
+                }
+                let mut bit_index = 0;
+                for i in 0..4 {
+                    bit_index = bit_index << 1;
+                    let temp_position = MapPosition {
+                        x: x as i32 + constants::SMOOTH_TILES_DX[i],
+                        y: y as i32 + constants::SMOOTH_TILES_DY[i],
+                    };
+                    if !map_size.is_inside(&temp_position) {
+                        continue;
+                    }
+                    let temp_tile = terrain
+                        .tilemap
+                        .get(temp_position.x as usize)
+                        .ok_or(format!(
+                            "MapGenerator.smooth_trees map X overflow at temp X={}",
+                            temp_position.x
+                        ))?
+                        .get(temp_position.y as usize)
+                        .ok_or(format!(
+                            "MapGenerator.smooth_trees map Y overflow at temp Y={}",
+                            temp_position.y
+                        ))?;
+                    if temp_tile.is_tree() {
+                        bit_index += 1;
+                    }
+                }
+                let tile = terrain.tilemap.get_mut(x).unwrap().get_mut(y).unwrap();
+                let mut tile_raw = constants::SMOOTH_FOREST_EDGES_TABLE[bit_index & 0x000F];
+                if tile_raw == dirt_type_raw {
+                    tile.set_type_raw(tile_raw);
+                } else {
+                    if tile_raw != woods_type_raw && (x + y) & 0x1 == 0x1 {
+                        tile_raw -= 8;
+                    }
+                    tile.set_raw(TILE_BLBNBIT_MASK | tile_raw);
+                }
+            }
+        }
+        Ok(())
+    }
 
     /// Put down a big diamond-like shaped river, where `base` is the top-left position of the blob.
     fn plop_big_river(terrain: &mut Map, base: &MapPosition) {
