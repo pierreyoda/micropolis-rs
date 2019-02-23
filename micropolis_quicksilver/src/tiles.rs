@@ -9,7 +9,7 @@ use quicksilver::{
     Error, Result,
 };
 
-use micropolis_rs_core::map::{Map, TileType};
+use micropolis_rs_core::map::Map;
 
 const TILE_SIZE: u16 = 16;
 const TILES_ATLAS_ROWS: u16 = 16;

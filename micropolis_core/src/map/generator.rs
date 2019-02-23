@@ -6,7 +6,7 @@ use rand::Rng;
 
 use super::tiles::TILE_BLBNBIT_MASK;
 use super::tiles_type::{WOODS_HIGH, WOODS_LOW};
-use super::{Map, MapPosition, MapPositionOffset, MapRectangle, Tile, TileMap, TileType};
+use super::{Map, MapPosition, MapPositionOffset, MapRectangle, Tile, TileType};
 
 pub struct Percentage(f64);
 
@@ -103,7 +103,7 @@ impl MapGenerator {
 
         // plant some trees
         if self.level_trees != 0 {
-            self.make_forests(rng, &mut terrain);
+            self.make_forests(rng, &mut terrain)?;
         }
 
         Ok(terrain)
@@ -112,7 +112,7 @@ impl MapGenerator {
     fn make_island<R: Rng>(&self, rng: &mut R, dimensions: &MapRectangle) -> Result<Map, String> {
         let mut terrain = self.make_naked_island(rng, dimensions);
         Self::smooth_rivers(rng, &mut terrain)?;
-        self.make_forests(rng, &mut terrain);
+        self.make_forests(rng, &mut terrain)?;
         Ok(terrain)
     }
 
