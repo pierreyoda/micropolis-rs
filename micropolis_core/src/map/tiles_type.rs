@@ -6,7 +6,7 @@ use num_traits::{FromPrimitive as FromPrimitiveTrait, ToPrimitive as ToPrimitive
 /// TODO: how to handle duplicates / ranges?
 /// TODO: explicit names for all types
 /// TODO: documentation
-#[derive(Clone, Debug, PartialEq, Eq, FromPrimitive, ToPrimitive)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, FromPrimitive, ToPrimitive)]
 pub enum TileType {
     Invalid = -1,
     /// Clear tile.

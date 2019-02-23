@@ -7,6 +7,7 @@ pub enum GameLevelDifficulty {
 
 impl GameLevelDifficulty {
     pub fn starting_funds(&self) -> u32 {
+        use GameLevelDifficulty::*;
         match self {
             Easy => 20000,
             Normal => 10000,
@@ -67,6 +68,7 @@ pub enum GameSpeedPreset {
 
 impl From<GameSpeedPreset> for GameSpeed {
     fn from(preset: GameSpeedPreset) -> GameSpeed {
+        use GameSpeedPreset::*;
         match preset {
             Paused => GameSpeed {
                 animations_delay: 999,

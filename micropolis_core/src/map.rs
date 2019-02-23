@@ -2,7 +2,7 @@ pub mod generator;
 pub mod tiles;
 pub mod tiles_type;
 
-use tiles_type::TileType;
+pub use tiles_type::TileType;
 
 pub type TileMap = Vec<Vec<TileType>>;
 
@@ -16,7 +16,7 @@ pub struct Map {
 }
 
 impl Map {
-    fn with_dimensions(dimensions: &MapRect, uniform_type: TileType) -> Self {
+    pub fn with_dimensions(dimensions: &MapRect, uniform_type: TileType) -> Self {
         let tiles = vec![vec![uniform_type; dimensions.get_width()]; dimensions.get_height()];
         Map { tiles }
     }
@@ -40,6 +40,10 @@ impl Map {
                 None => 0,
             },
         }
+    }
+
+    pub fn get_tiles(&self) -> &TileMap {
+        &self.tiles
     }
 }
 
@@ -124,7 +128,7 @@ impl MapPositionOffset {
         use MapPositionOffset::*;
         match self {
             None => None,
-            NothWest => North,
+            NorthWest => North,
             North => NorthEast,
             NorthEast => East,
             East => SouthEast,
@@ -139,7 +143,7 @@ impl MapPositionOffset {
         use MapPositionOffset::*;
         match self {
             None => None,
-            NothWest => SouthEast,
+            NorthWest => SouthEast,
             North => South,
             NorthEast => SouthWest,
             East => West,

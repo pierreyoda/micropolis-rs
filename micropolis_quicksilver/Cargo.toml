@@ -10,6 +10,12 @@ path = "src/main.rs"
 
 [dependencies]
 micropolis_rs_core = { path = "../micropolis_core" }
+# console_error_panic_hook = "0.1.6" # crash with cargo web
+
+[dependencies.rand]
+version = "0.6.5"
+default-features = false
+features = ["std", "stdweb"]
 
 [dependencies.quicksilver]
 version = "0.3.7"

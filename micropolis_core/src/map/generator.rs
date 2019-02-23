@@ -4,8 +4,7 @@ use std::cmp;
 
 use rand::Rng;
 
-use super::tiles_type::TileType;
-use super::{Map, MapPosition, MapPositionOffset, MapRect};
+use super::{Map, MapPosition, MapPositionOffset, MapRect, TileType};
 
 pub struct Percentage(f64);
 
@@ -62,7 +61,7 @@ impl MapGenerator {
             create_island,
             level_trees: -1,
             level_river_curves: -1,
-            level_lakes: 0, // -1,
+            level_lakes: -1,
         }
     }
 
@@ -422,7 +421,7 @@ impl MapGenerator {
 
 #[cfg(test)]
 mod tests {
-    use rand_pcg::Pcg32;
+    use rand::rngs::OsRng;
 
     use super::*;
     use crate::map::tiles_type::TileType;
@@ -430,9 +429,9 @@ mod tests {
 
     #[test]
     fn test_temp_print() {
-        let mut rng = Pcg32::new(0xcafef00dd15ea5e5, 721347520444481703);
+        let mut rng = OsRng::new().unwrap();
         let generator = MapGenerator::with_options(GeneratorCreateIsland::Sometimes(
-            Percentage::from_integer(100).unwrap(),
+            Percentage::from_integer(50).unwrap(),
         ));
         let terrain = generator.random_map_terrain(&mut rng, &MapRect::new(80, 80));
         let tiles = terrain.tiles;
