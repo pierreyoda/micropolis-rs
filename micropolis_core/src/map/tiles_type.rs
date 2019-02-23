@@ -1,9 +1,12 @@
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive as FromPrimitiveTrait, ToPrimitive as ToPrimitiveTrait};
 
+pub const WOODS_LOW: u16 = TileType::TreeBase as u16;
+pub const WOODS_HIGH: u16 = TileType::UnusedTrash2 as u16;
+
 /// The type of a single tile on the map.
 ///
-/// TODO: how to handle duplicates / ranges?
+/// TODO: how to handle duplicates / ranges? => REFACTOR enum River(...), Road(...)
 /// TODO: explicit names for all types
 /// TODO: documentation
 #[derive(Clone, Debug, PartialEq, Eq, Hash, FromPrimitive, ToPrimitive)]
@@ -15,7 +18,8 @@ pub enum TileType {
 
     /* Water */
     River = 2,
-    Redge = 3, // TODO: ?
+    /// Edge of a river. Original name `REDGE`.
+    RiverEdge = 3, // TODO: ?
     Channel = 4,
     FirstRiverEdge = 5,
     // tile 6 -- 19 ?
@@ -345,7 +349,18 @@ impl TileType {
         FromPrimitiveTrait::from_i16(value)
     }
 
+    pub fn from_u16(value: u16) -> Option<Self> {
+        FromPrimitiveTrait::from_u16(value)
+    }
+
     pub fn to_i16(&self) -> Option<i16> {
         ToPrimitiveTrait::to_i16(self)
+    }
+
+    pub fn to_u16(&self) -> Option<u16> {
+        match self {
+            TileType::Invalid => None,
+            _ => ToPrimitiveTrait::to_u16(self),
+        }
     }
 }

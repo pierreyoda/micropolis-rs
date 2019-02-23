@@ -1,15 +1,15 @@
 use std::rc::Rc;
 
-use super::tiles_type::TileType;
-use super::MapRect;
+use super::MapRectangle;
+use super::TileType;
 
 #[derive(Clone, Debug)]
 pub struct BuildingInfo {
-    size: MapRect,
+    size: MapRectangle,
 }
 
 impl BuildingInfo {
-    pub fn get_size(&self) -> &MapRect {
+    pub fn get_size(&self) -> &MapRectangle {
         &self.size
     }
 }
@@ -51,12 +51,94 @@ impl TileSpec {
     }
 }
 
+/// The tile has power if bit 15 is set.
+pub const TILE_POWER_BIT: u16 = 0b_1000_0000_0000_0000;
+/// The tile conducts electricity if bit 14 is set.
+pub const TILE_CONDUCT_BIT: u16 = 0b_0100_0000_0000_0000;
+/// The tile is burnable if bit 13 is set.
+pub const TILE_BURN_BIT: u16 = 0b_0010_0000_0000_0000;
+/// The tile is bulldozable if bit 12 is set.
+pub const TILE_BULL_BIT: u16 = 0b_0001_0000_0000_0000;
+/// The tile is animated if bit 11 is set.
+pub const TILE_ANIM_BIT: u16 = 0b_0000_1000_0000_0000;
+/// The tile is the center of its zone if bit 10 is set.
+pub const TILE_ZONE_BIT: u16 = 0b_0000_0100_0000_0000;
+/// TODO: woods level?
+pub const TILE_BLBNBIT_MASK: u16 = TILE_BULL_BIT | TILE_BURN_BIT;
+/// Bits containing the type of the tile.
+pub const TILE_TYPE_MASK: u16 = 0b_0000_0011_1111_1111;
+/// Bits containing the status of the tile.
+pub const TILE_STATUS_MASK: u16 = TILE_TYPE_MASK ^ 0xFFFF;
+
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Tile(i32);
+pub struct Tile {
+    /// Raw integer describing the type and status of the tile.
+    raw: u16,
+    /// Cached tile type value.
+    tile_type: Option<TileType>,
+}
 
 impl Tile {
-    pub fn get_type(&self) -> TileType {
-        // TODO:
-        TileType::Dirt
+    pub fn from_type(tile_type: TileType) -> Result<Self, String> {
+        match tile_type {
+            TileType::Invalid => Err(format!("Tile::from_type invalid type '{:?}'", tile_type)),
+            _ => Ok(Tile {
+                raw: tile_type.to_u16().ok_or(format!(
+                    "Tile::from_type cannot cast type '{:?}' to raw",
+                    tile_type
+                ))?,
+                tile_type: Some(tile_type),
+            }),
+        }
+    }
+
+    pub fn get_raw(&self) -> u16 {
+        self.raw
+    }
+    pub fn set_raw(&mut self, raw: u16) {
+        self.tile_type = TileType::from_u16(raw & TILE_TYPE_MASK);
+        self.raw = raw;
+    }
+
+    pub fn get_type(&self) -> &Option<TileType> {
+        &self.tile_type
+    }
+    pub fn set_type(&mut self, tile_type: TileType) -> Result<(), String> {
+        let type_raw = tile_type.to_u16().ok_or(format!(
+            "Tile.set_type cannot cast type '{:?}' to raw",
+            tile_type
+        ))?;
+        let status_raw = self.raw & TILE_STATUS_MASK;
+        self.raw = status_raw | type_raw;
+        self.tile_type = Some(tile_type);
+        Ok(())
+    }
+
+    pub fn get_type_raw(&self) -> u16 {
+        self.raw & TILE_TYPE_MASK
+    }
+    pub fn set_type_raw(&mut self, type_raw: u16) {
+        let type_raw_filtered = type_raw & TILE_TYPE_MASK;
+        let status_raw = self.raw | TILE_STATUS_MASK;
+        self.raw = status_raw & type_raw_filtered;
+        self.tile_type = TileType::from_u16(type_raw_filtered);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_tile_masks() {
+        assert_eq!(TILE_POWER_BIT, 0x8000);
+        assert_eq!(TILE_CONDUCT_BIT, 0x4000);
+        assert_eq!(TILE_BURN_BIT, 0x2000);
+        assert_eq!(TILE_BULL_BIT, 0x1000);
+        assert_eq!(TILE_ANIM_BIT, 0x800);
+        assert_eq!(TILE_ZONE_BIT, 0x400);
+        assert_eq!(TILE_BLBNBIT_MASK, 0x3000);
+        assert_eq!(TILE_STATUS_MASK, 0xFC00);
+        assert_eq!(TILE_TYPE_MASK, 0x03FF);
     }
 }

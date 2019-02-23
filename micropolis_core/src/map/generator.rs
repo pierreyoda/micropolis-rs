@@ -4,7 +4,9 @@ use std::cmp;
 
 use rand::Rng;
 
-use super::{Map, MapPosition, MapPositionOffset, MapRect, TileType};
+use super::tiles::TILE_BLBNBIT_MASK;
+use super::tiles_type::{WOODS_HIGH, WOODS_LOW};
+use super::{Map, MapPosition, MapPositionOffset, MapRectangle, Tile, TileMap, TileType};
 
 pub struct Percentage(f64);
 
@@ -65,21 +67,25 @@ impl MapGenerator {
         }
     }
 
-    pub fn random_map_terrain<R: Rng>(&self, rng: &mut R, dimensions: &MapRect) -> Map {
+    pub fn random_map_terrain<R: Rng>(
+        &self,
+        rng: &mut R,
+        dimensions: &MapRectangle,
+    ) -> Result<Map, String> {
         // initial landscape
         let mut terrain = match &self.create_island {
-            GeneratorCreateIsland::Never => Map::with_dimensions(dimensions, TileType::Dirt),
+            GeneratorCreateIsland::Never => Map::with_dimensions(dimensions, TileType::Dirt)?,
             GeneratorCreateIsland::Always => self.make_naked_island(rng, dimensions),
             GeneratorCreateIsland::Sometimes(chance) => {
                 if rng.gen_bool(chance.value()) {
-                    self.make_island(rng, dimensions)
+                    return self.make_island(rng, dimensions);
                 } else {
-                    Map::with_dimensions(dimensions, TileType::Dirt)
+                    Map::with_dimensions(dimensions, TileType::Dirt)?
                 }
             }
         };
 
-        // lay a river
+        // generate some rivers
         if self.level_river_curves != 0 {
             let start_position = MapPosition {
                 x: 40 + Self::random_in_range(rng, 0, dimensions.width as i32 - 80),
@@ -88,46 +94,46 @@ impl MapGenerator {
             self.make_rivers(rng, &mut terrain, &start_position);
         }
 
-        // lay down a few lakes
+        // generate a few lakes
         if self.level_lakes != 0 {
             self.make_lakes(rng, &mut terrain);
         }
 
-        self.smooth_rivers(&mut terrain);
+        self.smooth_rivers(rng, &mut terrain)?;
 
-        // plant trees
+        // plant some trees
         if self.level_trees != 0 {
             self.make_forests(rng, &mut terrain);
         }
 
-        terrain
+        Ok(terrain)
     }
 
-    fn make_island<R: Rng>(&self, rng: &mut R, dimensions: &MapRect) -> Map {
+    fn make_island<R: Rng>(&self, rng: &mut R, dimensions: &MapRectangle) -> Result<Map, String> {
         let mut terrain = self.make_naked_island(rng, dimensions);
-        self.smooth_rivers(&mut terrain);
+        self.smooth_rivers(rng, &mut terrain)?;
         self.make_forests(rng, &mut terrain);
-        terrain
+        Ok(terrain)
     }
 
     /// Generate a plain island surrounded by 5 tiles of river.
-    fn make_naked_island<R: Rng>(&self, rng: &mut R, dimensions: &MapRect) -> Map {
+    fn make_naked_island<R: Rng>(&self, rng: &mut R, dimensions: &MapRectangle) -> Map {
         // rectangular island
         let (x_max, y_max) = (dimensions.width as i32 - 5, dimensions.height as i32 - 5);
-        let mut tiles: Vec<Vec<TileType>> = (0..dimensions.width)
+        let tilemap: Vec<Vec<Tile>> = (0..dimensions.width)
             .map(|x| {
                 (0..dimensions.height)
                     .map(|y| {
                         if x >= 5 && x < x_max as usize && y >= 5 && y < y_max as usize {
-                            TileType::Dirt
+                            Tile::from_type(TileType::Dirt).unwrap()
                         } else {
-                            TileType::River
+                            Tile::from_type(TileType::River).unwrap()
                         }
                     })
                     .collect()
             })
             .collect();
-        let mut terrain = Map { tiles };
+        let mut terrain = Map { tilemap };
 
         for x in (0..x_max).step_by(2) {
             let y1 = Self::erandom_in_range(rng, 0, constants::ISLAND_RADIUS as i32);
@@ -171,7 +177,7 @@ impl MapGenerator {
             self.level_lakes / 2
         };
 
-        let map_size = map.get_bounds();
+        let map_size = map.bounds();
         while remaining_lakes > 0 {
             let x = 10 + Self::random_in_range(rng, 0, map_size.width as i32 - 21);
             let y = 10 + Self::random_in_range(rng, 0, map_size.width as i32 - 20);
@@ -228,26 +234,26 @@ impl MapGenerator {
         };
 
         let mut position = start.clone();
-        let mut local_direction = MapPositionOffset::None;
+        let mut last_local_direction = local_direction.clone();
         while terrain.in_bounds(&MapPosition {
             x: position.x + 4,
             y: position.y + 4,
         }) {
             Self::plop_big_river(terrain, &position);
             if Self::random_in_range(rng, 0, rate1) < 10 {
-                local_direction = global_direction.clone();
+                last_local_direction = global_direction.clone();
             } else {
                 if Self::random_in_range(rng, 0, rate2) > 90 {
-                    local_direction = local_direction.rotated_45();
+                    last_local_direction = last_local_direction.rotated_45();
                 }
                 if Self::random_in_range(rng, 0, rate2) > 90 {
                     // FIXME: C++ code has a 7 'count' parameter?
-                    local_direction = local_direction.rotated_45();
+                    last_local_direction = last_local_direction.rotated_45();
                 }
             }
-            position = local_direction.apply(&position);
+            position = last_local_direction.apply(&position);
         }
-        local_direction
+        last_local_direction
     }
 
     // TODO: factorize code with make_big_river (macro/closures)
@@ -265,37 +271,89 @@ impl MapGenerator {
         };
 
         let mut position = start.clone();
-        let mut local_direction = MapPositionOffset::None;
+        let mut last_local_direction = local_direction.clone();
         while terrain.in_bounds(&MapPosition {
             x: position.x + 3,
             y: position.y + 3,
         }) {
             Self::plop_small_river(terrain, &position);
             if Self::random_in_range(rng, 0, rate1) < 10 {
-                local_direction = global_direction.clone();
+                last_local_direction = global_direction.clone();
             } else {
                 if Self::random_in_range(rng, 0, rate2) > 90 {
-                    local_direction = local_direction.rotated_45();
+                    last_local_direction = last_local_direction.rotated_45();
                 }
                 if Self::random_in_range(rng, 0, rate2) > 90 {
                     // FIXME: C++ code has a 7 'count' parameter?
-                    local_direction = local_direction.rotated_45();
+                    last_local_direction = last_local_direction.rotated_45();
                 }
             }
             position = local_direction.apply(&position);
         }
-        local_direction
+        last_local_direction
     }
 
-    fn smooth_rivers(&self, terrain: &mut Map) {}
+    fn smooth_rivers<R: Rng>(&self, rng: &mut R, terrain: &mut Map) -> Result<(), String> {
+        return Ok(());
+        let map_size = terrain.bounds();
+        let dirt_type_raw = TileType::Dirt
+            .to_u16()
+            .ok_or("Dirt tile type raw conversion error")?;
+        let river_type_raw = TileType::River
+            .to_u16()
+            .ok_or("River tile type raw conversion error")?;
+        for x in 0..map_size.width {
+            for y in 0..map_size.height {
+                {
+                    // avoid immutable / mutable borrow conflict
+                    // TODO: better way
+                    let tile = terrain.tilemap.get(x).unwrap().get(y).unwrap();
+                    if tile.get_type() != &Some(TileType::RiverEdge) {
+                        continue;
+                    }
+                }
+                let mut bit_index = 0;
+                for i in 0..4 {
+                    bit_index = bit_index << 1;
+                    let temp_position = MapPosition {
+                        x: x as i32 + constants::SMOOTH_RIVER_DX[i],
+                        y: y as i32 + constants::SMOOTH_RIVER_DY[i],
+                    };
+                    if !map_size.is_inside(&temp_position) {
+                        continue;
+                    }
+                    let temp_tile_type_raw = terrain
+                        .tilemap
+                        .get(temp_position.x as usize)
+                        .unwrap()
+                        .get(temp_position.y as usize)
+                        .unwrap()
+                        .get_type_raw();
+                    if temp_tile_type_raw == dirt_type_raw {
+                        continue;
+                    }
+                    if temp_tile_type_raw < WOODS_LOW || temp_tile_type_raw > WOODS_HIGH {
+                        bit_index += 1;
+                    }
+                }
+                let tile = terrain.tilemap.get_mut(x).unwrap().get_mut(y).unwrap();
+                let mut tile_type_raw = constants::SMOOTH_RIVER_EDGES_TABLE[bit_index & 0x000F];
+                if tile_type_raw != river_type_raw && rng.gen_ratio(1, 2) {
+                    tile_type_raw += 1;
+                }
+                tile.set_type_raw(tile_type_raw);
+            }
+        }
+        Ok(())
+    }
 
     fn make_forests<R: Rng>(&self, rng: &mut R, terrain: &mut Map) {
         let amount: i32 = match self.level_trees {
             level if level < 0 => 50 + Self::random_in_range(rng, 0, 100),
             level => 3 + level,
         };
-        let map_size = terrain.get_bounds();
-        for i in 0..amount {
+        let map_size = terrain.bounds();
+        for _ in 0..amount {
             let x = Self::random_in_range(rng, 0, map_size.width as i32 - 1);
             let y = Self::random_in_range(rng, 0, map_size.height as i32 - 1);
             self.splash_trees(rng, terrain, &MapPosition { x, y });
@@ -315,14 +373,23 @@ impl MapGenerator {
             level if level < 0 => 50 + Self::random_in_range(rng, 0, 150),
             level => 50 + Self::random_in_range(rng, 0, 100 + level * 2),
         };
+        let mut tree_position = at.clone();
+        let woods_type_raw = TileType::Woods.to_u16().unwrap();
         while num_trees > 0 {
             let direction = Self::random_direction(rng);
-            let tree_position = direction.apply(at);
+            tree_position = direction.apply(&tree_position);
             if !terrain.in_bounds(&tree_position) {
-                // TODO: can the loop be stuck on edges?
-                continue;
+                return;
             }
-            // TODO: implement once tile handles woods level
+            let tile = terrain
+                .tilemap
+                .get_mut(tree_position.x as usize)
+                .unwrap()
+                .get_mut(tree_position.y as usize)
+                .unwrap();
+            if tile.get_type() == &Some(TileType::Dirt) {
+                tile.set_raw(TILE_BLBNBIT_MASK | woods_type_raw);
+            }
             num_trees -= 1;
         }
     }
@@ -333,14 +400,15 @@ impl MapGenerator {
     fn plop_big_river(terrain: &mut Map, base: &MapPosition) {
         for x in 0..9 {
             for y in 0..9 {
-                Self::set_tile_type(
-                    terrain,
-                    constants::BLOB_RIVER_BIG[y][x].clone(),
-                    &MapPosition {
-                        x: base.x + x as i32,
-                        y: base.y + y as i32,
-                    },
-                );
+                let position = MapPosition {
+                    x: base.x + x as i32,
+                    y: base.y + y as i32,
+                };
+                if !terrain.in_bounds(&position) {
+                    continue;
+                }
+                Self::set_tile(terrain, constants::BLOB_RIVER_BIG[y][x].clone(), &position)
+                    .expect("MapGenerator.plop_big_river set tile error");
             }
         }
     }
@@ -349,34 +417,43 @@ impl MapGenerator {
     fn plop_small_river(terrain: &mut Map, base: &MapPosition) {
         for x in 0..6 {
             for y in 0..6 {
-                Self::set_tile_type(
+                let position = MapPosition {
+                    x: base.x + x as i32,
+                    y: base.y + y as i32,
+                };
+                if !terrain.in_bounds(&position) {
+                    continue;
+                }
+                Self::set_tile(
                     terrain,
                     constants::BLOB_RIVER_SMALL[y][x].clone(),
-                    &MapPosition {
-                        x: base.x + x as i32,
-                        y: base.y + y as i32,
-                    },
-                );
+                    &position,
+                )
+                .expect("MapGenerator.plop_small_river set tile error");
             }
         }
     }
 
-    fn set_tile_type(terrain: &mut Map, tile_type: TileType, at: &MapPosition) {
-        if tile_type == TileType::Dirt || !terrain.in_bounds(at) {
-            return;
+    fn set_tile(
+        terrain: &mut Map,
+        new_tile_type: TileType,
+        at: &MapPosition,
+    ) -> Result<(), String> {
+        if new_tile_type == TileType::Dirt {
+            return Ok(());
         }
         let row = terrain
-            .tiles
+            .tilemap
             .get_mut(at.x as usize)
-            .expect("MapGenerator::set_tile_type X overflow");
+            .ok_or("MapGenerator.set_tile map X overflow")?;
         let tile = row
             .get_mut(at.y as usize)
-            .expect("MapGenerator::set_tile_type Y overflow");
-        match *tile {
-            TileType::Dirt => *tile = tile_type,
-            TileType::River if tile_type != TileType::Channel => return,
-            TileType::Channel => return,
-            _ => *tile = tile_type,
+            .ok_or("MapGenerator.set_tile map Y overflow")?;
+        match tile.get_type() {
+            Some(TileType::Dirt) => tile.set_type(new_tile_type),
+            Some(TileType::River) if new_tile_type != TileType::Channel => Ok(()),
+            Some(TileType::Channel) => Ok(()),
+            _ => tile.set_type(new_tile_type),
         }
     }
 
@@ -391,7 +468,8 @@ impl MapGenerator {
             4 => SouthEast,
             5 => South,
             6 => SouthWest,
-            _ => West,
+            7 => West,
+            _ => unreachable!(),
         }
     }
 
@@ -401,7 +479,8 @@ impl MapGenerator {
             0 => North,
             1 => East,
             2 => South,
-            _ => West,
+            3 => West,
+            _ => unreachable!(),
         }
     }
 
@@ -425,7 +504,7 @@ mod tests {
 
     use super::*;
     use crate::map::tiles_type::TileType;
-    use crate::map::MapRect;
+    use crate::map::MapRectangle;
 
     #[test]
     fn test_temp_print() {
@@ -433,17 +512,20 @@ mod tests {
         let generator = MapGenerator::with_options(GeneratorCreateIsland::Sometimes(
             Percentage::from_integer(50).unwrap(),
         ));
-        let terrain = generator.random_map_terrain(&mut rng, &MapRect::new(80, 80));
-        let tiles = terrain.tiles;
+        let terrain = generator
+            .random_map_terrain(&mut rng, &MapRectangle::new(120, 100))
+            .unwrap();
+        let tiles = terrain.tilemap;
         println!("TEMP: generating map for console print...");
         let mut repr = String::new();
         for row in tiles.iter() {
             repr.push('/');
             for tile in row.iter() {
-                repr.push(match tile {
-                    TileType::River => '~',
-                    TileType::Channel => '#',
-                    TileType::Dirt => '.',
+                repr.push(match tile.get_type() {
+                    Some(TileType::River) => '~',
+                    Some(TileType::RiverEdge) => '&',
+                    Some(TileType::Channel) => '#',
+                    Some(TileType::Dirt) => '.',
                     _ => 'T',
                 });
             }

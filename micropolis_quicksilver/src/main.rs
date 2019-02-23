@@ -12,7 +12,7 @@ use quicksilver::{
 use rand::rngs::OsRng;
 
 use micropolis_rs_core::map::generator::{GeneratorCreateIsland, MapGenerator, Percentage};
-use micropolis_rs_core::map::{Map, MapRect};
+use micropolis_rs_core::map::{Map, MapRectangle, TileType};
 use tiles::TilesRenderer;
 
 struct MicropolisClient {
@@ -26,11 +26,12 @@ struct MicropolisClient {
 impl State for MicropolisClient {
     fn new() -> Result<Self> {
         println!("Initializing micropolis-rs...");
-        let mut rng = OsRng::new().expect("cannot create OS RNG");
+        let rng = OsRng::new().expect("cannot create OS RNG");
         let terrain_generator_island_chance =
             GeneratorCreateIsland::Sometimes(Percentage::from_integer(50).unwrap());
         let terrain_generator = MapGenerator::with_options(terrain_generator_island_chance);
-        let test_map = terrain_generator.random_map_terrain(&mut rng, &MapRect::new(80, 80));
+        let test_map = Map::with_dimensions(&MapRectangle::new(120, 100), TileType::Dirt)
+            .expect("cannot create map");
         let tiles_renderer = Asset::new(TilesRenderer::load_tiles("tiles.png"));
         Ok(MicropolisClient {
             rng,
@@ -49,7 +50,8 @@ impl State for MicropolisClient {
             }
             self.test_map = self
                 .terrain_generator
-                .random_map_terrain(&mut self.rng, &self.test_map.get_bounds());
+                .random_map_terrain(&mut self.rng, &self.test_map.bounds())
+                .expect("map generator error");
             self.just_generated = true;
         } else {
             self.just_generated = false;
