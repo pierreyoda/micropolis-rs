@@ -4,15 +4,15 @@ mod tiles;
 
 use quicksilver::{
     geom::Vector,
-    graphics::Color,
+    graphics::{Color, Font},
     input::Key,
     lifecycle::{run, Asset, Settings, State, Window},
-    Result,
+    Future, Result,
 };
 use rand::rngs::OsRng;
 
 use micropolis_rs_core::map::generator::{GeneratorCreateIsland, MapGenerator, Percentage};
-use micropolis_rs_core::map::{Map, MapRectangle, TileType};
+use micropolis_rs_core::map::{Map, MapRectangle};
 use tiles::TilesRenderer;
 
 struct MicropolisClient {
@@ -20,25 +20,30 @@ struct MicropolisClient {
     terrain_generator: MapGenerator,
     just_generated: bool,
     test_map: Map,
-    tiles_renderer: Asset<TilesRenderer>,
+    assets: Asset<(Font, TilesRenderer)>,
 }
 
 impl State for MicropolisClient {
     fn new() -> Result<Self> {
         println!("Initializing micropolis-rs...");
-        let rng = OsRng::new().expect("cannot create OS RNG");
+        let mut rng = OsRng::new().expect("cannot create OS RNG");
         let terrain_generator_island_chance =
             GeneratorCreateIsland::Sometimes(Percentage::from_integer(50).unwrap());
         let terrain_generator = MapGenerator::with_options(terrain_generator_island_chance);
-        let test_map = Map::with_dimensions(&MapRectangle::new(120, 100), TileType::Dirt)
-            .expect("cannot create map");
-        let tiles_renderer = Asset::new(TilesRenderer::load_tiles("tiles.png"));
+        let test_map = terrain_generator
+            .random_map_terrain(&mut rng, &MapRectangle::new(120, 100))
+            .expect("map generator error");
+        let assets = Asset::new(
+            Font::load("open-sans/OpenSans-Regular.ttf")
+                .join(TilesRenderer::load_tiles("tiles.png"))
+                .and_then(|(ui_font, tiles_renderer)| Ok((ui_font, tiles_renderer))),
+        );
         Ok(MicropolisClient {
             rng,
             terrain_generator,
             just_generated: false,
             test_map,
-            tiles_renderer,
+            assets,
         })
     }
 
@@ -62,8 +67,8 @@ impl State for MicropolisClient {
     fn draw(&mut self, window: &mut Window) -> Result<()> {
         window.clear(Color::BLACK)?;
         let map = &self.test_map;
-        self.tiles_renderer
-            .execute(|renderer| renderer.render(window, map))
+        self.assets
+            .execute(|(_, tiles_renderer)| tiles_renderer.render(window, map))
     }
 }
 
