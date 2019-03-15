@@ -41,18 +41,18 @@ pub enum GameScenario {
 #[derive(Clone, Debug)]
 pub struct GameSpeed {
     /// Determines how often the animation timer fires, in milliseconds.
-    animations_delay: u32,
+    animations_delay: u16,
     /// Determines how many simulation steps are fired at each screen update.
     ///
     /// One simulation step is triggered for every two animation steps.
-    sim_steps_per_update: u32,
+    sim_steps_per_update: u16,
 }
 
 impl GameSpeed {
-    pub fn get_animations_delay(&self) -> u32 {
+    pub fn get_animations_delay(&self) -> u16 {
         self.animations_delay
     }
-    pub fn get_sim_steps_per_update(&self) -> u32 {
+    pub fn get_sim_steps_per_update(&self) -> u16 {
         self.sim_steps_per_update
     }
 }
