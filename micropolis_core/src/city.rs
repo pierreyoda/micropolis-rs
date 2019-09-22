@@ -65,7 +65,7 @@ pub struct City {
 impl City {
     pub fn new(name: String) -> Result<Self, String> {
         Ok(City {
-            rng: OsRng::new().expect("cannot create OS RNG"),
+            rng: OsRng,
             init_status: CityInitializationState::JustCreated,
             map: Map::with_dimensions(&MapRectangle::new(120, 100), TileType::Dirt)?, // TODO: loading
             name,

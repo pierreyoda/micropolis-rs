@@ -26,7 +26,7 @@ struct MicropolisClient {
 impl State for MicropolisClient {
     fn new() -> Result<Self> {
         println!("Initializing micropolis-rs...");
-        let mut rng = OsRng::new().expect("cannot create OS RNG");
+        let mut rng = OsRng;
         let terrain_generator_island_chance =
             GeneratorCreateIsland::Sometimes(Percentage::from_integer(50).unwrap());
         let terrain_generator = MapGenerator::with_options(terrain_generator_island_chance);

@@ -587,7 +587,7 @@ mod tests {
 
     #[test]
     fn test_temp_print() {
-        let mut rng = OsRng::new().unwrap();
+        let mut rng = OsRng;
         let generator = MapGenerator::with_options(GeneratorCreateIsland::Sometimes(
             Percentage::from_integer(50).unwrap(),
         ));
