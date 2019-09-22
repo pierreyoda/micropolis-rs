@@ -1,4 +1,5 @@
 pub mod budget;
+pub mod meta;
 pub mod simulation;
 
 use rand::rngs::OsRng;

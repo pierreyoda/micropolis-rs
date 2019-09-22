@@ -10,6 +10,7 @@ path = "src/lib.rs"
 [dependencies]
 num-traits = "0.2.8"
 num-derive = "0.2.5"
+quick-xml = "0.16.1"
 
 [dependencies.rand]
 version = "0.7.0"
