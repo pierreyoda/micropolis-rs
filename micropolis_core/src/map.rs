@@ -176,6 +176,7 @@ impl MapPositionOffset {
         }
     }
 
+    /// Get the direction rotated by 180 degrees clock-wise.
     pub fn rotated_180(&self) -> MapPositionOffset {
         use MapPositionOffset::*;
         match self {
