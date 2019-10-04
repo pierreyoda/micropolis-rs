@@ -7,23 +7,7 @@ use rand::Rng;
 use super::tiles::TILE_BLBNBIT_MASK;
 use super::tiles_type::{WOODS_HIGH, WOODS_LOW};
 use super::{Map, MapPosition, MapPositionOffset, MapRectangle, Tile, TileType};
-
-pub struct Percentage(f64);
-
-impl Percentage {
-    pub fn from_integer(percentage: u8) -> Option<Self> {
-        if percentage <= 100 {
-            Some(Percentage(percentage as f64 / 100f64))
-        } else {
-            None
-        }
-    }
-
-    /// Value, in percentage (%).
-    pub fn value(&self) -> f64 {
-        self.0
-    }
-}
+use crate::utils::Percentage;
 
 /// Should the map generated as an island?
 pub enum GeneratorCreateIsland {
