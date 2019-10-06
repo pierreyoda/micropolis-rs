@@ -1,7 +1,7 @@
 import React, { FunctionComponent } from "react";
 
-import Nav from "@/components/nav";
-import Head from "@/components/head";
+import Nav from "@/components/Nav";
+import Head from "@/components/Head";
 
 const MainLayout: FunctionComponent = ({ children }) => (
   <div>

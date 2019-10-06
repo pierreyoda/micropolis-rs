@@ -1,3 +1,5 @@
+/* eslint-disable global-require */
+
 const production = process.env.APP_ENV === "production";
 
 module.exports = {
