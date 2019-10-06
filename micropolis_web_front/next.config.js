@@ -1,6 +1,7 @@
 const path = require("path");
+const withCSS = require("@zeit/next-css");
 
-module.exports = () => ({
+module.exports = () => withCSS({
   exportTrailingSlash: true,
   exportPathMap: () => ({
     "/": { page: "/" },
@@ -14,6 +15,9 @@ module.exports = () => ({
         ...config.resolve.alias,
         "@": path.resolve(__dirname, "./"),
       },
+    },
+    node: {
+      fs: "empty", // fixes npm packages that depend on `fs` module
     },
   }),
 });

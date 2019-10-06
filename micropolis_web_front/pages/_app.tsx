@@ -1,7 +1,8 @@
 import React from "react";
 import NextApp from "next/app";
 
-import MainLayout from "../layouts/main";
+import "@/assets/styles/tailwind.css";
+import MainLayout from "@/layouts/main";
 
 export default class App extends NextApp {
   render() {
