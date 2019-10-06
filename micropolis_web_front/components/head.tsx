@@ -13,7 +13,7 @@ const Head: FunctionComponent<HeadProps> = ({
   description,
   url,
   ogImage,
-  }) => (
+}) => (
   <NextHead>
     <meta charSet="UTF-8" lang="en" />
     <title>{title}</title>

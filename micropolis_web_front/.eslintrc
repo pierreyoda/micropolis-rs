@@ -1,0 +1,127 @@
+{
+    "env": {
+      "browser": true,
+      "es6": true
+    },
+    "extends": [
+      "eslint:recommended",
+      // "plugin:prettier/recommended",
+      "prettier/react",
+      "prettier/@typescript-eslint",
+      "airbnb-typescript",
+      "plugin:react/recommended",
+      "plugin:@typescript-eslint/recommended"
+    ],
+    "globals": {
+      "Atomics": "readonly",
+      "SharedArrayBuffer": "readonly"
+    },
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+      "ecmaFeatures": {
+        "jsx": true
+      },
+      "ecmaVersion": 2018,
+      "sourceType": "module"
+    },
+    "plugins": ["@typescript-eslint", "react", "prettier", "emotion"],
+    "rules": {
+      // "prettier/prettier": "error",
+      "react/jsx-one-expression-per-line": "off",
+      "react/jsx-filename-extension": [
+        "error",
+        {
+          "extensions": [".js", ".ts", "tsx"]
+        }
+      ],
+      "react/jsx-props-no-spreading": "off",
+      "react/no-array-index-key": 1,
+      "@typescript-eslint/explicit-function-return-type": "off",
+      "@typescript-eslint/explicit-member-accessibility": "off",
+      "@typescript-eslint/no-non-null-assertion": "off",
+      "indent": [
+        "error",
+        2,
+        {
+          "SwitchCase": 1
+        }
+      ],
+      "linebreak-style": ["error", "unix"],
+      "operator-linebreak": [
+        "error",
+        "before",
+        {
+          "overrides": {
+            "||": "after",
+            "&&": "after",
+            "=": "after"
+          }
+        }
+      ],
+      "quotes": ["error", "double"],
+      "semi": ["error", "always"],
+      "max-len": [
+        "error",
+        {
+          "code": 110
+        }
+      ],
+      "spaced-comment": [
+        "error",
+        "always",
+        {
+          "markers": ["/"]
+        }
+      ],
+      "object-curly-newline": "off",
+      "no-confusing-arrow": "off",
+      "implicit-arrow-linebreak": "off",
+      "jsx-a11y/anchor-is-valid": [
+        "error",
+        {
+          "components": ["Link"],
+          "specialLink": ["hrefLeft", "hrefRight"],
+          "aspects": ["invalidHref", "preferButton"]
+        }
+      ],
+      "no-nested-ternary": ["off"],
+      "import/prefer-default-export": ["off"],
+      "import/no-extraneous-dependencies": [
+        "error",
+        {
+          "devDependencies": true
+        }
+      ]
+    },
+    "settings": {
+      "react": {
+        "version": "detect"
+      },
+      "import/resolver": {
+        "alias": {
+          "map": [["@", "./"]],
+          "extensions": [".ts", ".js", ".tsx", ".jsx", ".json"]
+        }
+      }
+    },
+    "overrides": [
+      {
+        "files": ["**/*.tsx"],
+        "rules": {
+          "react/prop-types": "off"
+        }
+      },
+      {
+        "files": ["**/*.d.ts"],
+        "rules": {
+          "@typescript-eslint/no-explicit-any": "off"
+        }
+      },
+      {
+        "files": ["**/*.js"],
+        "rules": {
+          "@typescript-eslint/no-var-requires": "off"
+        }
+      }
+    ]
+  }
