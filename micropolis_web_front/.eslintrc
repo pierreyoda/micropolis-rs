@@ -39,6 +39,8 @@
       "@typescript-eslint/explicit-function-return-type": "off",
       "@typescript-eslint/explicit-member-accessibility": "off",
       "@typescript-eslint/no-non-null-assertion": "off",
+      "@typescript-eslint/quotes": ["error", "double"],
+      "quotes": "off",
       "indent": [
         "error",
         2,
@@ -58,7 +60,6 @@
           }
         }
       ],
-      "quotes": ["error", "double"],
       "semi": ["error", "always"],
       "max-len": [
         "error",
@@ -75,6 +76,7 @@
       ],
       "object-curly-newline": "off",
       "no-confusing-arrow": "off",
+      "arrow-parens": ["error", "as-needed"],
       "implicit-arrow-linebreak": "off",
       "jsx-a11y/anchor-is-valid": [
         "error",
