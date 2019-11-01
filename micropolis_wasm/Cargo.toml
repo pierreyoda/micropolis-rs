@@ -1,0 +1,19 @@
+[package]
+name = "micropolis_rs_wasm"
+version = "0.0.1"
+authors = ["pierreyoda <pierreyoda@users.noreply.github.com>"]
+edition = "2018"
+license = "MIT"
+
+[lib]
+path = "src/lib.rs"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+micropolis_rs_core = { path = "../micropolis_core" }
+wasm-bindgen = "0.2.53"
+
+[dependencies.rand]
+version = "0.7.2"
+default-features = false
+features = ["std", "stdweb", "wasm-bindgen"]
