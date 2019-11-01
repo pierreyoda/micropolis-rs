@@ -18,6 +18,6 @@ default-features = false
 features = ["std", "stdweb"]
 
 [dependencies.quicksilver]
-version = "0.3.19"
+version = "0.3.20"
 default-features = false
 features = ["fonts", "sounds"]
