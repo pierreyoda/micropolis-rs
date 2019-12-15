@@ -1,5 +1,6 @@
 const path = require("path");
 const withCSS = require("@zeit/next-css");
+const CopyPlugin = require("copy-webpack-plugin");
 
 module.exports = () => withCSS({
   exportTrailingSlash: true,
@@ -9,6 +10,15 @@ module.exports = () => withCSS({
   }),
   webpack: config => ({
     ...config,
+    plugins: [
+      ...config.plugins,
+      new CopyPlugin([
+        {
+          from: path.join(__dirname, "../img/"),
+          to: path.join(__dirname, "./public/game/"),
+        },
+      ]),
+    ],
     resolve: {
       ...config.resolve,
       alias: {

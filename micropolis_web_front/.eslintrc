@@ -24,7 +24,7 @@
       "ecmaVersion": 2018,
       "sourceType": "module"
     },
-    "plugins": ["@typescript-eslint", "react", "prettier", "emotion"],
+    "plugins": ["@typescript-eslint", "react", "react-hooks", "prettier", "emotion"],
     "rules": {
       // "prettier/prettier": "error",
       "react/jsx-one-expression-per-line": "off",
@@ -36,6 +36,8 @@
       ],
       "react/jsx-props-no-spreading": "off",
       "react/no-array-index-key": 1,
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "warn",
       "@typescript-eslint/explicit-function-return-type": "off",
       "@typescript-eslint/explicit-member-accessibility": "off",
       "@typescript-eslint/no-non-null-assertion": "off",

@@ -1,5 +1,4 @@
-import React from "react";
-import { NextPage } from "next";
+import React, { NextPage } from "react";
 
 const About: NextPage = () => (
   <div>

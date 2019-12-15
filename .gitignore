@@ -2,5 +2,4 @@
 **/*.rs.bk
 
 # IDEs
-/.vscode
-/.idea
+.vscode
