@@ -1,0 +1,9 @@
+version: "3.7"
+
+services:
+  front:
+    build:
+        context: micropolis_web_front/
+        #dockerfile: micropolis_web_front/Dockerfile
+    ports:
+      - "3000:3000"
