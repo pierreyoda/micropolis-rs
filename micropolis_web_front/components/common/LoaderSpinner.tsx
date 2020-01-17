@@ -6,7 +6,6 @@ export type LoaderSpinnerType =
   | "BallTriangle"
   | "Bars"
   | "Circles"
-  | "CradleLoader"
   | "Grid"
   | "Hearts"
   | "MutatingDots"
