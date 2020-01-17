@@ -23,7 +23,7 @@ const PixiContainer: FunctionComponent<PixiContainerProps> = (
 ) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [, setApp] = useState<PIXI.Application>(null);
+  const [, setApp] = useState<PIXI.Application>();
 
   useLayoutEffect(() => {
     if (debug) {
@@ -33,6 +33,9 @@ const PixiContainer: FunctionComponent<PixiContainerProps> = (
 
   // init pixi.js application
   useLayoutEffect(() => {
+    if (!containerRef.current || !canvasRef.current) {
+      return () => null;
+    }
     const pixiApp = new PIXI.Application({
       width: 800,
       height: 600,
