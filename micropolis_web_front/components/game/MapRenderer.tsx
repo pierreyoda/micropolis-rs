@@ -1,3 +1,4 @@
+import "pixi-tilemap";
 import React, { useEffect, useMemo, FunctionComponent } from "react";
 import { Loader, LoaderResource, BaseRenderTexture, SCALE_MODES, RenderTexture } from "pixi.js";
 
@@ -5,7 +6,7 @@ interface MapRendererProps {
   width: number;
   height: number;
   loader: Loader;
-  tilesImagePath: string;
+  tilesImagePath?: string;
   onLoadingProgress: (loader: Loader, resource: LoaderResource) => void;
 }
 
@@ -16,11 +17,12 @@ const MapRenderer: FunctionComponent<MapRendererProps> = ({
   height,
   loader,
   onLoadingProgress,
+  tilesImagePath = "/game/tiles.png",
 }) => {
   useEffect(
     () => {
       loader
-        .add("tiles", "/game/tiles.png")
+        .add("tiles", tilesImagePath)
         .on("progress", onLoadingProgress)
         .load();
     },

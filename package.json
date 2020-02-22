@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "pixi-tilemap": "^2.0.3",
+    "react-pixi-fiber": "^0.13.2"
+  }
+}

@@ -1,5 +1,7 @@
-import * as PIXI from "pixi.js";
 import React, { useState, useRef, useLayoutEffect, FunctionComponent } from "react";
+import { Stage } from "react-pixi-fiber";
+
+import NewGameScreen from "./NewGameScreen";
 
 type PixiRendererType = "WebGL" | "canvas";
 
@@ -9,6 +11,10 @@ const getPixiSupportedType = (): PixiRendererType =>
 export interface PixiContainerProps {
   debug?: boolean;
 }
+
+const loadAssets = (app: PIXI.Application) => {
+  app.loader.add("tile_map", "/game/tiles.png");
+};
 
 /**
  * A PixiJS Container, *i.e.* the root container of the graphical application.
@@ -46,13 +52,21 @@ const PixiContainer: FunctionComponent<PixiContainerProps> = (
       view: canvasRef.current,
     });
     setApp(pixiApp);
+    loadAssets(pixiApp); // TODO: look into Suspence for seamless async loading
     return () => pixiApp.destroy(false);
   }, []);
 
   return (
-    <div ref={containerRef} className="flex-grow w-full h-full">
-      <canvas ref={canvasRef} className="absolute block" />
-    </div>
+    <Stage
+      className="flex-grow w-full h-full" 
+      width={800}
+      height={600}
+      antialias={true}
+      transparent={false}
+      backgroundColor="0x000000"
+    >
+      <NewGameScreen />
+    </Stage>
   );
 };
 
