@@ -67,4 +67,29 @@ const Button: FunctionComponent<ButtonProps> = ({
   );
 };
 
+  const className = useMemo(
+    () => disabled 
+      ? "bg-gray-500"
+      : active
+        ? "bg-green-700"
+        : "bg-green-500 hover:bg-green-600",
+    [disabled, active],
+  );
+
+  return (
+    <ButtonContainer
+      role="button"
+      tabIndex={0}
+      aria-disabled={disabled}
+      aria-pressed={active}
+      onClick={trigger}
+      onKeyDown={trigger}
+      className={className}
+      css={width}
+    >
+      {children}
+    </ButtonContainer>
+  );
+};
+
 export default Button;
