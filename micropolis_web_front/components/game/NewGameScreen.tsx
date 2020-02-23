@@ -14,9 +14,12 @@ const NewGameScreen: FunctionComponent<NewGameScreenProps> = () => (
     backgroundColor="#edad0a"
   >
     <AppContext.Consumer>
-      {/* {(app: Application) => (<MapRenderer
+      {(app: Application) => (<MapRenderer
         loader={app.loader}
-      />)} */}
+        renderer={app.renderer}
+        tilesImagePath="/game/tiles.png"
+        onLoadingProgress={() => {}}
+      />)}
     </AppContext.Consumer>
   </Card>
 );

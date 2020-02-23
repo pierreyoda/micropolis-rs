@@ -1,45 +1,38 @@
 import "pixi-tilemap";
-import React, { useEffect, useMemo, FunctionComponent } from "react";
-import { Loader, LoaderResource, BaseRenderTexture, SCALE_MODES, RenderTexture } from "pixi.js";
+import { CustomPIXIComponentBehaviorDefinition, CustomPIXIComponent } from "react-pixi-fiber";
+import { Loader, LoaderResource, DisplayObject, Renderer } from "pixi.js";
 
-interface MapRendererProps {
-  width: number;
-  height: number;
+export interface MapRendererProps {
+  renderer: Renderer;
+  tilesImagePath: string;
   loader: Loader;
-  tilesImagePath?: string;
   onLoadingProgress: (loader: Loader, resource: LoaderResource) => void;
 }
 
 const TILE_SIZE = 16; // in pixels
+const ATLAS_ROWS = 16;
+const ATLAS_COLUMNS = 60;
+const ATLAS_TILES_COUNT = ATLAS_ROWS * ATLAS_COLUMNS;
 
-const MapRenderer: FunctionComponent<MapRendererProps> = ({
-  width,
-  height,
-  loader,
-  onLoadingProgress,
-  tilesImagePath = "/game/tiles.png",
-}) => {
-  useEffect(
-    () => {
-      loader
-        .add("tiles", tilesImagePath)
-        .on("progress", onLoadingProgress)
-        .load();
-    },
-    [loader, onLoadingProgress],
-  );
+let tilemap: PIXI.tilemap.CompositeRectTileLayer;
 
-  const renderTexture = useMemo(
-    () => {
-      const base = new BaseRenderTexture({ width, height, scaleMode: SCALE_MODES.LINEAR });
-      return new RenderTexture(base);
-    },
-    [width, height],
-  );
-
-  return (
-    <div>test</div>
-  );
+const MapRenderer: CustomPIXIComponentBehaviorDefinition<DisplayObject, MapRendererProps> = {
+  customDisplayObject: ({ loader, tilesImagePath, onLoadingProgress }) => {
+    loader
+      .add("tiles", tilesImagePath)
+      .on("progress", onLoadingProgress)
+      .load((loader, resources) => {
+        tilemap = new PIXI.tilemap.CompositeRectTileLayer(0, [resources["tiles"]?.texture!]);
+        for (let tileIndex = 0; tileIndex < ATLAS_TILES_COUNT; tileIndex++) {
+          tilemap.addFrame(`tile-${tileIndex}`, tileIndex % ATLAS_ROWS * TILE_SIZE, tileIndex/ ATLAS_ROWS * TILE_SIZE);
+        }
+      });
+    tilemap.visible = true;
+    return tilemap;
+  },
+  // customApplyProps: (map, { renderer }) => {
+  //   map.render(renderer)
+  // },
 };
 
-export default MapRenderer;
+export default CustomPIXIComponent(MapRenderer, "MAP_RENDERER");
