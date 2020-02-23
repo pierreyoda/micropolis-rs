@@ -1,6 +1,7 @@
 const path = require("path");
 const withCSS = require("@zeit/next-css");
 const CopyPlugin = require("copy-webpack-plugin");
+const WasmPackPlugin = require("@wasm-tool/wasm-pack-plugin");
 
 module.exports = () => withCSS({
   exportTrailingSlash: true,
@@ -26,6 +27,13 @@ module.exports = () => withCSS({
         "@": path.resolve(__dirname, "./"),
       },
     },
+    plugins: [
+      ...config.plugins,
+      new WasmPackPlugin({
+        crateDirectory: path.resolve(__dirname, "../micropolis_wasm/"),
+        outDir: path.resolve(__dirname, "../micropolis_wasm/pkg/"),
+      }),
+    ],
     node: {
       fs: "empty", // fixes npm packages that depend on `fs` module
     },
