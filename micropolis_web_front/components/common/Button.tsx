@@ -10,15 +10,31 @@ import styled from "@emotion/styled";
 
 import { ENTER } from "@/utils/keys";
 
+const buttonColors = [
+  "gray",
+  "red",
+  "orange",
+  "yellow",
+  "green",
+  "teal",
+  "blue",
+  "indigo",
+  "purple",
+  "pink",
+] as const;
+export type ButtonColor = typeof buttonColors[number];
+
 const ButtonContainer = styled.div`
   ${tw`py-2 px-4 rounded outline-none`};
-  ${tw`bg-green-500 hover:bg-green-500`};
   ${tw`font-bold text-center text-white`};
+  ${tw`flex items-center justify-center`};
 `;
 
 export interface ButtonProps {
   disabled?: boolean;
   width?: string;
+  height?: string;
+  color?: ButtonColor;
   active: boolean;
   onToggle: () => void;
 }
@@ -30,13 +46,19 @@ const Button: FunctionComponent<ButtonProps> = ({
   disabled = false,
   active = false,
   width = "100px",
+  height = "50px",
+  color = "green",
   onToggle,
   children,
 }) => {
   const trigger = useCallback(
-    (e: KeyboardEvent | MouseEvent) => {
+    (e: KeyboardEvent | MouseEvent, type?: "mousedown" | "mouseup") => {
       if (disabled) { return; }
-      if (isKeyboardEvent(e) && e.key !== ENTER) { return; }
+      if (isKeyboardEvent(e)) {
+        if (e.key !== ENTER) { return; }
+        onToggle();
+      }
+      if (type === "mousedown") { return; }
       onToggle();
     },
     [disabled],
@@ -44,11 +66,11 @@ const Button: FunctionComponent<ButtonProps> = ({
 
   const className = useMemo(
     () => disabled
-      ? "bg-gray-500"
+      ? "bg-gray-500 font-italic"
       : active
-        ? "bg-green-700"
-        : "bg-green-500 hover:bg-green-600",
-    [disabled, active],
+        ? `bg-${color}-700`
+        : `bg-${color}-500 hover:bg-${color}-600`,
+    [disabled, active, color],
   );
 
   return (
@@ -57,10 +79,11 @@ const Button: FunctionComponent<ButtonProps> = ({
       tabIndex={0}
       aria-disabled={disabled}
       aria-pressed={active}
-      onClick={trigger}
+      onMouseDown={e => trigger(e, "mousedown")}
+      onMouseUp={e => trigger(e, "mouseup")}
       onKeyDown={trigger}
       className={className}
-      css={width}
+      style={{ width, height }}
     >
       {children}
     </ButtonContainer>

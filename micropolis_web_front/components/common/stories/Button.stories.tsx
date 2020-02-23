@@ -10,6 +10,7 @@ storiesOf("Common", module)
   .add("Button", () => {
     const [toggled, setToggled] = useState(false);
     const width = number("Width", 250, { min: 25, max: 1500, step: 25 });
+    const height = number("Height", 45, { min: 25, max: 150, step: 10 });
 
     return (
       <StoryWrapper>
@@ -19,6 +20,7 @@ storiesOf("Common", module)
           active={toggled}
           onToggle={() => setToggled(t => !t)}
           width={`${width}px`}
+          height={`${height}px`}
         >
           {text("Button Label", "Click me! 👍")}
         </Button>

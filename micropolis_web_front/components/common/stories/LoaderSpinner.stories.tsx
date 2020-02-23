@@ -15,10 +15,10 @@ const printPascalCase = (pascal: string): string => pascal.replace(/([A-Z])/g, "
 storiesOf("common/LoaderSpinner", module)
   .addDecorator(withKnobs)
   .add("Showcase", () => (
-    <div className="w-full h-full flex flex-col items-center overflow-y-auto bg-red-900">
+    <div className="w-full h-full flex flex-col items-center overflow-y-auto bg-pink-300">
       {loaderSpinnerTypes.map(type => (
         <div key={type} title={printPascalCase(type)} className="mb-8">
-          <LoaderSpinner type={type} />
+          <LoaderSpinner type={type} color={color("Color", "#eaeaea")} />
         </div>
       ))}
     </div>
