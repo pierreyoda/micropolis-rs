@@ -18,7 +18,7 @@ export const loaderSpinnerTypes = [
   "ThreeDots",
   "Triangle",
   "Watch",
-];
+] as const;
 
 export type LoaderSpinnerType = typeof loaderSpinnerTypes[number];
 
@@ -34,8 +34,8 @@ export interface LoaderSpinnerProps {
 /**
  * @see https://github.com/mhnpd/react-loader-spinner
  */
-const LoaderSpinner: FunctionComponent<LoaderSpinnerProps> = props => (
-  <Loader {...props} />
+const LoaderSpinner: FunctionComponent<LoaderSpinnerProps> = ({ type, ...props }) => (
+  <Loader type={type} {...props} />
 );
 
 export default LoaderSpinner;

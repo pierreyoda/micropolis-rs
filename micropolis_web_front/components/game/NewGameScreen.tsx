@@ -14,9 +14,9 @@ const NewGameScreen: FunctionComponent<NewGameScreenProps> = () => (
     backgroundColor="#edad0a"
   >
     <AppContext.Consumer>
-      {(app: Application) => (<MapRenderer
+      {/* {(app: Application) => (<MapRenderer
         loader={app.loader}
-      />)}
+      />)} */}
     </AppContext.Consumer>
   </Card>
 );

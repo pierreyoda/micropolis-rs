@@ -1,12 +1,12 @@
 import React, { useState, useRef, useLayoutEffect, FunctionComponent } from "react";
 import { Stage } from "react-pixi-fiber";
+import { utils } from "pixi.js";
 
 import NewGameScreen from "./NewGameScreen";
 
 type PixiRendererType = "WebGL" | "canvas";
 
-const getPixiSupportedType = (): PixiRendererType =>
-  PIXI.utils.isWebGLSupported() ? "WebGL" : "canvas";
+const getPixiSupportedType = (): PixiRendererType => utils.isWebGLSupported() ? "WebGL" : "canvas";
 
 export interface PixiContainerProps {
   debug?: boolean;
@@ -33,7 +33,7 @@ const PixiContainer: FunctionComponent<PixiContainerProps> = (
 
   useLayoutEffect(() => {
     if (debug) {
-      PIXI.utils.sayHello(getPixiSupportedType());
+      utils.sayHello(getPixiSupportedType());
     }
   }, [debug]);
 
@@ -61,9 +61,11 @@ const PixiContainer: FunctionComponent<PixiContainerProps> = (
       className="flex-grow w-full h-full"
       width={800}
       height={600}
-      antialias={true}
-      transparent={false}
-      backgroundColor="0x000000"
+      options={{
+        antialias: true,
+        transparent: false,
+        backgroundColor: 0x000000,
+      }}
     >
       <NewGameScreen />
     </Stage>

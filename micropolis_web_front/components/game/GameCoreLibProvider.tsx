@@ -10,9 +10,9 @@ const GameCoreLibProvider = dynamic({
   loading: () => <span>Loading game lib...</span>,
   loader: async () => {
     const gameCoreLib = connectMicropolisCoreLib(await importMicropolisCoreWasmLib());
-    const GameCoreLibContextProvider = () => (
-      <GameCoreLibContext.Provider value={gameCoreLib} />
-    );
+    // const GameCoreLibContextProvider = () => (
+    //   <GameCoreLibContext.Provider value={gameCoreLib} />
+    // );
     return ({ children }) => (
       <div>
         {children}
