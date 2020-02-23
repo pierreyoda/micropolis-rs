@@ -8,7 +8,7 @@ import {
   color,
 } from "@storybook/addon-knobs";
 
-import LoaderSpinner, { loaderSpinnerTypes } from "./LoaderSpinner";
+import LoaderSpinner, { loaderSpinnerTypes } from "../LoaderSpinner";
 
 const printPascalCase = (pascal: string): string => pascal.replace(/([A-Z])/g, " $1");
 

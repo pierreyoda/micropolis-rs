@@ -1,23 +1,26 @@
 import React, { FunctionComponent } from "react";
 import Loader from "react-loader-spinner";
 
-export type LoaderSpinnerType =
-  | "Audio"
-  | "BallTriangle"
-  | "Bars"
-  | "Circles"
-  | "Grid"
-  | "Hearts"
-  | "MutatingDots"
-  | "Oval"
-  | "Plane"
-  | "Puff"
-  | "RevolvingDot"
-  | "Rings"
-  | "TailSpin"
-  | "ThreeDots"
-  | "Triangle"
-  | "Watch";
+export const loaderSpinnerTypes = [
+  "Audio",
+  "BallTriangle",
+  "Bars",
+  "Circles",
+  "Grid",
+  "Hearts",
+  "MutatingDots",
+  "Oval",
+  "Plane",
+  "Puff",
+  "RevolvingDot",
+  "Rings",
+  "TailSpin",
+  "ThreeDots",
+  "Triangle",
+  "Watch",
+];
+
+export type LoaderSpinnerType = typeof loaderSpinnerTypes[number];
 
 export interface LoaderSpinnerProps {
   type: LoaderSpinnerType;

@@ -58,7 +58,7 @@ const PixiContainer: FunctionComponent<PixiContainerProps> = (
 
   return (
     <Stage
-      className="flex-grow w-full h-full" 
+      className="flex-grow w-full h-full"
       width={800}
       height={600}
       antialias={true}
