@@ -27,47 +27,24 @@ const loadAssets = (app: PIXI.Application) => {
 const PixiContainer: FunctionComponent<PixiContainerProps> = (
   { debug } = { debug: false },
 ) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [, setApp] = useState<PIXI.Application>();
-
   useLayoutEffect(() => {
     if (debug) {
       utils.sayHello(getPixiSupportedType());
     }
   }, [debug]);
 
-  // init pixi.js application
-  useLayoutEffect(() => {
-    if (!containerRef.current || !canvasRef.current) {
-      return () => null;
-    }
-    const pixiApp = new PIXI.Application({
-      width: 800,
-      height: 600,
-      antialias: true,
-      transparent: false,
-      backgroundColor: 0x000000,
-      resizeTo: containerRef.current,
-      view: canvasRef.current,
-    });
-    setApp(pixiApp);
-    loadAssets(pixiApp); // TODO: look into Suspence for seamless async loading
-    return () => pixiApp.destroy(false);
-  }, []);
-
   return (
     <Stage
-      className="flex-grow w-full h-full"
-      width={800}
-      height={600}
+      className="flex-grow w-full h-auto"
       options={{
+        width: 800,
+        height: 600,
         antialias: true,
         transparent: false,
-        backgroundColor: 0x000000,
+        backgroundColor: 0x22543d,
       }}
     >
-      <NewGameScreen />
+      {/* <NewGameScreen /> */}
     </Stage>
   );
 };

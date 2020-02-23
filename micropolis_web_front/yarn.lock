@@ -12618,10 +12618,10 @@ react-loader-spinner@^3.1.5:
     babel-runtime "^6.26.0"
     prop-types "^15.6.2"
 
-react-pixi-fiber@^0.13.2:
-  version "0.13.2"
-  resolved "https://registry.yarnpkg.com/react-pixi-fiber/-/react-pixi-fiber-0.13.2.tgz#98ab02ce16946522e683c8e0dc24bf4562978d70"
-  integrity sha512-6egjhYYwvk3ydbzSVQAM7mIvt0wemoC49qjn0GWixA+AZYhk+VIMChxdUcDzVwinLaCcK1jNyNaWo/SYJbBl9Q==
+react-pixi-fiber@^1.0.0-beta.1:
+  version "1.0.0-beta.1"
+  resolved "https://registry.yarnpkg.com/react-pixi-fiber/-/react-pixi-fiber-1.0.0-beta.1.tgz#1d2ca4aab8f933fa5b4439bd97b1b91033760560"
+  integrity sha512-UiW8FpWNwkMElyl0I6G0yWSwfgymdUBZZBrFG7+r7YzekpuhRbvn3ynQmcwc9GpVuCIG4aetXPsk0cr73/MH3w==
   dependencies:
     fbjs "^0.8.0"
     performance-now "^2.1.0"
