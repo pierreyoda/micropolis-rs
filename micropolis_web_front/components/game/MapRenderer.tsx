@@ -1,6 +1,10 @@
+// import * as PIXI from "pixi.js";
+// (window as any).PIXI = PIXI;
 import "pixi-tilemap";
 import { CustomPIXIComponentBehaviorDefinition, CustomPIXIComponent } from "react-pixi-fiber";
 import { Loader, LoaderResource, DisplayObject, Renderer } from "pixi.js";
+
+PIXI.tilemap.Constant.maxTextures = 4;
 
 export interface MapRendererProps {
   renderer: Renderer;
@@ -27,10 +31,10 @@ const MapRenderer: CustomPIXIComponentBehaviorDefinition<DisplayObject, MapRende
           tilemap.addFrame(`tile-${tileIndex}`, tileIndex % ATLAS_ROWS * TILE_SIZE, tileIndex/ ATLAS_ROWS * TILE_SIZE);
         }
       });
-    tilemap.visible = true;
     return tilemap;
   },
   // customApplyProps: (map, { renderer }) => {
+  //   console.log(map)
   //   map.render(renderer)
   // },
 };

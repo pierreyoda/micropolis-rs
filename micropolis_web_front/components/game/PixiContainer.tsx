@@ -1,4 +1,4 @@
-import React, { useState, useRef, useLayoutEffect, FunctionComponent } from "react";
+import React, { FunctionComponent, useLayoutEffect } from "react";
 import { Stage } from "react-pixi-fiber";
 import { utils } from "pixi.js";
 
@@ -44,7 +44,7 @@ const PixiContainer: FunctionComponent<PixiContainerProps> = (
         backgroundColor: 0x22543d,
       }}
     >
-      {/* <NewGameScreen /> */}
+      <NewGameScreen />
     </Stage>
   );
 };

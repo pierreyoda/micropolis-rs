@@ -1,4 +1,5 @@
 const path = require("path");
+const webpack = require("webpack");
 const withCSS = require("@zeit/next-css");
 const CopyPlugin = require("copy-webpack-plugin");
 const WasmPackPlugin = require("@wasm-tool/wasm-pack-plugin");
@@ -29,6 +30,9 @@ module.exports = () => withCSS({
     },
     plugins: [
       ...config.plugins,
+      new webpack.ProvidePlugin({
+        PIXI: "pixi.js",
+      }),
       new WasmPackPlugin({
         crateDirectory: path.resolve(__dirname, "../micropolis_wasm/"),
         outDir: path.resolve(__dirname, "../micropolis_wasm/pkg/"),
