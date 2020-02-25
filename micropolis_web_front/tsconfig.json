@@ -26,7 +26,8 @@
       "typeRoots": [
         "node_modules/@types",
         "types"
-      ]
+      ],
+      "downlevelIteration": true
     },
     "exclude": [
       "node_modules"

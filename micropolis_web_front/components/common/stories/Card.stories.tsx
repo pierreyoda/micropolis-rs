@@ -36,7 +36,6 @@ storiesOf("Common", module)
                 Open
               </Button>
         }
-        
       </StoryWrapper>
     );
   });
