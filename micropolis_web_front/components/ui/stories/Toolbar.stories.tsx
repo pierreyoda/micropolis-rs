@@ -12,48 +12,48 @@ const buildChildren = (count: number): ToolbarItemChild[] =>
   }));
 
 storiesOf("Game/UI", module)
-    .addDecorator(withKnobs)
-    .add("Toolbar", () => {
-      const items: ToolbarItem[] = [
-        { 
-          key: "main",
-          label: "Micropolis",
-          children: [],
-        },
-        { 
-          key: "options",
-          label: "Options",
-          children: [],
-        },
-        { 
-          key: "disasters",
-          label: "Disasters",
-          children: [],
-        },
-        { 
-          key: "time",
-          label: "Time",
-          children: [],
-        },
-        {
-          key: "priority",
-          label: "Priority",
-          children: [],
-        },
-        { 
-          key: "windows",
-          label: "Windows",
-          children: [],
-        },
-      ].map(item => ({
-        ...item,
-        children: buildChildren(6),
-      }));
-      console.log(buildChildren(5));
+  .addDecorator(withKnobs)
+  .add("Toolbar", () => {
+    const items: ToolbarItem[] = [
+      { 
+        key: "main",
+        label: "Micropolis",
+        children: [],
+      },
+      { 
+        key: "options",
+        label: "Options",
+        children: [],
+      },
+      { 
+        key: "disasters",
+        label: "Disasters",
+        children: [],
+      },
+      { 
+        key: "time",
+        label: "Time",
+        children: [],
+      },
+      {
+        key: "priority",
+        label: "Priority",
+        children: [],
+      },
+      { 
+        key: "windows",
+        label: "Windows",
+        children: [],
+      },
+    ].map(item => ({
+      ...item,
+      children: buildChildren(6),
+    }));
+    console.log(buildChildren(5));
 
-      return (
-        <StoryWrapper>
-          <Toolbar items={items} />
-        </StoryWrapper>
-      );
-    });
+    return (
+      <StoryWrapper>
+        <Toolbar items={items} />
+      </StoryWrapper>
+    );
+  });

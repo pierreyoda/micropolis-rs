@@ -16,7 +16,7 @@ module.exports = () => withCSS({
       new CopyPlugin([
         {
           from: path.join(__dirname, "../img/"),
-          to: path.join(__dirname, "./public/game/"),
+          to: path.join(__dirname, "./assets/game/"),
         },
       ]),
     ],

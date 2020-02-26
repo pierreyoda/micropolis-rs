@@ -1,38 +1,40 @@
-import "pixi-tilemap";
-import { CustomPIXIComponentBehaviorDefinition, CustomPIXIComponent } from "react-pixi-fiber";
-import { Loader, LoaderResource, DisplayObject, Renderer } from "pixi.js";
+import React, { FunctionComponent } from "react";
 
-export interface MapRendererProps {
-  renderer: Renderer;
-  tilesImagePath: string;
-  loader: Loader;
-  onLoadingProgress: (loader: Loader, resource: LoaderResource) => void;
+import Tile from "./Tile";
+import AtlasImage from "@/assets/game/tiles.png";
+
+export interface TileMeta {
+  type: number;
 }
 
-const TILE_SIZE = 16; // in pixels
-const ATLAS_ROWS = 16;
-const ATLAS_COLUMNS = 60;
-const ATLAS_TILES_COUNT = ATLAS_ROWS * ATLAS_COLUMNS;
+export interface MapPayload {
+  tiles: TileMeta[][];
+}
 
-let tilemap: PIXI.tilemap.CompositeRectTileLayer;
+export interface MapRendererProps {
+  map: MapPayload;
+}
 
-const MapRenderer: CustomPIXIComponentBehaviorDefinition<DisplayObject, MapRendererProps> = {
-  customDisplayObject: ({ loader, tilesImagePath, onLoadingProgress }) => {
-    loader
-      .add("tiles", tilesImagePath)
-      .on("progress", onLoadingProgress)
-      .load((loader, resources) => {
-        tilemap = new PIXI.tilemap.CompositeRectTileLayer(0, [resources["tiles"]?.texture!]);
-        for (let tileIndex = 0; tileIndex < ATLAS_TILES_COUNT; tileIndex++) {
-          tilemap.addFrame(`tile-${tileIndex}`, tileIndex % ATLAS_ROWS * TILE_SIZE, tileIndex/ ATLAS_ROWS * TILE_SIZE);
-        }
-      });
-    tilemap.visible = true;
-    return tilemap;
-  },
-  // customApplyProps: (map, { renderer }) => {
-  //   map.render(renderer)
-  // },
-};
+/**
+ * TileMap renderer.
+ */
+const MapRenderer: FunctionComponent<MapRendererProps> = ({
+  map: { tiles },
+}) => {
+  return (
+    <div className="flex">
+      {tiles.map((col, colIndex) => (
+        <div className="flex-col">
+          {col.map(({ type }, rowIndex) => <Tile 
+            row={rowIndex}
+            colunm={colIndex}
+            tileIndex={type}
+            atlasImage={AtlasImage}
+          />)}
+        </div>
+      ))}
+    </div>
+  );
+}
 
-export default CustomPIXIComponent(MapRenderer, "MAP_RENDERER");
+export default MapRenderer;

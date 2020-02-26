@@ -1,6 +1,4 @@
 import React, { FunctionComponent } from "react";
-import { AppContext } from "react-pixi-fiber";
-import { Application } from "pixi.js";
 
 import Card from "../common/Card";
 import MapRenderer from "./MapRenderer";
@@ -13,14 +11,7 @@ const NewGameScreen: FunctionComponent<NewGameScreenProps> = () => (
     title={"New Game"}
     backgroundColor="#edad0a"
   >
-    <AppContext.Consumer>
-      {(app: Application) => (<MapRenderer
-        loader={app.loader}
-        renderer={app.renderer}
-        tilesImagePath="/game/tiles.png"
-        onLoadingProgress={() => {}}
-      />)}
-    </AppContext.Consumer>
+    
   </Card>
 );
 
