@@ -10,8 +10,8 @@ export interface CardProps {
   backgroundColor: string;
 }
 
-const Card: FunctionComponent<CardProps> = ({ 
-  children, 
+const Card: FunctionComponent<CardProps> = ({
+  children,
   title,
   closable = false,
   onClose = () => {},
@@ -23,14 +23,14 @@ const Card: FunctionComponent<CardProps> = ({
 
   return (
     <div
-      className="flex flex-col items-center"
+      className="flex flex-col items-center rounded"
       style={{ backgroundColor }}
     >
-      <div 
-        className="w-full flex items-center justify-between py-3 px-6"
+      <div
+        className="w-full flex items-center justify-between py-3 px-6 rounded-t"
         style={{ backgroundColor: headerColor }}
       >
-        <h3 className="font-bold text-gray-400">{title}</h3>
+        <h3 className="font-bold text-gray-100">{title}</h3>
         {closable &&
           <Button
             width="25px"
