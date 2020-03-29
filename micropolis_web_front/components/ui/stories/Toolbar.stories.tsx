@@ -9,28 +9,29 @@ const buildChildren = (count: number): ToolbarItemChild[] =>
   [...Array(count).keys()].map((i): ToolbarItemChild => ({
     key: `child-${i}`,
     label: `Sub-item ${i + 1}`,
+    onClick: () => { console.log(`child-${i}`); },
   }));
 
 storiesOf("Game/UI", module)
   .addDecorator(withKnobs)
   .add("Toolbar", () => {
     const items: ToolbarItem[] = [
-      { 
+      {
         key: "main",
         label: "Micropolis",
         children: [],
       },
-      { 
+      {
         key: "options",
         label: "Options",
         children: [],
       },
-      { 
+      {
         key: "disasters",
         label: "Disasters",
         children: [],
       },
-      { 
+      {
         key: "time",
         label: "Time",
         children: [],
@@ -40,7 +41,7 @@ storiesOf("Game/UI", module)
         label: "Priority",
         children: [],
       },
-      { 
+      {
         key: "windows",
         label: "Windows",
         children: [],

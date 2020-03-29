@@ -8,6 +8,7 @@ export interface CardProps {
   closable?: boolean;
   onClose?: () => void;
   backgroundColor: string;
+  className?: string;
 }
 
 const Card: FunctionComponent<CardProps> = ({
@@ -17,8 +18,6 @@ const Card: FunctionComponent<CardProps> = ({
   onClose = () => {},
   backgroundColor,
 }) => {
-  const [closeButtonActive] = useState(false);
-
   const headerColor = useMemo(() => new Color(backgroundColor).darken(0.3).hex(), [backgroundColor]);
 
   return (
@@ -30,16 +29,15 @@ const Card: FunctionComponent<CardProps> = ({
         className="w-full flex items-center justify-between py-3 px-6 rounded-t"
         style={{ backgroundColor: headerColor }}
       >
-        <h3 className="font-bold text-gray-100">{title}</h3>
+        <h3 className="font-bold text-gray-400">{title}</h3>
         {closable &&
           <Button
             width="25px"
             height="25px"
             color="red"
-            active={closeButtonActive}
             onToggle={onClose}
           >
-            X
+            <span className="text-sm">X</span>
           </Button>
         }
       </div>
