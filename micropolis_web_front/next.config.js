@@ -31,7 +31,8 @@ module.exports = () => withCSS({
       ...config.plugins,
       new WasmPackPlugin({
         crateDirectory: path.resolve(__dirname, "../micropolis_wasm/"),
-        outDir: path.resolve(__dirname, "../micropolis_wasm/pkg/"),
+        outDir: path.resolve(__dirname, "./pkg"),
+        forceMode: "development",
       }),
     ],
     node: {

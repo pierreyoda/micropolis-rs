@@ -1,3 +1,5 @@
+use serde::Serialize;
+
 pub mod generator;
 pub mod tiles;
 pub mod tiles_type;
@@ -8,7 +10,7 @@ pub use tiles_type::TileType;
 pub type TileMap = Vec<Vec<Tile>>;
 
 /// Stores the state of the entire map containing a Metropolis city.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize)]
 pub struct Map {
     /// The internal data structure storing the tiles of the map (assumed as rectangular).
     ///

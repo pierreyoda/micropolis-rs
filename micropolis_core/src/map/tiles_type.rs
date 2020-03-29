@@ -1,3 +1,4 @@
+use serde::Serialize;
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive as FromPrimitiveTrait, ToPrimitive as ToPrimitiveTrait};
 
@@ -9,7 +10,7 @@ pub const WOODS_HIGH: u16 = TileType::UnusedTrash2 as u16;
 /// TODO: how to handle duplicates / ranges? => REFACTOR enum River(...), Road(...)
 /// TODO: explicit names for all types
 /// TODO: documentation
-#[derive(Clone, Debug, PartialEq, Eq, Hash, FromPrimitive, ToPrimitive)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, FromPrimitive, ToPrimitive, Serialize)]
 pub enum TileType {
     Invalid = -1,
     /// Clear tile.

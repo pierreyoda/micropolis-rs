@@ -1,4 +1,5 @@
 use std::rc::Rc;
+use serde::Serialize;
 
 use super::tiles_type::{TileType, WOODS_HIGH, WOODS_LOW};
 use super::MapRectangle;
@@ -70,7 +71,7 @@ pub const TILE_TYPE_MASK: u16 = 0b_0000_0011_1111_1111;
 /// Bits containing the status of the tile.
 pub const TILE_STATUS_MASK: u16 = TILE_TYPE_MASK ^ 0xFFFF;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub struct Tile {
     /// Raw integer describing the type and status of the tile.
     raw: u16,

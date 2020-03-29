@@ -27,7 +27,7 @@ const MapRenderer: FunctionComponent<MapRendererProps> = ({
         <div className="flex-col">
           {col.map(({ type }, rowIndex) => <Tile 
             row={rowIndex}
-            colunm={colIndex}
+            column={colIndex}
             tileIndex={type}
             atlasImage={AtlasImage}
           />)}
