@@ -1,3 +1,5 @@
+use std::convert::TryInto;
+
 use crate::utils::Percentage;
 
 /// Integer-based money storage type. Must be copy by default.
@@ -37,14 +39,78 @@ impl CityBudget {
         }
     }
 
-    pub fn update_budget_lines(&mut self, available_budget: MoneyValue) {
-        let budget_lines = [&self.fire_department, &self.police_department, &self.roads];
-        let budgets_values = budget_lines
-            .into_iter()
-            .map(|line| line.value as f64 * line.percentage.value());
-        let mut total: f64 = budgets_values.sum();
-        if total > 0 {
+    pub fn update_budget_lines(&mut self, tax_funds: MoneyValue, total_funds: MoneyValue) {
+        let [budget_roads, budget_fire, budget_police] = [
+            (self.roads.value as f64 * self.roads.percentage.value()) as MoneyValue,
+            (self.fire_department.value as f64 * self.fire_department.percentage.value()) as MoneyValue,
+            (self.police_department.value as f64 * self.police_department.percentage.value()) as MoneyValue,
+        ];
+        let mut total = budget_roads + budget_fire + budget_police;
+        let mut available_budget = tax_funds + total_funds;
 
+        if available_budget > total {
+            // TODO: why are we not substracting from the available budget as below
+            self.fire_department.value = budget_fire;
+            self.police_department.value = budget_police;
+            self.roads.value = budget_roads;
+        } else if total > 0 {
+            // Not enough available budget to fund everything.
+            // First spend on roads, then on fire, then on police.
+
+            if available_budget > budget_roads {
+                // Enough budget to fully fund roads.
+                self.roads.value = budget_roads;
+                available_budget -= budget_roads;
+
+                if available_budget > budget_fire {
+                    // Enough budget to fully fund fire.
+                    self.fire_department.value = budget_fire;
+                    available_budget -= budget_fire;
+
+                    if available_budget > budget_police {
+                        // Enough budget to fully fund police.
+                        // FIXME: Hey what are we doing here? Should never get here.
+                        // We tested for available_budget > total above
+                        // (where total = fireInt + policeInt + roadInt),
+                        // so this should never happen.
+                        self.police_department.value = budget_police;
+                        available_budget -= budget_police;
+                    } else {
+                        // Fuly funded roads and fire.
+                        // Partially fund police.
+                        self.police_department.value = available_budget;
+                        if available_budget > 0 {
+                            // Scale back police percentage to available cash.
+                            self.police_department.percentage = Percentage::from_integer((available_budget / self.police_department.value).try_into().unwrap()).unwrap();
+                        } else {
+                            // Exactly nothing left, so scale back police percentage to zero.
+                            self.police_department.percentage = Percentage::from_integer(0).unwrap();
+                        }
+                    }
+                } else {
+                    // Not enough budget to fully fund fire.
+                    self.fire_department.value = available_budget;
+
+                    // No police after funding roads and fire.
+                    self.police_department.value = 0;
+                    self.police_department.percentage = Percentage::from_integer(0).unwrap();
+
+                    if available_budget > 0 {
+                        // Scale back fire percentage to available cash.
+                        self.fire_department.percentage = Percentage::from_integer((available_budget / self.fire_department.value).try_into().unwrap()).unwrap();
+                    } else {
+                        // Exactly nothing left, so scale back fire percentage to zero.
+                        self.fire_department.percentage = Percentage::from_integer(0).unwrap();
+                    }
+                }
+            } else {
+                assert!(available_budget == total);
+                assert!(total == 0);
+                // Zero funding, so no values but full percentages.
+                self.roads = BudgetLine::new();
+                self.fire_department = BudgetLine::new();
+                self.police_department = BudgetLine::new();
+            }
         }
     }
 }
