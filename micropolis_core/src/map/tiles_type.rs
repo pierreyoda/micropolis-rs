@@ -1,6 +1,6 @@
-use serde::Serialize;
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive as FromPrimitiveTrait, ToPrimitive as ToPrimitiveTrait};
+use serde::Serialize;
 
 pub const WOODS_LOW: u16 = TileType::TreeBase as u16;
 pub const WOODS_HIGH: u16 = TileType::UnusedTrash2 as u16;

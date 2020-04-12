@@ -1,5 +1,5 @@
-use std::rc::Rc;
 use serde::Serialize;
+use std::rc::Rc;
 
 use super::tiles_type::{TileType, WOODS_HIGH, WOODS_LOW};
 use super::MapRectangle;

@@ -42,8 +42,10 @@ impl CityBudget {
     pub fn update_budget_lines(&mut self, tax_funds: MoneyValue, total_funds: MoneyValue) {
         let [budget_roads, budget_fire, budget_police] = [
             (self.roads.value as f64 * self.roads.percentage.value()) as MoneyValue,
-            (self.fire_department.value as f64 * self.fire_department.percentage.value()) as MoneyValue,
-            (self.police_department.value as f64 * self.police_department.percentage.value()) as MoneyValue,
+            (self.fire_department.value as f64 * self.fire_department.percentage.value())
+                as MoneyValue,
+            (self.police_department.value as f64 * self.police_department.percentage.value())
+                as MoneyValue,
         ];
         let mut total = budget_roads + budget_fire + budget_police;
         let mut available_budget = tax_funds + total_funds;
@@ -81,10 +83,16 @@ impl CityBudget {
                         self.police_department.value = available_budget;
                         if available_budget > 0 {
                             // Scale back police percentage to available cash.
-                            self.police_department.percentage = Percentage::from_integer((available_budget / self.police_department.value).try_into().unwrap()).unwrap();
+                            self.police_department.percentage = Percentage::from_integer(
+                                (available_budget / self.police_department.value)
+                                    .try_into()
+                                    .unwrap(),
+                            )
+                            .unwrap();
                         } else {
                             // Exactly nothing left, so scale back police percentage to zero.
-                            self.police_department.percentage = Percentage::from_integer(0).unwrap();
+                            self.police_department.percentage =
+                                Percentage::from_integer(0).unwrap();
                         }
                     }
                 } else {
@@ -97,7 +105,12 @@ impl CityBudget {
 
                     if available_budget > 0 {
                         // Scale back fire percentage to available cash.
-                        self.fire_department.percentage = Percentage::from_integer((available_budget / self.fire_department.value).try_into().unwrap()).unwrap();
+                        self.fire_department.percentage = Percentage::from_integer(
+                            (available_budget / self.fire_department.value)
+                                .try_into()
+                                .unwrap(),
+                        )
+                        .unwrap();
                     } else {
                         // Exactly nothing left, so scale back fire percentage to zero.
                         self.fire_department.percentage = Percentage::from_integer(0).unwrap();
