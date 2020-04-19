@@ -1,6 +1,6 @@
 import React, { useMemo, FunctionComponent } from "react";
 
-const TILE_SIZE = 16; // in pixels
+export const TILE_SIZE = 16; // in pixels
 const ATLAS_ROWS = 16;
 const ATLAS_COLUMNS = 64;
 const ATLAS_TILES = ATLAS_ROWS * ATLAS_COLUMNS;
@@ -15,7 +15,7 @@ export interface TileProps {
 const Tile: FunctionComponent<TileProps> = ({ row, column, tileIndex, atlasImage }) => {
   const [atlasX, atlasY] = useMemo(
       () => [
-        tileIndex % ATLAS_ROWS * TILE_SIZE, 
+        tileIndex % ATLAS_ROWS * TILE_SIZE,
         tileIndex / ATLAS_ROWS * TILE_SIZE,
       ],
       [tileIndex],
@@ -30,7 +30,7 @@ const Tile: FunctionComponent<TileProps> = ({ row, column, tileIndex, atlasImage
     <img
       src={atlasImage}
       style={{
-        position: "relative",
+        position: "fixed",
         left: positionX,
         top: positionY,
         width: TILE_SIZE,

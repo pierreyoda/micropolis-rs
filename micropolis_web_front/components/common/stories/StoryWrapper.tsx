@@ -1,9 +1,18 @@
 import React, { FunctionComponent } from "react";
 
-const StoryWrapper: FunctionComponent = ({ children }) => (
+interface StoryWrapperProps {
+  full?: boolean;
+  noPadding?: boolean;
+}
+
+const StoryWrapper: FunctionComponent<StoryWrapperProps> = ({
+  children,
+  full = true,
+  noPadding = false,
+}) => (
   <div
-    className="flex flex-col items-center justify-center p-12 bg-gray-500"
-    css={{ width: "1280px", height: "800px" }}
+    className={`classflex flex-col items-center justify-center ${noPadding ? "" : "p-12"} bg-gray-200`}
+    style={{ width: full ? "100%" : "1280px", height: full ? "100vh" : "800px" }}
   >
     {children}
   </div>

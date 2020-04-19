@@ -6,20 +6,20 @@ import Button from "../common/Button";
 import Card from "../common/Card";
 
 export interface NewGameScreenProps {
+  generateMap: (width: number, height: number) => MapPayload;
 }
 
 // TODO: use real map generation WASM API
-// const MAX_TILE_INDEX = 1028;
-// const generateMap = (width: number, height: number): MapPayload => ({
-//   tiles: [...Array(width).keys()].reduce((columns: TileMeta[][]) =>
-//     [...columns,
-//      ...Array(height).reduce((rows: TileMeta[]): TileMeta => [
-//      ...rows, {
-//        type: Math.round(Math.random() * MAX_TILE_INDEX),
-//     }], []),
-//   ], []
-//   ),
-// });
+const MAX_TILE_INDEX = 1028;
+export const generateMapStub = (width: number, height: number): MapPayload => ({
+  tiles: [...Array(height).keys()].reduce((columns: TileMeta[][]) =>
+    [...columns,
+     [...Array(width).keys()].reduce((rows: TileMeta[]): TileMeta[] => [
+     ...rows, {
+       type: Math.round(Math.random() * MAX_TILE_INDEX),
+    }], []),
+  ], []),
+});
 
 const NewGameScreen: FunctionComponent<NewGameScreenProps> = () => {
   const [cityName, setCityName] = useState("");
