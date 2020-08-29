@@ -1,14 +1,12 @@
 const path = require("path");
 
-// require("../assets/styles/tailwind.css");
-
 module.exports = {
   addons: [
     "@storybook/addon-essentials",
     "@storybook/addon-knobs",
     "@storybook/addon-a11y",
   ],
-  stories: "../**/*.stories.tsx",
+  stories: ["../components/**/**/*.stories.tsx"],
   webpackFinal: async config => ({
     ...config,
     resolve: {
