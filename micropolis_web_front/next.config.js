@@ -4,7 +4,7 @@ const CopyPlugin = require("copy-webpack-plugin");
 const WasmPackPlugin = require("@wasm-tool/wasm-pack-plugin");
 
 module.exports = () => withCSS({
-  exportTrailingSlash: true,
+  trailingSlash: true,
   exportPathMap: () => ({
     "/": { page: "/" },
     "/about": { page: "/about" },
@@ -13,12 +13,14 @@ module.exports = () => withCSS({
     ...config,
     plugins: [
       ...config.plugins,
-      new CopyPlugin([
-        {
-          from: path.join(__dirname, "../img/"),
-          to: path.join(__dirname, "./assets/game/"),
-        },
-      ]),
+      new CopyPlugin({
+        patterns: [
+          {
+            from: path.join(__dirname, "../img/"),
+            to: path.join(__dirname, "./assets/game/"),
+          },
+        ],
+      }),
     ],
     resolve: {
       ...config.resolve,
