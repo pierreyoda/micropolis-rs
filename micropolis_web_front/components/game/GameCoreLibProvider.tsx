@@ -9,7 +9,8 @@ GameCoreLibContext.displayName = "MicropolisGameCoreLib";
 const GameCoreLibProvider = dynamic({
   loading: () => <span>Loading game lib...</span>,
   loader: async () => {
-    const gameCoreLib = connectMicropolisCoreLib(await importMicropolisCoreWasmLib());
+    const coreLib = await importMicropolisCoreWasmLib();
+    const gameCoreLib = connectMicropolisCoreLib(coreLib);
     const GameCoreLibContextProvider = () => (
       <GameCoreLibContext.Provider value={gameCoreLib} />
     );

@@ -1,7 +1,7 @@
 import { PromisedType } from "@/utils";
 import { WebMapGenerator } from "@/pkg/";
 
-export const importMicropolisCoreWasmLib = () => import("@/pkg");
+export const importMicropolisCoreWasmLib = async () => import("@/pkg");
 
 export type MicropolisCoreLib = PromisedType<
   ReturnType<typeof importMicropolisCoreWasmLib>

@@ -16,4 +16,4 @@ quick-xml = "0.18.1"
 [dependencies.rand]
 version = "0.7.3"
 default-features = false
-features = ["std", "stdweb"]
+features = ["std", "stdweb", "wasm-bindgen"]
