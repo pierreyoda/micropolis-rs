@@ -3,6 +3,7 @@ pub mod meta;
 pub mod power;
 pub mod simulation;
 
+use power::CityPower;
 use rand::rngs::OsRng;
 
 use crate::map::{Map, MapRectangle, TileMap, TileType};
@@ -61,14 +62,18 @@ pub struct City {
     fires_count: u32,
     /// Population counts.
     population: CityPopulation,
+    /// Electricity simulation.
+    power: CityPower,
 }
 
 impl City {
     pub fn new(name: String) -> Result<Self, String> {
+        let map = Map::tilemap_with_dimensions(&MapRectangle::new(120, 100), TileType::Dirt)?; // TODO: loading
+        let power = CityPower::from_map(&map);
         Ok(City {
             rng: OsRng,
             init_status: CityInitializationState::JustCreated,
-            map: Map::tilemap_with_dimensions(&MapRectangle::new(120, 100), TileType::Dirt)?, // TODO: loading
+            map,
             name,
             starting_year: 1900,
             city_time: 0,
@@ -81,6 +86,7 @@ impl City {
                 industrial: 0,
                 total: 0,
             },
+            power,
         })
     }
 }
