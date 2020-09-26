@@ -129,6 +129,10 @@ impl Tile {
         let type_raw = self.get_type_raw();
         WOODS_LOW <= type_raw && type_raw <= WOODS_HIGH
     }
+
+    pub fn is_conductive(&self) -> bool {
+        self.get_type_raw() & TILE_POWER_BIT == TILE_POWER_BIT
+    }
 }
 
 #[cfg(test)]

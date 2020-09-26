@@ -6,7 +6,7 @@ use rand::Rng;
 
 use super::tiles::TILE_BLBNBIT_MASK;
 use super::tiles_type::{WOODS_HIGH, WOODS_LOW};
-use super::{Map, MapPosition, MapPositionOffset, MapRectangle, Tile, TileType};
+use super::{Map, MapPosition, MapPositionOffset, MapRectangle, Tile, TileMap, TileType};
 use crate::utils::Percentage;
 
 /// Should the map generated as an island?
@@ -55,16 +55,18 @@ impl MapGenerator {
         &self,
         rng: &mut R,
         dimensions: &MapRectangle,
-    ) -> Result<Map, String> {
+    ) -> Result<TileMap, String> {
         // initial landscape
         let mut terrain = match &self.create_island {
-            GeneratorCreateIsland::Never => Map::with_dimensions(dimensions, TileType::Dirt)?,
+            GeneratorCreateIsland::Never => {
+                Map::tilemap_with_dimensions(dimensions, TileType::Dirt)?
+            }
             GeneratorCreateIsland::Always => self.make_naked_island(rng, dimensions),
             GeneratorCreateIsland::Sometimes(chance) => {
                 if rng.gen_bool(chance.value()) {
                     return self.make_island(rng, dimensions);
                 } else {
-                    Map::with_dimensions(dimensions, TileType::Dirt)?
+                    Map::tilemap_with_dimensions(dimensions, TileType::Dirt)?
                 }
             }
         };
@@ -93,7 +95,11 @@ impl MapGenerator {
         Ok(terrain)
     }
 
-    fn make_island<R: Rng>(&self, rng: &mut R, dimensions: &MapRectangle) -> Result<Map, String> {
+    fn make_island<R: Rng>(
+        &self,
+        rng: &mut R,
+        dimensions: &MapRectangle,
+    ) -> Result<TileMap, String> {
         let mut terrain = self.make_naked_island(rng, dimensions);
         Self::smooth_rivers(rng, &mut terrain)?;
         self.make_forests(rng, &mut terrain)?;
@@ -101,7 +107,7 @@ impl MapGenerator {
     }
 
     /// Generate a plain island surrounded by 5 tiles of river.
-    fn make_naked_island<R: Rng>(&self, rng: &mut R, dimensions: &MapRectangle) -> Map {
+    fn make_naked_island<R: Rng>(&self, rng: &mut R, dimensions: &MapRectangle) -> TileMap {
         // rectangular island
         let (x_max, y_max) = (dimensions.width as i32 - 5, dimensions.height as i32 - 5);
         let tilemap: Vec<Vec<Tile>> = (0..dimensions.width)
@@ -117,7 +123,7 @@ impl MapGenerator {
                     .collect()
             })
             .collect();
-        let mut terrain = Map { tilemap };
+        let mut terrain = TileMap { data: tilemap };
 
         for x in (0..x_max).step_by(2) {
             let y1 = Self::erandom_in_range(rng, 0, constants::ISLAND_RADIUS as i32);
@@ -154,7 +160,7 @@ impl MapGenerator {
         terrain
     }
 
-    fn make_lakes<R: Rng>(&self, rng: &mut R, map: &mut Map) {
+    fn make_lakes<R: Rng>(&self, rng: &mut R, map: &mut TileMap) {
         let mut remaining_lakes: i32 = if self.level_lakes < 0 {
             Self::random_in_range(rng, 0, 10)
         } else {
@@ -171,7 +177,7 @@ impl MapGenerator {
     }
 
     /// Generate a single lake around the given rough position.
-    fn make_single_lake<R: Rng>(&self, rng: &mut R, terrain: &mut Map, at: MapPosition) {
+    fn make_single_lake<R: Rng>(&self, rng: &mut R, terrain: &mut TileMap, at: MapPosition) {
         let mut num_plops = 2 + Self::random_in_range(rng, 0, 12);
         while num_plops > 0 {
             let offset_x = Self::random_in_range(rng, 0, 12) - 6;
@@ -189,7 +195,7 @@ impl MapGenerator {
         }
     }
 
-    fn make_rivers<R: Rng>(&self, rng: &mut R, terrain: &mut Map, start: &MapPosition) {
+    fn make_rivers<R: Rng>(&self, rng: &mut R, terrain: &mut TileMap, start: &MapPosition) {
         let mut global_direction = Self::random_straight_direction(rng);
         self.make_big_river(rng, terrain, start, &global_direction, &global_direction);
 
@@ -207,7 +213,7 @@ impl MapGenerator {
     fn make_big_river<R: Rng>(
         &self,
         rng: &mut R,
-        terrain: &mut Map,
+        terrain: &mut TileMap,
         start: &MapPosition,
         global_direction: &MapPositionOffset,
         local_direction: &MapPositionOffset,
@@ -244,7 +250,7 @@ impl MapGenerator {
     fn make_small_river<R: Rng>(
         &self,
         rng: &mut R,
-        terrain: &mut Map,
+        terrain: &mut TileMap,
         start: &MapPosition,
         global_direction: &MapPositionOffset,
         local_direction: &MapPositionOffset,
@@ -277,7 +283,7 @@ impl MapGenerator {
         last_local_direction
     }
 
-    fn smooth_rivers<R: Rng>(rng: &mut R, terrain: &mut Map) -> Result<(), String> {
+    fn smooth_rivers<R: Rng>(rng: &mut R, terrain: &mut TileMap) -> Result<(), String> {
         let map_size = terrain.bounds();
         let dirt_type_raw = TileType::Dirt
             .to_u16()
@@ -291,7 +297,7 @@ impl MapGenerator {
                     // avoid immutable / mutable borrow conflict
                     // TODO: find better way
                     let tile = terrain
-                        .tilemap
+                        .data
                         .get(x)
                         .ok_or(format!(
                             "MapGenerator.smooth_rivers map X overflow at {}",
@@ -317,7 +323,7 @@ impl MapGenerator {
                         continue;
                     }
                     let temp_tile_type_raw = terrain
-                        .tilemap
+                        .data
                         .get(temp_position.x as usize)
                         .ok_or(format!(
                             "MapGenerator.smooth_rivers map X overflow at temp X={}",
@@ -336,7 +342,7 @@ impl MapGenerator {
                         bit_index += 1;
                     }
                 }
-                let tile = terrain.tilemap.get_mut(x).unwrap().get_mut(y).unwrap();
+                let tile = terrain.data.get_mut(x).unwrap().get_mut(y).unwrap();
                 let mut tile_raw = constants::SMOOTH_RIVER_EDGES_TABLE[bit_index & 0x000F];
                 if tile_raw != river_type_raw && rng.gen_ratio(1, 2) {
                     tile_raw += 1;
@@ -347,7 +353,7 @@ impl MapGenerator {
         Ok(())
     }
 
-    fn make_forests<R: Rng>(&self, rng: &mut R, terrain: &mut Map) -> Result<(), String> {
+    fn make_forests<R: Rng>(&self, rng: &mut R, terrain: &mut TileMap) -> Result<(), String> {
         let amount: i32 = match self.level_trees {
             level if level < 0 => 50 + Self::random_in_range(rng, 0, 100),
             level => 3 + level,
@@ -369,7 +375,7 @@ impl MapGenerator {
     /// The amount of trees generated depends on `level_trees`.
     /// Note: trees are not smoothed.
     /// TODO: function generates trees even if `level_trees` is 0 (original bug).
-    fn splash_trees<R: Rng>(&self, rng: &mut R, terrain: &mut Map, at: &MapPosition) {
+    fn splash_trees<R: Rng>(&self, rng: &mut R, terrain: &mut TileMap, at: &MapPosition) {
         let mut num_trees: i32 = match self.level_trees {
             level if level < 0 => 50 + Self::random_in_range(rng, 0, 150),
             level => 50 + Self::random_in_range(rng, 0, 100 + level * 2),
@@ -383,7 +389,7 @@ impl MapGenerator {
                 return;
             }
             let tile = terrain
-                .tilemap
+                .data
                 .get_mut(tree_position.x as usize)
                 .unwrap()
                 .get_mut(tree_position.y as usize)
@@ -395,7 +401,7 @@ impl MapGenerator {
         }
     }
 
-    fn smooth_trees(terrain: &mut Map) -> Result<(), String> {
+    fn smooth_trees(terrain: &mut TileMap) -> Result<(), String> {
         let map_size = terrain.bounds();
         let dirt_type_raw = TileType::Dirt
             .to_u16()
@@ -409,7 +415,7 @@ impl MapGenerator {
                     // avoid immutable / mutable borrow conflict
                     // TODO: find better way
                     let tile = terrain
-                        .tilemap
+                        .data
                         .get_mut(x)
                         .ok_or(format!("MapGenerator.smooth_trees map overflow at X={}", x,))?
                         .get_mut(y)
@@ -429,7 +435,7 @@ impl MapGenerator {
                         continue;
                     }
                     let temp_tile = terrain
-                        .tilemap
+                        .data
                         .get(temp_position.x as usize)
                         .ok_or(format!(
                             "MapGenerator.smooth_trees map X overflow at temp X={}",
@@ -444,7 +450,7 @@ impl MapGenerator {
                         bit_index += 1;
                     }
                 }
-                let tile = terrain.tilemap.get_mut(x).unwrap().get_mut(y).unwrap();
+                let tile = terrain.data.get_mut(x).unwrap().get_mut(y).unwrap();
                 let mut tile_raw = constants::SMOOTH_FOREST_EDGES_TABLE[bit_index & 0x000F];
                 if tile_raw == dirt_type_raw {
                     tile.set_type_raw(tile_raw);
@@ -460,7 +466,7 @@ impl MapGenerator {
     }
 
     /// Put down a big diamond-like shaped river, where `base` is the top-left position of the blob.
-    fn plop_big_river(terrain: &mut Map, base: &MapPosition) {
+    fn plop_big_river(terrain: &mut TileMap, base: &MapPosition) {
         for x in 0..9 {
             for y in 0..9 {
                 let position = MapPosition {
@@ -477,7 +483,7 @@ impl MapGenerator {
     }
 
     /// Put down a small diamond-like shaped river, where `base` is the top-left position of the blob.
-    fn plop_small_river(terrain: &mut Map, base: &MapPosition) {
+    fn plop_small_river(terrain: &mut TileMap, base: &MapPosition) {
         for x in 0..6 {
             for y in 0..6 {
                 let position = MapPosition {
@@ -498,7 +504,7 @@ impl MapGenerator {
     }
 
     fn set_tile(
-        terrain: &mut Map,
+        terrain: &mut TileMap,
         new_tile_type: TileType,
         at: &MapPosition,
     ) -> Result<(), String> {
@@ -506,7 +512,7 @@ impl MapGenerator {
             return Ok(());
         }
         let row = terrain
-            .tilemap
+            .data
             .get_mut(at.x as usize)
             .ok_or("MapGenerator.set_tile map X overflow")?;
         let tile = row
@@ -578,7 +584,7 @@ mod tests {
         let terrain = generator
             .random_map_terrain(&mut rng, &MapRectangle::new(120, 100))
             .unwrap();
-        let tiles = terrain.tilemap;
+        let tiles = terrain.data;
         println!("TEMP: generating map for console print...");
         let mut repr = String::new();
         for row in tiles.iter() {

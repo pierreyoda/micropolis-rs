@@ -1,10 +1,11 @@
 pub mod budget;
 pub mod meta;
+pub mod power;
 pub mod simulation;
 
 use rand::rngs::OsRng;
 
-use crate::map::{Map, MapRectangle, TileType};
+use crate::map::{Map, MapRectangle, TileMap, TileType};
 
 pub enum CityInitializationState {
     Initialized = 0,
@@ -36,8 +37,8 @@ pub struct City {
     rng: OsRng,
     /// Status of the city's initialization (`initSimLoad` in the C++ code).
     init_status: CityInitializationState,
-    /// Map describing the city and its surroundings.
-    map: Map,
+    /// TileMap describing the city and its surroundings.
+    map: TileMap,
     /// Name of the city.
     name: String,
     /// Starting year of the city.
@@ -67,7 +68,7 @@ impl City {
         Ok(City {
             rng: OsRng,
             init_status: CityInitializationState::JustCreated,
-            map: Map::with_dimensions(&MapRectangle::new(120, 100), TileType::Dirt)?, // TODO: loading
+            map: Map::tilemap_with_dimensions(&MapRectangle::new(120, 100), TileType::Dirt)?, // TODO: loading
             name,
             starting_year: 1900,
             city_time: 0,

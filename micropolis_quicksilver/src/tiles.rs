@@ -9,7 +9,7 @@ use quicksilver::{
     Error, Result,
 };
 
-use micropolis_rs_core::map::Map;
+use micropolis_rs_core::map::TileMap;
 
 const TILE_SIZE: u16 = 16;
 const TILES_ATLAS_ROWS: u16 = 16;
@@ -42,7 +42,7 @@ impl TilesRenderer {
         })
     }
 
-    pub fn render(&self, window: &mut Window, map: &Map) -> Result<()> {
+    pub fn render(&self, window: &mut Window, map: &TileMap) -> Result<()> {
         let tiles = map.tiles();
         for (x, row) in tiles.iter().enumerate() {
             for (y, tile) in row.iter().enumerate() {

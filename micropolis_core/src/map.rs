@@ -7,11 +7,18 @@ pub mod tiles_type;
 pub use tiles::Tile;
 pub use tiles_type::TileType;
 
-pub type TileMap = Vec<Vec<Tile>>;
+pub const WORLD_WIDTH: usize = 120;
+pub const WORLD_HEIGHT: usize = 100;
 
-/// Stores the state of the entire map containing a Metropolis city.
+pub type MapData<T> = Vec<Vec<T>>;
+
+/// Generic class for maps in the Micropolis game.
+///
+/// A map is assumed to cover a 2D grid of #WORLD_W times #WORLD_H positions.
+/// A block of positions may be clustered, and represented by a single data
+/// value.
 #[derive(Clone, Debug, Serialize)]
-pub struct Map {
+pub struct Map<T> {
     /// The internal data structure storing the tiles of the map (assumed as rectangular).
     ///
     /// First dimension is the X (horizontal) axis, second dimension is the Y (vertical) axis:
@@ -22,24 +29,15 @@ pub struct Map {
     ///        |           |
     ///        v Y        -+
     ///       (0, H)       (W, H)
-    tilemap: TileMap,
+    pub(crate) data: MapData<T>,
 }
 
-impl Map {
-    pub fn with_dimensions(
-        dimensions: &MapRectangle,
-        uniform_type: TileType,
-    ) -> Result<Self, String> {
-        let tilemap =
-            vec![vec![Tile::from_type(uniform_type)?; dimensions.height]; dimensions.width];
-        Ok(Map { tilemap })
-    }
-
+impl<T> Map<T> {
     pub fn in_bounds(&self, position: &MapPosition) -> bool {
-        if position.x < 0 || position.y < 0 || position.x >= self.tilemap.len() as i32 {
+        if position.x < 0 || position.y < 0 || position.x >= self.data.len() as i32 {
             false
         } else {
-            match self.tilemap.first() {
+            match self.data.first() {
                 Some(first) => position.y < first.len() as i32,
                 None => false,
             }
@@ -48,23 +46,58 @@ impl Map {
 
     pub fn bounds(&self) -> MapRectangle {
         MapRectangle {
-            width: self.tilemap.len(),
-            height: match self.tilemap.first() {
+            width: self.data.len(),
+            height: match self.data.first() {
                 Some(first) => first.len(),
                 None => 0,
             },
         }
     }
 
-    pub fn tiles(&self) -> &TileMap {
-        &self.tilemap
+    pub fn tiles(&self) -> &MapData<T> {
+        &self.data
+    }
+
+    pub fn get_tile_at(&self, position: &MapPosition) -> Option<&T> {
+        if self.in_bounds(position) {
+            Some(
+                self.data
+                    .get(position.x as usize)?
+                    .get(position.y as usize)?,
+            )
+        } else {
+            None
+        }
+    }
+
+    pub fn set_tile_at(&mut self, position: &MapPosition, tile: T) -> bool {
+        if let Some(column) = self.data.get_mut(position.x as usize) {
+            if let Some(cell) = column.get_mut(position.y as usize) {
+                std::mem::replace(cell, tile);
+                return true;
+            }
+        }
+        false
+    }
+}
+
+pub type TileMap = Map<Tile>;
+
+impl Map<Tile> {
+    pub fn tilemap_with_dimensions(
+        dimensions: &MapRectangle,
+        uniform_type: TileType,
+    ) -> Result<Self, String> {
+        let tilemap =
+            vec![vec![Tile::from_type(uniform_type)?; dimensions.height]; dimensions.width];
+        Ok(Map { data: tilemap })
     }
 }
 
 /// Represents a position on a 2D map.
 ///
 /// Uses signed integers to allow for offsetting.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub struct MapPosition {
     /// Horizontal position on the map.
     x: i32,
@@ -119,6 +152,17 @@ pub enum MapPositionOffset {
     West,
 }
 
+pub const MAP_POSITION_DIRECTIONS: [MapPositionOffset; 8] = [
+    MapPositionOffset::North,
+    MapPositionOffset::NorthEast,
+    MapPositionOffset::East,
+    MapPositionOffset::SouthEast,
+    MapPositionOffset::South,
+    MapPositionOffset::SouthWest,
+    MapPositionOffset::West,
+    MapPositionOffset::NorthWest,
+];
+
 impl MapPositionOffset {
     /// Apply the relative position offset of this instance to an absolute position.
     pub fn apply(&self, position: &MapPosition) -> MapPosition {
@@ -131,16 +175,20 @@ impl MapPositionOffset {
 
     /// Apply the relative position offset of this instance to an absolute position,
     /// constrained to the given bounds.
-    pub fn apply_with_bounds(&self, position: &MapPosition, bounds: &MapRectangle) -> MapPosition {
+    pub fn apply_with_bounds(
+        &self,
+        position: &MapPosition,
+        bounds: &MapRectangle,
+    ) -> Option<MapPosition> {
         let applied = self.apply(position);
         if 0 <= applied.x
             && applied.x < bounds.width as i32
             && 0 <= applied.y
             && applied.y <= bounds.height as i32
         {
-            applied
+            Some(applied)
         } else {
-            position.clone()
+            None
         }
     }
 

@@ -12,7 +12,7 @@ use quicksilver::{
 use rand::rngs::OsRng;
 
 use micropolis_rs_core::map::generator::{GeneratorCreateIsland, MapGenerator};
-use micropolis_rs_core::map::{Map, MapRectangle};
+use micropolis_rs_core::map::{MapRectangle, TileMap};
 use micropolis_rs_core::utils::Percentage;
 use tiles::TilesRenderer;
 
@@ -20,7 +20,7 @@ struct MicropolisClient {
     rng: OsRng,
     terrain_generator: MapGenerator,
     just_generated: bool,
-    test_map: Map,
+    test_map: TileMap,
     assets: Asset<(Font, TilesRenderer)>,
 }
 

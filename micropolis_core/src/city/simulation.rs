@@ -1,6 +1,6 @@
 use super::City;
 use crate::game::GameSpeed;
-use crate::map::{Map, MapPosition, TileType};
+use crate::map::{MapPosition, TileMap, TileType};
 
 pub struct Simulation {
     speed: GameSpeed,
