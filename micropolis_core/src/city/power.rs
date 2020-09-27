@@ -1,6 +1,6 @@
 use crate::map::{
-    Map, MapPosition, MapPositionOffset, MapRectangle, TileMap, MAP_POSITION_DIRECTIONS,
-    WORLD_HEIGHT, WORLD_WIDTH,
+    Map, MapClusteringStrategy, MapPosition, MapPositionOffset, MapRectangle, TileMap,
+    MAP_POSITION_DIRECTIONS, WORLD_HEIGHT, WORLD_WIDTH,
 };
 
 /// Size of the power stack.
@@ -16,9 +16,10 @@ type PowerMap = Map<u8>;
 
 impl PowerMap {
     pub fn powermap_with_dimensions(dimensions: &MapRectangle, default_value: u8) -> Self {
-        PowerMap {
-            data: vec![vec![default_value; dimensions.get_height()]; dimensions.get_width()],
-        }
+        PowerMap::with_data(
+            vec![vec![default_value; dimensions.get_height()]; dimensions.get_width()],
+            MapClusteringStrategy::BlockSize1,
+        )
     }
 }
 
@@ -43,18 +44,15 @@ impl CityPower {
             coal_generators_count: 0,
             nuclear_generators_count: 0,
             power_stack_pointer: 0,
-            power_stack: [MapPosition::new(0, 0).clone(); POWER_STACK_SIZE],
+            power_stack: [MapPosition::new(0, 0); POWER_STACK_SIZE],
         }
     }
 
     /// Push the given position onto the power stack if there is room.
-    pub fn push_power_stack(&mut self, position: &MapPosition) {
+    pub fn push_power_stack(&mut self, position: MapPosition) {
         if self.power_stack_pointer < (POWER_STACK_SIZE - 2) {
             self.power_stack_pointer += 1;
-            std::mem::replace(
-                &mut self.power_stack[self.power_stack_pointer],
-                position.clone(),
-            );
+            self.power_stack[self.power_stack_pointer] = position;
         }
     }
 
@@ -121,7 +119,7 @@ impl CityPower {
                     }
                 }
                 if connections_count > 1 {
-                    self.push_power_stack(&position);
+                    self.push_power_stack(position);
                 } else if connections_count == 0 {
                     break 'inner;
                 }

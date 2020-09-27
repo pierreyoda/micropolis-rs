@@ -9,7 +9,7 @@ pub struct CityMetadata {
     is_read_only: bool,
 }
 
-const XML_REQUIRED_PROPERTIES_NAMES: [&'static str; 4] =
+const XML_REQUIRED_PROPERTIES_NAMES: [&str; 4] =
     ["title", "description", "saveFileName", "readOnly"];
 
 impl CityMetadata {

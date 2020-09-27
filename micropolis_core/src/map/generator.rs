@@ -1,13 +1,14 @@
 pub mod constants;
 
-use std::cmp;
-
 use rand::Rng;
 
 use super::tiles::TILE_BLBNBIT_MASK;
 use super::tiles_type::{WOODS_HIGH, WOODS_LOW};
-use super::{Map, MapPosition, MapPositionOffset, MapRectangle, Tile, TileMap, TileType};
-use crate::utils::Percentage;
+use super::{
+    Map, MapClusteringStrategy, MapPosition, MapPositionOffset, MapRectangle, Tile, TileMap,
+    TileType,
+};
+use crate::utils::{erandom_in_range, random_in_range, Percentage};
 
 /// Should the map generated as an island?
 pub enum GeneratorCreateIsland {
@@ -74,8 +75,8 @@ impl MapGenerator {
         // generate some rivers
         if self.level_river_curves != 0 {
             let start_position = MapPosition {
-                x: 40 + Self::random_in_range(rng, 0, dimensions.width as i32 - 80),
-                y: 33 + Self::random_in_range(rng, 0, dimensions.height as i32 - 67),
+                x: 40 + random_in_range(rng, 0, dimensions.width as i32 - 80),
+                y: 33 + random_in_range(rng, 0, dimensions.height as i32 - 67),
             };
             self.make_rivers(rng, &mut terrain, &start_position);
         }
@@ -123,12 +124,15 @@ impl MapGenerator {
                     .collect()
             })
             .collect();
-        let mut terrain = TileMap { data: tilemap };
+        let mut terrain = TileMap {
+            data: tilemap,
+            clustering_strategy: MapClusteringStrategy::BlockSize8,
+        };
 
         for x in (0..x_max).step_by(2) {
-            let y1 = Self::erandom_in_range(rng, 0, constants::ISLAND_RADIUS as i32);
+            let y1 = erandom_in_range(rng, 0, constants::ISLAND_RADIUS as i32);
             Self::plop_big_river(&mut terrain, &MapPosition { x, y: y1 });
-            let y2 = Self::erandom_in_range(rng, 0, constants::ISLAND_RADIUS as i32);
+            let y2 = erandom_in_range(rng, 0, constants::ISLAND_RADIUS as i32);
             Self::plop_big_river(&mut terrain, &MapPosition { x, y: y2 });
 
             Self::plop_small_river(&mut terrain, &MapPosition { x, y: 0 });
@@ -142,9 +146,9 @@ impl MapGenerator {
         }
 
         for y in (0..y_max).step_by(2) {
-            let x1 = Self::erandom_in_range(rng, 0, constants::ISLAND_RADIUS as i32);
+            let x1 = erandom_in_range(rng, 0, constants::ISLAND_RADIUS as i32);
             Self::plop_big_river(&mut terrain, &MapPosition { x: x1, y });
-            let x2 = Self::erandom_in_range(rng, 0, constants::ISLAND_RADIUS as i32);
+            let x2 = erandom_in_range(rng, 0, constants::ISLAND_RADIUS as i32);
             Self::plop_big_river(&mut terrain, &MapPosition { x: x2, y });
 
             Self::plop_small_river(&mut terrain, &MapPosition { x: 0, y });
@@ -162,15 +166,15 @@ impl MapGenerator {
 
     fn make_lakes<R: Rng>(&self, rng: &mut R, map: &mut TileMap) {
         let mut remaining_lakes: i32 = if self.level_lakes < 0 {
-            Self::random_in_range(rng, 0, 10)
+            random_in_range(rng, 0, 10)
         } else {
             self.level_lakes / 2
         };
 
         let map_size = map.bounds();
         while remaining_lakes > 0 {
-            let x = 10 + Self::random_in_range(rng, 0, map_size.width as i32 - 21);
-            let y = 10 + Self::random_in_range(rng, 0, map_size.width as i32 - 20);
+            let x = 10 + random_in_range(rng, 0, map_size.width as i32 - 21);
+            let y = 10 + random_in_range(rng, 0, map_size.width as i32 - 20);
             self.make_single_lake(rng, map, MapPosition { x, y });
             remaining_lakes -= 1;
         }
@@ -178,10 +182,10 @@ impl MapGenerator {
 
     /// Generate a single lake around the given rough position.
     fn make_single_lake<R: Rng>(&self, rng: &mut R, terrain: &mut TileMap, at: MapPosition) {
-        let mut num_plops = 2 + Self::random_in_range(rng, 0, 12);
+        let mut num_plops = 2 + random_in_range(rng, 0, 12);
         while num_plops > 0 {
-            let offset_x = Self::random_in_range(rng, 0, 12) - 6;
-            let offset_y = Self::random_in_range(rng, 0, 12) - 6;
+            let offset_x = random_in_range(rng, 0, 12) - 6;
+            let offset_y = random_in_range(rng, 0, 12) - 6;
             let plop_position = MapPosition {
                 x: at.x + offset_x,
                 y: at.y + offset_y,
@@ -230,13 +234,13 @@ impl MapGenerator {
             y: position.y + 4,
         }) {
             Self::plop_big_river(terrain, &position);
-            if Self::random_in_range(rng, 0, rate1) < 10 {
+            if random_in_range(rng, 0, rate1) < 10 {
                 last_local_direction = global_direction.clone();
             } else {
-                if Self::random_in_range(rng, 0, rate2) > 90 {
+                if random_in_range(rng, 0, rate2) > 90 {
                     last_local_direction = last_local_direction.rotated_45();
                 }
-                if Self::random_in_range(rng, 0, rate2) > 90 {
+                if random_in_range(rng, 0, rate2) > 90 {
                     // FIXME: C++ code has a 7 'count' parameter?
                     last_local_direction = last_local_direction.rotated_45();
                 }
@@ -267,13 +271,13 @@ impl MapGenerator {
             y: position.y + 3,
         }) {
             Self::plop_small_river(terrain, &position);
-            if Self::random_in_range(rng, 0, rate1) < 10 {
+            if random_in_range(rng, 0, rate1) < 10 {
                 last_local_direction = global_direction.clone();
             } else {
-                if Self::random_in_range(rng, 0, rate2) > 90 {
+                if random_in_range(rng, 0, rate2) > 90 {
                     last_local_direction = last_local_direction.rotated_45();
                 }
-                if Self::random_in_range(rng, 0, rate2) > 90 {
+                if random_in_range(rng, 0, rate2) > 90 {
                     // FIXME: C++ code has a 7 'count' parameter?
                     last_local_direction = last_local_direction.rotated_45();
                 }
@@ -355,13 +359,13 @@ impl MapGenerator {
 
     fn make_forests<R: Rng>(&self, rng: &mut R, terrain: &mut TileMap) -> Result<(), String> {
         let amount: i32 = match self.level_trees {
-            level if level < 0 => 50 + Self::random_in_range(rng, 0, 100),
+            level if level < 0 => 50 + random_in_range(rng, 0, 100),
             level => 3 + level,
         };
         let map_size = terrain.bounds();
         for _ in 0..amount {
-            let x = Self::random_in_range(rng, 0, map_size.width as i32 - 1);
-            let y = Self::random_in_range(rng, 0, map_size.height as i32 - 1);
+            let x = random_in_range(rng, 0, map_size.width as i32 - 1);
+            let y = random_in_range(rng, 0, map_size.height as i32 - 1);
             self.splash_trees(rng, terrain, &MapPosition { x, y });
         }
 
@@ -377,8 +381,8 @@ impl MapGenerator {
     /// TODO: function generates trees even if `level_trees` is 0 (original bug).
     fn splash_trees<R: Rng>(&self, rng: &mut R, terrain: &mut TileMap, at: &MapPosition) {
         let mut num_trees: i32 = match self.level_trees {
-            level if level < 0 => 50 + Self::random_in_range(rng, 0, 150),
-            level => 50 + Self::random_in_range(rng, 0, 100 + level * 2),
+            level if level < 0 => 50 + random_in_range(rng, 0, 150),
+            level => 50 + random_in_range(rng, 0, 100 + level * 2),
         };
         let mut tree_position = at.clone();
         let woods_type_raw = TileType::Woods.to_u16().unwrap();
@@ -551,19 +555,6 @@ impl MapGenerator {
             3 => West,
             _ => unreachable!(),
         }
-    }
-
-    /// Generate a random integer in the given inclusive range.
-    fn random_in_range<R: Rng>(rng: &mut R, lower: i32, upper: i32) -> i32 {
-        rng.gen_range(lower, upper + 1)
-    }
-
-    /// Generate a random integer in the given inclusive range with a bias
-    /// towards smaller values.
-    fn erandom_in_range<R: Rng>(rng: &mut R, lower: i32, upper: i32) -> i32 {
-        let z = Self::random_in_range(rng, lower, upper);
-        let x = Self::random_in_range(rng, lower, upper);
-        return cmp::min(z, x);
     }
 }
 
