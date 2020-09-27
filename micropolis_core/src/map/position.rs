@@ -1,9 +1,12 @@
-use std::ops::{Add, Sub};
+use std::{
+    fmt,
+    ops::{Add, Sub},
+};
 
 /// Represents a position on a 2D map.
 ///
 /// Uses signed integers to allow for offsetting.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
 pub struct MapPosition {
     /// Horizontal position on the map.
     pub(super) x: i32,
@@ -39,6 +42,12 @@ impl Sub for MapPosition {
     }
 }
 
+impl fmt::Display for MapPosition {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "MapPosition(x={}, y={})", self.x, self.y)
+    }
+}
+
 /// Describes the width and height of a rectangle section of a Metropolis city.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MapRectangle {
@@ -63,6 +72,12 @@ impl MapRectangle {
             && position.x < self.width as i32
             && 0 <= position.y
             && position.y < self.height as i32
+    }
+}
+
+impl fmt::Display for MapRectangle {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "MapPosition(w={}, h={})", self.width, self.height)
     }
 }
 

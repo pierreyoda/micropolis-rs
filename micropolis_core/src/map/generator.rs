@@ -2,12 +2,13 @@ pub mod constants;
 
 use rand::Rng;
 
-use super::tiles::TILE_BLBNBIT_MASK;
+use super::tiles::{TILE_BLBNBIT_MASK, TILE_BURN_BULL_BIT};
 use super::tiles_type::{WOODS_HIGH, WOODS_LOW};
 use super::{
     Map, MapClusteringStrategy, MapPosition, MapPositionOffset, MapRectangle, Tile, TileMap,
     TileType,
 };
+use crate::map::tools::ToolEffects;
 use crate::utils::{erandom_in_range, random_in_range, Percentage};
 
 /// Should the map generated as an island?
@@ -467,6 +468,69 @@ impl MapGenerator {
             }
         }
         Ok(())
+    }
+
+    pub fn smooth_trees_at(
+        terrain: &TileMap,
+        position: &MapPosition,
+        effects: ToolEffects,
+        preserve: bool,
+    ) -> Result<ToolEffects, String> {
+        if !effects
+            .get_map_value_at(terrain, position)
+            .ok_or(format!(
+                "MapGenerator.smooth_trees_at cannot read effects tile value at {}",
+                position
+            ))?
+            .is_tree()
+        {
+            return Ok(effects);
+        }
+
+        let mut bit_index: u16 = 0;
+        for z in 0..4 {
+            bit_index <<= 0x01;
+            if terrain.in_bounds(
+                &(*position
+                    + MapPosition::new(
+                        constants::SMOOTH_TILES_DX[z],
+                        constants::SMOOTH_TILES_DY[z],
+                    )),
+            ) {
+                bit_index += 1;
+            }
+        }
+
+        let table_index = (bit_index & 0x0F) as usize;
+        let temp = *constants::SMOOTH_FOREST_EDGES_TABLE
+            .get(table_index)
+            .ok_or(format!(
+                "MapGenerator.smooth_trees_at SMOOTH_FOREST_EDGES_TABLE overflow: {}",
+                table_index
+            ))?;
+        match temp {
+            0 => Ok(effects.add_modification(
+                position,
+                Tile::from_raw(
+                    TILE_BURN_BULL_BIT
+                        | if TileType::from_u16(temp).ok_or(format!(
+                            "MapGenerator.smooth_trees_at cannot create tile from {}",
+                            temp
+                        ))? != TileType::Woods
+                            && (position.x + position.y) & 0x01 != 0x00
+                        {
+                            temp - 8
+                        } else {
+                            temp
+                        },
+                )?,
+            )),
+            _ => Ok(if preserve {
+                effects
+            } else {
+                effects.add_modification(position, Tile::from_raw(temp)?)
+            }),
+        }
     }
 
     /// Put down a big diamond-like shaped river, where `base` is the top-left position of the blob.

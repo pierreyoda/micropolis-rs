@@ -60,6 +60,7 @@ pub const TILE_CONDUCT_BIT: u16 = 0b_0100_0000_0000_0000;
 pub const TILE_BURN_BIT: u16 = 0b_0010_0000_0000_0000;
 /// The tile is bulldozable if bit 12 is set.
 pub const TILE_BULL_BIT: u16 = 0b_0001_0000_0000_0000;
+pub const TILE_BURN_BULL_BIT: u16 = TILE_BURN_BIT | TILE_BULL_BIT;
 /// The tile is animated if bit 11 is set.
 pub const TILE_ANIM_BIT: u16 = 0b_0000_1000_0000_0000;
 /// The tile is the center of its zone if bit 10 is set.
@@ -70,6 +71,8 @@ pub const TILE_BLBNBIT_MASK: u16 = TILE_BULL_BIT | TILE_BURN_BIT;
 pub const TILE_TYPE_MASK: u16 = 0b_0000_0011_1111_1111;
 /// Bits containing the status of the tile.
 pub const TILE_STATUS_MASK: u16 = TILE_TYPE_MASK ^ 0xFFFF;
+/// Mask for the `MapTileCharacters` part of the tile.
+pub const TILE_LOW_MASK: u16 = 0x03ff;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub struct Tile {
@@ -80,6 +83,15 @@ pub struct Tile {
 }
 
 impl Tile {
+    pub fn from_raw(raw: u16) -> Result<Self, String> {
+        let tile_type = TileType::from_u16(raw & TILE_TYPE_MASK)
+            .ok_or(format!("Tile::from_raw cannot cast tile type from {}", raw))?;
+        Ok(Self {
+            raw,
+            tile_type: Some(tile_type),
+        })
+    }
+
     pub fn from_type(tile_type: TileType) -> Result<Self, String> {
         match tile_type {
             TileType::Invalid => Err(format!("Tile::from_type invalid type '{:?}'", tile_type)),
@@ -125,9 +137,17 @@ impl Tile {
         self.tile_type = TileType::from_u16(type_raw_filtered);
     }
 
+    pub fn is_dirt(&self) -> bool {
+        self.tile_type == Some(TileType::Dirt)
+    }
+
     pub fn is_tree(&self) -> bool {
         let type_raw = self.get_type_raw();
         WOODS_LOW <= type_raw && type_raw <= WOODS_HIGH
+    }
+
+    pub fn is_of_type(&self, tile_type: &TileType) -> bool {
+        self.tile_type == Some(*tile_type)
     }
 
     pub fn is_conductive(&self) -> bool {
