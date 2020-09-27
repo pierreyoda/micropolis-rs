@@ -1,9 +1,11 @@
 use serde::Serialize;
 
+pub mod connect;
 pub mod generator;
 pub mod position;
 pub mod tiles;
 pub mod tiles_type;
+pub mod tools;
 
 pub use position::*;
 pub use tiles::Tile;
