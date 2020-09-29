@@ -116,9 +116,13 @@ impl TileMapConnector {
                 map, position, effects,
             )?)),
             ConnectTileCommand::Bulldoze => {
-                match Self::bulldoze_tile(map, position, effects, auto_bulldoze)? {
-                    ToolResult::Succeeded(e) => effects = e,
-                    other => return Ok(other),
+                if let Some(result) = effects.chain_or_return(Self::bulldoze_tile(
+                    map,
+                    position,
+                    effects,
+                    auto_bulldoze,
+                )?) {
+                    return Ok(result);
                 }
                 Ok(ToolResult::Succeeded(Self::fix_zone(
                     map, position, effects,
