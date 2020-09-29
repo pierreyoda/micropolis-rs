@@ -9,12 +9,12 @@ use crate::{
 use super::{
     effects::build_building, effects::put_down_forest, effects::put_down_land,
     effects::put_down_park, effects::put_down_water, effects::put_rubble, utils::check_big_zone,
-    utils::compute_size, utils::is_tile_auto_bulldozable, BuildingConstructionInfo,
-    ConnectTileCommand, EditingTool, ToolEffects, ToolResult,
+    utils::compute_size, utils::is_tile_auto_bulldozable, BuildingInfo, ConnectTileCommand,
+    EditingTool, ToolEffects, ToolResult,
 };
 
 /// Apply bulldozer tool (manual, with explosion animation for buildings).
-pub fn tool_bulldozer<R: Rng>(
+pub(super) fn tool_bulldozer<R: Rng>(
     rng: &mut R,
     map: &TileMap,
     position: &MapPosition,
@@ -143,7 +143,7 @@ fn tool_build_wrapper<F: Fn(ToolEffects) -> Result<ToolResult, String>>(
 }
 
 /// Build a road at the given position.
-pub fn tool_road(
+pub(super) fn tool_road(
     map: &TileMap,
     position: &MapPosition,
     effects: ToolEffects,
@@ -167,7 +167,7 @@ pub fn tool_road(
 }
 
 /// Build a railroad at the given position.
-pub fn tool_rail(
+pub(super) fn tool_rail(
     map: &TileMap,
     position: &MapPosition,
     effects: ToolEffects,
@@ -191,7 +191,7 @@ pub fn tool_rail(
 }
 
 /// Build a wire at the given position.
-pub fn tool_wire(
+pub(super) fn tool_wire(
     map: &TileMap,
     position: &MapPosition,
     effects: ToolEffects,
@@ -215,7 +215,7 @@ pub fn tool_wire(
 }
 
 /// Build at park.
-pub fn tool_park<R: Rng>(
+pub(super) fn tool_park<R: Rng>(
     rng: &mut R,
     map: &TileMap,
     center: &MapPosition,
@@ -232,7 +232,7 @@ pub fn tool_park<R: Rng>(
 }
 
 /// Build a communication network.
-pub fn tool_network(
+pub(super) fn tool_network(
     map: &TileMap,
     position: &MapPosition,
     effects: ToolEffects,
@@ -283,7 +283,7 @@ fn put_down_network(
 }
 
 /// Place water at the give position.
-pub fn tool_water(
+pub(super) fn tool_water(
     map: &TileMap,
     position: &MapPosition,
     effects: ToolEffects,
@@ -328,7 +328,7 @@ pub(super) fn tool_land<R: Rng>(
 }
 
 /// Place a forest at the given position.
-pub fn tool_forest<R: Rng>(
+pub(super) fn tool_forest<R: Rng>(
     rng: &mut R,
     map: &TileMap,
     position: &MapPosition,
@@ -380,11 +380,11 @@ pub fn tool_forest<R: Rng>(
 }
 
 /// Build at building.
-pub fn tool_build_building(
+pub(super) fn tool_build_building(
     map: &TileMap,
     center: &MapPosition,
     effects: ToolEffects,
-    building_info: &BuildingConstructionInfo,
+    building_info: &BuildingInfo,
     auto_bulldoze: bool,
 ) -> Result<ToolResult, String> {
     tool_build_wrapper(

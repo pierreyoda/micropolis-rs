@@ -107,6 +107,12 @@ impl MapRectangle {
     }
 }
 
+impl Into<MapRectangle> for (usize, usize) {
+    fn into(self) -> MapRectangle {
+        MapRectangle::new(self.0, self.1)
+    }
+}
+
 impl fmt::Display for MapRectangle {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "MapPosition(w={}, h={})", self.width, self.height)
