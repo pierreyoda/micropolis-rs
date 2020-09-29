@@ -1,8 +1,12 @@
 use std::collections::HashMap;
 
 use rand::Rng;
+use toolbox::{
+    tool_build_building, tool_bulldozer, tool_forest, tool_land, tool_network, tool_park,
+    tool_rail, tool_road, tool_water, tool_wire,
+};
 
-use super::{tiles::TILE_LOW_MASK, MapPosition, MapRectangle, Tile, TileMap};
+use super::{buildings::BuildingType, tiles::TILE_LOW_MASK, MapPosition, Tile, TileMap};
 
 mod effects;
 mod toolbox;
@@ -83,19 +87,6 @@ pub enum ToolResult {
     Failed,
     /// Build succeeded.
     Succeeded(ToolEffects),
-}
-
-pub struct BuildingConstructionInfo {
-    /// Tiles footprint.
-    size: MapRectangle,
-    /// Tile value at top-left in the map.
-    base_tile: Tile,
-    /// Tool needed for making the building.
-    tool: EditingTool,
-    /// Name of the tool needed for making the building.
-    tool_name: String,
-    /// Building has animated tiles?
-    is_animated: bool,
 }
 
 /// Structure for storing effects of applying a tool to the world.
@@ -228,18 +219,126 @@ impl ToolEffects {
 
 pub fn apply_tool<R: Rng>(
     rng: &mut R,
-    map: &TileMap,
+    map: &mut TileMap,
     position: &MapPosition,
     tool: &EditingTool,
     auto_bulldoze: bool,
     animations_enabled: bool,
-) -> Result<ToolEffects, String> {
+    total_funds: u32,
+) -> Result<ToolResult, String> {
     use EditingTool::*;
 
     // TODO: handle free tool / free terrain editing scenarios
     let effects = ToolEffects::new(false);
-    // let result = match *tool {
-    // };
+    let result = match *tool {
+        Residential => apply_build_building(
+            map,
+            position,
+            BuildingType::Residential,
+            effects,
+            auto_bulldoze,
+        ),
+        Commercial => apply_build_building(
+            map,
+            position,
+            BuildingType::Commercial,
+            effects,
+            auto_bulldoze,
+        ),
+        Industrial => apply_build_building(
+            map,
+            position,
+            BuildingType::Industrial,
+            effects,
+            auto_bulldoze,
+        ),
+        FireStation => apply_build_building(
+            map,
+            position,
+            BuildingType::FireStation,
+            effects,
+            auto_bulldoze,
+        ),
+        PoliceStation => apply_build_building(
+            map,
+            position,
+            BuildingType::PoliceStation,
+            effects,
+            auto_bulldoze,
+        ),
+        Wire => tool_wire(map, position, effects, auto_bulldoze),
+        Bulldozer => tool_bulldozer(
+            rng,
+            map,
+            position,
+            effects,
+            auto_bulldoze,
+            animations_enabled,
+        ),
+        Railroad => tool_rail(map, position, effects, auto_bulldoze),
+        Road => tool_road(map, position, effects, auto_bulldoze),
+        Stadium => {
+            apply_build_building(map, position, BuildingType::Stadium, effects, auto_bulldoze)
+        }
+        Park => tool_park(rng, map, position, effects, auto_bulldoze),
+        Seaport => {
+            apply_build_building(map, position, BuildingType::Seaport, effects, auto_bulldoze)
+        }
+        CoalPower => apply_build_building(
+            map,
+            position,
+            BuildingType::CoalPowerPlant,
+            effects,
+            auto_bulldoze,
+        ),
+        NuclearPower => apply_build_building(
+            map,
+            position,
+            BuildingType::NuclearPowerPlant,
+            effects,
+            auto_bulldoze,
+        ),
+        Airport => {
+            apply_build_building(map, position, BuildingType::Airport, effects, auto_bulldoze)
+        }
+        Network => tool_network(map, position, effects),
+        Water => tool_water(map, position, effects),
+        Land => tool_land(
+            rng,
+            map,
+            position,
+            effects,
+            auto_bulldoze,
+            animations_enabled,
+        ),
+        Forest => tool_forest(
+            rng,
+            map,
+            position,
+            effects,
+            auto_bulldoze,
+            animations_enabled,
+        ),
+    }?;
 
-    todo!()
+    match result {
+        ToolResult::Succeeded(chained_effects) => {
+            if chained_effects.modify_world_if_enough_money(map, total_funds) {
+                Ok(result)
+            } else {
+                Ok(ToolResult::NoMoney)
+            }
+        }
+        _ => Ok(result),
+    }
+}
+
+fn apply_build_building(
+    map: &TileMap,
+    center: &MapPosition,
+    building: BuildingType,
+    effects: ToolEffects,
+    auto_bulldoze: bool,
+) -> Result<ToolResult, String> {
+    tool_build_building(map, center, effects, &building.info()?, auto_bulldoze)
 }

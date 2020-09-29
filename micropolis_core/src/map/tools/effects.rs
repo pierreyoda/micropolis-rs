@@ -10,8 +10,8 @@ use crate::{
 };
 
 use super::{
-    utils::check_border, utils::is_tile_auto_bulldozable, BuildingConstructionInfo, EditingTool,
-    ToolEffects, ToolResult,
+    utils::check_border, utils::is_tile_auto_bulldozable, BuildingInfo, EditingTool, ToolEffects,
+    ToolResult,
 };
 
 /// Make a square of rubble tiles of the given size.
@@ -197,7 +197,7 @@ fn prepare_bulding_site(
 fn put_down_building(
     map: &TileMap,
     position: &MapPosition,
-    building_info: &BuildingConstructionInfo,
+    building_info: &BuildingInfo,
     effects: ToolEffects,
 ) -> Result<ToolResult, String> {
     let (width, height) = (
@@ -227,7 +227,7 @@ fn put_down_building(
 pub(super) fn build_building(
     map: &TileMap,
     center: &MapPosition,
-    building_info: &BuildingConstructionInfo,
+    building_info: &BuildingInfo,
     effects: ToolEffects,
     auto_bulldoze: bool,
 ) -> Result<ToolResult, String> {

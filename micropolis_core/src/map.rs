@@ -1,5 +1,6 @@
 use serde::Serialize;
 
+pub mod buildings;
 pub mod connect;
 pub mod generator;
 pub mod position;
