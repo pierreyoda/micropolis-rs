@@ -16,18 +16,25 @@ pub struct MapPosition {
 
 impl MapPosition {
     pub fn new(x: i32, y: i32) -> Self {
-        MapPosition { x, y }
+        Self { x, y }
+    }
+
+    pub fn with_offset(&self, offset_x: i8, offset_y: i8) -> Self {
+        Self {
+            x: self.x + offset_x as i32,
+            y: self.y + offset_y as i32,
+        }
     }
 
     pub fn with_x_offset(&self, offset_x: i8) -> Self {
-        MapPosition {
+        Self {
             x: self.x + offset_x as i32,
             y: self.y,
         }
     }
 
     pub fn with_y_offset(&self, offset_y: i8) -> Self {
-        MapPosition {
+        Self {
             x: self.x,
             y: self.y + offset_y as i32,
         }
@@ -89,6 +96,14 @@ impl MapRectangle {
             && position.x < self.width as i32
             && 0 <= position.y
             && position.y < self.height as i32
+    }
+
+    pub fn is_contained(&self, top_left: &MapPosition, size: &Self) -> bool {
+        let (width, height) = (size.width as i32, size.height as i32);
+        top_left.x >= 0
+            || top_left.x + width <= self.width as i32
+            || top_left.y >= 0
+            || top_left.y + height <= self.height as i32
     }
 }
 
@@ -231,6 +246,10 @@ mod tests {
 
     #[test]
     fn test_position_offsetting() {
+        assert_eq!(
+            MapPosition::new(7, -3).with_offset(3, 3),
+            MapPosition::new(10, 0),
+        );
         assert_eq!(
             MapPosition::new(7, -3).with_x_offset(-1),
             MapPosition::new(6, -3),

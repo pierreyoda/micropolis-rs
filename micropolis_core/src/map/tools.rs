@@ -80,7 +80,7 @@ pub enum ToolResult {
 }
 
 struct BuildingConstructionInfo {
-    /// Number of tiles.
+    /// Tiles footprint.
     size: MapRectangle,
     /// Tile value at top-left in the map.
     base_tile: Tile,
@@ -89,7 +89,7 @@ struct BuildingConstructionInfo {
     /// Name of the tool needed for making the building.
     tool_name: String,
     /// Building has animated tiles?
-    building_is_animated: bool,
+    is_animated: bool,
 }
 
 /// Structure for storing effects of applying a tool to the world.
@@ -143,6 +143,18 @@ impl ToolEffects {
     pub fn clear(&mut self) {
         self.cost = 0;
         self.modifications.clear();
+    }
+
+    /// Consume the given tool result to apply it to the current instance
+    /// if it suceeded in order to continue modifications, or return the result as-is otherwise.
+    pub fn chain_or_return(self, result: ToolResult) -> Option<ToolResult> {
+        match result {
+            ToolResult::Succeeded(other) => {
+                self = other;
+                None
+            }
+            _ => Some(result),
+        }
     }
 
     /// Perform the effects stored in the structure to the simulation world.
@@ -206,12 +218,15 @@ pub mod utilities {
     use rand::Rng;
 
     use crate::{
-        map::generator::MapGenerator, map::tiles::TILE_ANIM_BIT, map::tiles::TILE_BULL_BIT,
-        map::tiles::TILE_BURN_BIT, map::tiles::TILE_BURN_BULL_BIT, map::tiles::TILE_CONDUCT_BIT,
-        map::MapPosition, map::Tile, map::TileMap, map::TileType, utils::random_in_range,
+        map::connect::TileMapConnector, map::generator::MapGenerator, map::tiles::TILE_ANIM_BIT,
+        map::tiles::TILE_BULL_BIT, map::tiles::TILE_BURN_BIT, map::tiles::TILE_BURN_BULL_BIT,
+        map::tiles::TILE_CONDUCT_BIT, map::tiles::TILE_ZONE_BIT, map::MapPosition,
+        map::MapRectangle, map::Tile, map::TileMap, map::TileType, utils::random_in_range,
     };
 
-    use super::{EditingTool, ToolEffects, ToolResult};
+    use super::{
+        BuildingConstructionInfo, ConnectTileCommand, EditingTool, ToolEffects, ToolResult,
+    };
 
     /// Put down a park at the given position.
     pub fn put_down_park<R: Rng>(
@@ -342,8 +357,188 @@ pub mod utilities {
         ))
     }
 
+    /// Prepare the site where a building is about to be put down,.
+    ///
+    /// This function performs some basic sanity checks, and implements
+    /// the auto-bulldoze functionality to prepare the site.
+    fn prepare_bulding_site(
+        map: &TileMap,
+        position: &MapPosition,
+        size: &MapRectangle,
+        effects: ToolEffects,
+        auto_bulldoze: bool,
+    ) -> Result<ToolResult, String> {
+        let (width, height) = (size.width as i8, size.height as i8);
+
+        // check that the entire site fits on the map
+        if !map.bounds().is_contained(&position, size) {
+            return Ok(ToolResult::Failed);
+        }
+
+        // ensure that all the tiles are clear, auto-bulldoze if allowed and possible
+        for dy in 0..height {
+            for dx in 0..width {
+                let current_position = position.with_offset(dx, dy);
+                let current_tile = effects
+                    .get_map_tile_at(map, &current_position)
+                    .ok_or(format!("Cannot read tile at {}", current_position))?;
+                if current_tile.is_of_type(&TileType::Dirt) {
+                    continue; // tile is buildable
+                }
+                if !auto_bulldoze || is_tile_auto_bulldozable(&current_tile) != Some(true) {
+                    return Ok(ToolResult::NeedBulldoze);
+                }
+                effects = effects
+                    .add_cost(EditingTool::Bulldozer.cost())
+                    .add_modification(&current_position, Tile::from_type(TileType::Dirt)?);
+            }
+        }
+
+        Ok(ToolResult::Succeeded(effects))
+    }
+
+    /// Put down a new building, starting at the given position (left, top).
+    ///
+    /// Parameters:
+    /// - base_tile
+    ///   Tile value to use at the top-left position.
+    /// - animation_flag
+    ///   Set animation flag at relative position (1, 2).
+    fn put_down_building(
+        map: &TileMap,
+        position: &MapPosition,
+        size: &MapRectangle,
+        base_tile: Tile,
+        animation_flag: bool,
+        effects: ToolEffects,
+    ) -> Result<ToolResult, String> {
+        let (width, height) = (size.width as i8, size.height as i8);
+        let mut tile = base_tile.clone();
+        for dy in 0..height {
+            for dx in 0..width {
+                let tile_raw = base_tile.get_raw()
+                    | TILE_BURN_BIT
+                    | TILE_CONDUCT_BIT
+                    | match (dx, dy) {
+                        (1, 1) => TILE_ZONE_BIT,
+                        (1, 2) if animation_flag => TILE_ANIM_BIT,
+                        _ => 0x00,
+                    };
+                effects.add_modification(&position.with_offset(dx, dy), Tile::from_raw(tile_raw)?);
+                tile.set_raw(tile.get_raw() + 1);
+            }
+        }
+
+        Ok(ToolResult::Succeeded(effects))
+    }
+
+    /// Build a new building, with the given position being its 'center' tile.
+    pub fn build_building(
+        map: &TileMap,
+        center: &MapPosition,
+        building_info: &mut BuildingConstructionInfo,
+        effects: ToolEffects,
+        auto_bulldoze: bool,
+    ) -> Result<ToolResult, String> {
+        // compute top-left 'anchor'
+        let anchor = center.with_offset(-1, -1);
+        // prepare building site
+        if let Some(prepareResult) = effects.chain_or_return(prepare_bulding_site(
+            map,
+            &anchor,
+            &building_info.size,
+            effects,
+            auto_bulldoze,
+        )?) {
+            return Ok(prepareResult);
+        }
+        // put down the building
+        if let Some(buildResult) = effects.chain_or_return(put_down_building(
+            map,
+            &anchor,
+            &building_info.size,
+            building_info.base_tile.clone(),
+            building_info.is_animated,
+            effects,
+        )?) {
+            return Ok(buildResult);
+        }
+        // update surrounding connections
+        if let Some(connectResult) = effects.chain_or_return(check_border(
+            map,
+            &anchor,
+            &building_info.size,
+            effects,
+            auto_bulldoze,
+        )?) {
+            return Ok(connectResult);
+        }
+        // all good!
+        Ok(ToolResult::Succeeded(
+            effects.add_cost(building_info.tool.cost()),
+        ))
+    }
+
     /// Check and connect a new zone around the border.
-    pub fn check_border() {}
+    pub fn check_border(
+        map: &TileMap,
+        position: &MapPosition,
+        zone_size: &MapRectangle,
+        effects: ToolEffects,
+        auto_bulldoze: bool,
+    ) -> Result<ToolResult, String> {
+        let (zone_width, zone_height) = (zone_size.width as i8, zone_size.height as i8);
+
+        for top in 0..zone_width {
+            if let Some(result) = effects.chain_or_return(TileMapConnector::connect_tile(
+                map,
+                &position.with_offset(top, -1),
+                &ConnectTileCommand::Fix,
+                effects,
+                auto_bulldoze,
+            )?) {
+                return Ok(result);
+            }
+        }
+
+        for left in 0..zone_height {
+            if let Some(result) = effects.chain_or_return(TileMapConnector::connect_tile(
+                map,
+                &position.with_offset(-1, left),
+                &ConnectTileCommand::Fix,
+                effects,
+                auto_bulldoze,
+            )?) {
+                return Ok(result);
+            }
+        }
+
+        for bottom in 0..zone_width {
+            if let Some(result) = effects.chain_or_return(TileMapConnector::connect_tile(
+                map,
+                &position.with_offset(bottom, zone_height),
+                &ConnectTileCommand::Fix,
+                effects,
+                auto_bulldoze,
+            )?) {
+                return Ok(result);
+            }
+        }
+
+        for right in 0..zone_height {
+            if let Some(result) = effects.chain_or_return(TileMapConnector::connect_tile(
+                map,
+                &position.with_offset(zone_width, right),
+                &ConnectTileCommand::Fix,
+                effects,
+                auto_bulldoze,
+            )?) {
+                return Ok(result);
+            }
+        }
+
+        Ok(ToolResult::Succeeded(effects))
+    }
 
     /// Computes the size of the zone that the tile belongs to, or 0 if
     /// unknown tile value.
