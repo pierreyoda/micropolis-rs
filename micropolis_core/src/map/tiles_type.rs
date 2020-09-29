@@ -1,3 +1,5 @@
+use std::fmt;
+
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive as FromPrimitiveTrait, ToPrimitive as ToPrimitiveTrait};
 use serde::Serialize;
@@ -343,6 +345,12 @@ pub enum TileType {
     Church7 = 1014,
     Church7Last = 1018,
     // TileCount = 1024,
+}
+
+impl fmt::Display for TileType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "TileType::{:?}", self)
+    }
 }
 
 impl TileType {

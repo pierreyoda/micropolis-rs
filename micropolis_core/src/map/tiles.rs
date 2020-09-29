@@ -1,5 +1,5 @@
 use serde::Serialize;
-use std::rc::Rc;
+use std::{fmt, rc::Rc};
 
 use super::tiles_type::{TileType, WOODS_HIGH, WOODS_LOW};
 use super::MapRectangle;
@@ -81,6 +81,12 @@ pub struct Tile {
     raw: u16,
     /// Cached tile type value.
     tile_type: Option<TileType>,
+}
+
+impl fmt::Display for Tile {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Tile(type={:?}, raw={:0>4X})", self.tile_type, self.raw)
+    }
 }
 
 impl Tile {
