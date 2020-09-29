@@ -18,6 +18,20 @@ impl MapPosition {
     pub fn new(x: i32, y: i32) -> Self {
         MapPosition { x, y }
     }
+
+    pub fn with_x_offset(&self, offset_x: i8) -> Self {
+        MapPosition {
+            x: self.x + offset_x as i32,
+            y: self.y,
+        }
+    }
+
+    pub fn with_y_offset(&self, offset_y: i8) -> Self {
+        MapPosition {
+            x: self.x,
+            y: self.y + offset_y as i32,
+        }
+    }
 }
 
 impl Add for MapPosition {
@@ -65,6 +79,9 @@ impl MapRectangle {
     }
     pub fn get_height(&self) -> usize {
         self.height
+    }
+    pub fn get_tuple(&self) -> (i32, i32) {
+        (self.width as i32, self.height as i32)
     }
 
     pub fn is_inside(&self, position: &MapPosition) -> bool {
@@ -186,17 +203,17 @@ impl MapPositionOffset {
 
 #[cfg(test)]
 mod tests {
-    use super::MapPosition;
+    use super::{MapPosition, MapRectangle};
 
     #[test]
     fn test_position_addition() {
         assert_eq!(
             MapPosition::new(3, 2) + MapPosition::new(-1, 12),
-            MapPosition::new(2, 14)
+            MapPosition::new(2, 14),
         );
         assert_eq!(
             MapPosition::new(13, -5) + MapPosition::new(0, -1),
-            MapPosition::new(13, -6)
+            MapPosition::new(13, -6),
         );
     }
 
@@ -204,11 +221,28 @@ mod tests {
     fn test_position_substraction() {
         assert_eq!(
             MapPosition::new(3, 2) - MapPosition::new(-1, 12),
-            MapPosition::new(4, -10)
+            MapPosition::new(4, -10),
         );
         assert_eq!(
             MapPosition::new(13, -5) - MapPosition::new(0, -1),
-            MapPosition::new(13, -4)
+            MapPosition::new(13, -4),
         );
+    }
+
+    #[test]
+    fn test_position_offsetting() {
+        assert_eq!(
+            MapPosition::new(7, -3).with_x_offset(-1),
+            MapPosition::new(6, -3),
+        );
+        assert_eq!(
+            MapPosition::new(7, -3).with_y_offset(2),
+            MapPosition::new(7, -1),
+        );
+    }
+
+    #[test]
+    fn test_rectangle_tuple() {
+        assert_eq!(MapRectangle::new(120, 100).get_tuple(), (120, 100),);
     }
 }
