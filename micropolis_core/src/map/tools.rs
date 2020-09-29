@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use rand::Rng;
+
 use super::{tiles::TILE_LOW_MASK, MapPosition, MapRectangle, Tile, TileMap};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -79,7 +81,7 @@ pub enum ToolResult {
     Succeeded(ToolEffects),
 }
 
-struct BuildingConstructionInfo {
+pub struct BuildingConstructionInfo {
     /// Tiles footprint.
     size: MapRectangle,
     /// Tile value at top-left in the map.
@@ -116,6 +118,8 @@ struct BuildingConstructionInfo {
 /// and funds.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ToolEffects {
+    /// Ignore any incurred cost.
+    free: bool,
     /// Accumulated cost of the modifications.
     cost: u32,
     /// Set of modifications in the world, indexed by position.
@@ -123,18 +127,23 @@ pub struct ToolEffects {
 }
 
 impl ToolEffects {
-    pub fn new() -> Self {
+    pub fn new(free: bool) -> Self {
         Self {
+            free,
             cost: 0,
             modifications: HashMap::new(),
         }
     }
 
+    #[must_use]
     pub fn add_cost(self, cost: u32) -> Self {
-        self.cost += cost;
+        if self.free {
+            self.cost += cost;
+        }
         self
     }
 
+    #[must_use]
     pub fn add_modification(self, position: &MapPosition, tile: Tile) -> Self {
         self.set_map_value_at(position, tile);
         self
@@ -213,23 +222,302 @@ impl ToolEffects {
     }
 }
 
+pub fn apply_tool<R: Rng>(
+    rng: &mut R,
+    map: &TileMap,
+    position: &MapPosition,
+    tool: &EditingTool,
+    auto_bulldoze: bool,
+    animations_enabled: bool,
+) -> Result<ToolEffects, String> {
+    use EditingTool::*;
+
+    // TODO: handle free tool / free terrain editing scenarios
+    let effects = ToolEffects::new(false);
+    // let result = match *tool {
+    // };
+
+    todo!()
+}
+
 /// Collection of building utilities.
-pub mod utilities {
+mod toolbox {
     use rand::Rng;
 
     use crate::{
         map::connect::TileMapConnector, map::generator::MapGenerator, map::tiles::TILE_ANIM_BIT,
         map::tiles::TILE_BULL_BIT, map::tiles::TILE_BURN_BIT, map::tiles::TILE_BURN_BULL_BIT,
-        map::tiles::TILE_CONDUCT_BIT, map::tiles::TILE_ZONE_BIT, map::MapPosition,
-        map::MapRectangle, map::Tile, map::TileMap, map::TileType, utils::random_in_range,
+        map::tiles::TILE_CONDUCT_BIT, map::tiles::TILE_LOW_MASK, map::tiles::TILE_ZONE_BIT,
+        map::MapPosition, map::MapRectangle, map::Tile, map::TileMap, map::TileType,
+        utils::random_in_range,
     };
 
     use super::{
         BuildingConstructionInfo, ConnectTileCommand, EditingTool, ToolEffects, ToolResult,
     };
 
+    /// Apply bulldozer tool (manual, with explosion animation for buildings).
+    pub fn tool_bulldozer<R: Rng>(
+        rng: &mut R,
+        map: &TileMap,
+        position: &MapPosition,
+        effects: ToolEffects,
+        auto_bulldoze: bool,
+        animations_enabled: bool,
+    ) -> Result<ToolResult, String> {
+        if !map.in_bounds(position) {
+            return Ok(ToolResult::Failed);
+        }
+
+        let tile_raw = effects
+            .get_map_tile_at(map, position)
+            .ok_or(format!("toool_bulldozer: cannot read tile at {}", position))?
+            .get_raw()
+            & TILE_LOW_MASK;
+        let tile = Tile::from_raw(tile_raw)?;
+        let (delta, zone_size) = if tile_raw & TILE_ZONE_BIT != 0x00 {
+            (
+                MapPosition::new(0, 0),
+                compute_size(&tile).ok_or(format!(
+                    "tool_bulldozer: cannot compute size for tile {}",
+                    tile
+                ))?,
+            )
+        } else {
+            check_big_zone(&tile).ok_or(format!(
+                "tool_bulldozer: cannot check big zone for tile {}",
+                tile
+            ))?
+        };
+
+        if zone_size == 0 {
+            // invalid zone
+            let result =
+                if tile.is_any_of_types(&[TileType::River, TileType::RiverEdge, TileType::Channel])
+                {
+                    let result = TileMapConnector::connect_tile(
+                        map,
+                        position,
+                        &ConnectTileCommand::Bulldoze,
+                        effects,
+                        auto_bulldoze,
+                    )?;
+                    if effects.get_map_tile_at(map, position).ok_or(format!(
+                        "tool_bulldozer: cannot read effects tile at {}",
+                        position
+                    ))? != tile
+                    {
+                        effects.add_cost(5);
+                    }
+                    result
+                } else {
+                    TileMapConnector::connect_tile(
+                        map,
+                        position,
+                        &ConnectTileCommand::Bulldoze,
+                        effects,
+                        auto_bulldoze,
+                    )?
+                };
+        } else {
+            effects = effects.add_cost(EditingTool::Bulldozer.cost());
+            let mut bulldozing_at = position.clone();
+            let center = *position + delta;
+
+            match zone_size {
+                3 => {
+                    // TODO: trigger sound Explosion-High in channel city at position
+                    effects = put_rubble(
+                        rng,
+                        map,
+                        &center.with_offset(-1, -1),
+                        3,
+                        effects,
+                        animations_enabled,
+                    )?;
+                }
+                4 => {
+                    // TODO: trigger sound Explosion-Low in channel city at position
+                    effects = put_rubble(
+                        rng,
+                        map,
+                        &center.with_offset(-1, -1),
+                        4,
+                        effects,
+                        animations_enabled,
+                    )?;
+                }
+                6 => {
+                    // TODO: trigger sound Explosion-High in channel city at position
+                    // TODO: trigger sound Explosion-Low in channel city at position
+                    effects = put_rubble(
+                        rng,
+                        map,
+                        &center.with_offset(-1, -1),
+                        6,
+                        effects,
+                        animations_enabled,
+                    )?;
+                }
+                _ => unreachable!(""),
+            }
+        }
+
+        // TODO: send "didtool" message "Dozr, (x, y)"
+
+        Ok(ToolResult::Succeeded(effects))
+    }
+
+    /// Make a square of rubble tiles of the given size.
+    #[must_use]
+    fn put_rubble<R: Rng>(
+        rng: &mut R,
+        map: &TileMap,
+        anchor: &MapPosition,
+        size: i8,
+        effects: ToolEffects,
+        animations_enabled: bool,
+    ) -> Result<ToolEffects, String> {
+        for x in anchor.x..anchor.x + size as i32 {
+            for y in anchor.y..anchor.y + size as i32 {
+                let current_position = MapPosition::new(x, y);
+                if !map.in_bounds(&current_position) {
+                    continue;
+                }
+                let tile = effects
+                    .get_map_tile_at(map, &current_position)
+                    .ok_or(format!(
+                        "put_rubble cannot read effects tile at {}",
+                        current_position
+                    ))?;
+                if tile.is_any_of_types(&[TileType::Radioactive, TileType::Dirt]) {
+                    continue;
+                }
+                effects = effects.add_modification(
+                    &current_position,
+                    Tile::from_raw(
+                        if animations_enabled {
+                            TileType::TINYEXP.to_u16().unwrap() + random_in_range(rng, 0, 2)
+                        } else {
+                            TileType::SOMETINYEXP.to_u16().unwrap()
+                        } | TILE_ANIM_BIT
+                            | TILE_BULL_BIT,
+                    )?,
+                );
+            }
+        }
+        Ok(effects)
+    }
+
+    /// Build arbitrary infrastructure at the given position.
+    fn tool_build_wrapper<F: Fn(ToolEffects) -> Result<ToolResult, String>>(
+        map: &TileMap,
+        position: &MapPosition,
+        effects: ToolEffects,
+        apply: F,
+        tool_message_id: &str,
+    ) -> Result<ToolResult, String> {
+        if !map.in_bounds(position) {
+            return Ok(ToolResult::Failed);
+        }
+        if let Some(result) = effects.chain_or_return(apply(effects)?) {
+            return Ok(result);
+        }
+        // TODO: send "didtool" message "(tool_message_id), (x, y)"
+        Ok(ToolResult::Succeeded(effects))
+    }
+
+    /// Build a road at the given position.
+    pub fn tool_road(
+        map: &TileMap,
+        position: &MapPosition,
+        effects: ToolEffects,
+        auto_bulldoze: bool,
+    ) -> Result<ToolResult, String> {
+        tool_build_wrapper(
+            map,
+            position,
+            effects,
+            |e| {
+                TileMapConnector::connect_tile(
+                    map,
+                    position,
+                    &ConnectTileCommand::Road,
+                    e,
+                    auto_bulldoze,
+                )
+            },
+            "Road",
+        )
+    }
+
+    /// Build a railroad at the given position.
+    pub fn tool_rail(
+        map: &TileMap,
+        position: &MapPosition,
+        effects: ToolEffects,
+        auto_bulldoze: bool,
+    ) -> Result<ToolResult, String> {
+        tool_build_wrapper(
+            map,
+            position,
+            effects,
+            |e| {
+                TileMapConnector::connect_tile(
+                    map,
+                    position,
+                    &ConnectTileCommand::Rail,
+                    e,
+                    auto_bulldoze,
+                )
+            },
+            "Rail",
+        )
+    }
+
+    /// Build a wire at the given position.
+    pub fn tool_wire(
+        map: &TileMap,
+        position: &MapPosition,
+        effects: ToolEffects,
+        auto_bulldoze: bool,
+    ) -> Result<ToolResult, String> {
+        tool_build_wrapper(
+            map,
+            position,
+            effects,
+            |e| {
+                TileMapConnector::connect_tile(
+                    map,
+                    position,
+                    &ConnectTileCommand::Wire,
+                    e,
+                    auto_bulldoze,
+                )
+            },
+            "Wire",
+        )
+    }
+
+    /// Build at park.
+    pub fn tool_park<R: Rng>(
+        rng: &mut R,
+        map: &TileMap,
+        center: &MapPosition,
+        effects: ToolEffects,
+        auto_bulldoze: bool,
+    ) -> Result<ToolResult, String> {
+        tool_build_wrapper(
+            map,
+            center,
+            effects,
+            |e| put_down_park(rng, map, center, e),
+            "Park",
+        )
+    }
+
     /// Put down a park at the given position.
-    pub fn put_down_park<R: Rng>(
+    fn put_down_park<R: Rng>(
         rng: &mut R,
         map: &TileMap,
         position: &MapPosition,
@@ -253,8 +541,23 @@ pub mod utilities {
         }
     }
 
+    /// Build a communication network.
+    pub fn tool_network(
+        map: &TileMap,
+        position: &MapPosition,
+        effects: ToolEffects,
+    ) -> Result<ToolResult, String> {
+        tool_build_wrapper(
+            map,
+            position,
+            effects,
+            |e| put_down_network(map, position, e),
+            "Park",
+        )
+    }
+
     /// Put down a communication network.
-    pub fn put_down_network(
+    fn put_down_network(
         map: &TileMap,
         position: &MapPosition,
         effects: ToolEffects,
@@ -289,8 +592,23 @@ pub mod utilities {
         ))
     }
 
+    /// Place water at the give position.
+    pub fn tool_water(
+        map: &TileMap,
+        position: &MapPosition,
+        effects: ToolEffects,
+    ) -> Result<ToolResult, String> {
+        tool_build_wrapper(
+            map,
+            position,
+            effects,
+            |e| put_down_water(map, position, e),
+            "Water",
+        )
+    }
+
     /// Put down a water tile.
-    pub fn put_down_water(
+    fn put_down_water(
         map: &TileMap,
         position: &MapPosition,
         effects: ToolEffects,
@@ -309,8 +627,38 @@ pub mod utilities {
         }
     }
 
+    /// Place land at the give position.
+    pub fn tool_land<R: Rng>(
+        rng: &mut R,
+        map: &TileMap,
+        position: &MapPosition,
+        effects: ToolEffects,
+        auto_bulldoze: bool,
+        animations_enabled: bool,
+    ) -> Result<ToolResult, String> {
+        tool_build_wrapper(
+            map,
+            position,
+            effects,
+            |e| {
+                if let Some(result) = e.chain_or_return(tool_bulldozer(
+                    rng,
+                    map,
+                    position,
+                    e,
+                    auto_bulldoze,
+                    animations_enabled,
+                )?) {
+                    return Ok(result);
+                }
+                put_down_land(map, position, effects)
+            },
+            "Land",
+        )
+    }
+
     /// Put down a land tile.
-    pub fn put_down_land(
+    fn put_down_land(
         map: &TileMap,
         position: &MapPosition,
         effects: ToolEffects,
@@ -332,8 +680,60 @@ pub mod utilities {
     const FOREST_DX: [i32; 8] = [-1, 0, 1, -1, 1, -1, 0, 1];
     const FOREST_DY: [i32; 8] = [-1, -1, -1, 0, 0, 1, 1, 1];
 
+    /// Place a forest at the given position.
+    pub fn tool_forest<R: Rng>(
+        rng: &Rng,
+        map: &TileMap,
+        position: &MapPosition,
+        effects: ToolEffects,
+        auto_bulldoze: bool,
+        animations_enabled: bool,
+    ) -> Result<ToolResult, String> {
+        tool_build_wrapper(
+            map,
+            position,
+            effects,
+            |e| {
+                let tile = e.get_map_value_at(map, position).ok_or(format!(
+                    "tool_forest: cannot read effects tile at {}",
+                    position
+                ))?;
+                if tile.is_tree() {
+                    // nothing to do
+                    return Ok(ToolResult::Succeeded(e));
+                }
+
+                if !tile.is_dirt() {
+                    // TODO: bulldozer should be free in terrain mode or from a free tool
+                    if let Some(result) = e.chain_or_return(tool_bulldozer(
+                        rng,
+                        map,
+                        position,
+                        effects,
+                        auto_bulldoze,
+                        animations_enabled,
+                    )?) {
+                        return result;
+                    }
+                }
+
+                let tile_refreshed = e.get_map_value_at(map, position).ok_or(format!(
+                    "tool_forest: cannot read effects tile at {}",
+                    position
+                ))?;
+                if tile_refreshed.is_dirt() {
+                    put_down_forest(map, position, e)
+                } else {
+                    // auto-bulldozing not allowed or impossible
+                    Ok(ToolResult::Failed)
+                }
+            },
+            "Forest",
+        )
+    }
+
     /// Put down a forest.
-    pub fn put_down_forest(
+    fn put_down_forest(
         map: &TileMap,
         position: &MapPosition,
         effects: ToolEffects,
@@ -355,6 +755,23 @@ pub mod utilities {
         Ok(ToolResult::Succeeded(
             effects.add_cost(EditingTool::Forest.cost()),
         ))
+    }
+
+    /// Build at building.
+    pub fn tool_build_building(
+        map: &TileMap,
+        center: &MapPosition,
+        effects: ToolEffects,
+        building_info: &BuildingConstructionInfo,
+        auto_bulldoze: bool,
+    ) -> Result<ToolResult, String> {
+        tool_build_wrapper(
+            map,
+            center,
+            effects,
+            |e| put_down_building(map, center, &building_info, effects),
+            &*building_info.tool_name,
+        )
     }
 
     /// Prepare the site where a building is about to be put down,.
@@ -407,21 +824,22 @@ pub mod utilities {
     fn put_down_building(
         map: &TileMap,
         position: &MapPosition,
-        size: &MapRectangle,
-        base_tile: Tile,
-        animation_flag: bool,
+        building_info: &BuildingConstructionInfo,
         effects: ToolEffects,
     ) -> Result<ToolResult, String> {
-        let (width, height) = (size.width as i8, size.height as i8);
-        let mut tile = base_tile.clone();
+        let (width, height) = (
+            building_info.size.width as i8,
+            building_info.size.height as i8,
+        );
+        let mut tile = building_info.base_tile.clone();
         for dy in 0..height {
             for dx in 0..width {
-                let tile_raw = base_tile.get_raw()
+                let tile_raw = building_info.base_tile.get_raw()
                     | TILE_BURN_BIT
                     | TILE_CONDUCT_BIT
                     | match (dx, dy) {
                         (1, 1) => TILE_ZONE_BIT,
-                        (1, 2) if animation_flag => TILE_ANIM_BIT,
+                        (1, 2) if building_info.is_animated => TILE_ANIM_BIT,
                         _ => 0x00,
                     };
                 effects.add_modification(&position.with_offset(dx, dy), Tile::from_raw(tile_raw)?);
@@ -433,7 +851,7 @@ pub mod utilities {
     }
 
     /// Build a new building, with the given position being its 'center' tile.
-    pub fn build_building(
+    fn build_building(
         map: &TileMap,
         center: &MapPosition,
         building_info: &mut BuildingConstructionInfo,
@@ -453,14 +871,9 @@ pub mod utilities {
             return Ok(prepareResult);
         }
         // put down the building
-        if let Some(buildResult) = effects.chain_or_return(put_down_building(
-            map,
-            &anchor,
-            &building_info.size,
-            building_info.base_tile.clone(),
-            building_info.is_animated,
-            effects,
-        )?) {
+        if let Some(buildResult) =
+            effects.chain_or_return(put_down_building(map, &anchor, &building_info, effects)?)
+        {
             return Ok(buildResult);
         }
         // update surrounding connections

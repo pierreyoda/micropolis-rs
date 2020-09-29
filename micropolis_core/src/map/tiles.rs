@@ -157,6 +157,14 @@ impl Tile {
         self.tile_type == Some(*tile_type)
     }
 
+    pub fn is_any_of_types(&self, tile_types: &[TileType]) -> bool {
+        if let Some(tile_type) = self.tile_type {
+            tile_types.iter().any(|t| *t == tile_type)
+        } else {
+            false
+        }
+    }
+
     pub fn is_conductive(&self) -> bool {
         self.get_type_raw() & TILE_POWER_BIT == TILE_POWER_BIT
     }
