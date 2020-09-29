@@ -2,6 +2,7 @@ pub mod budget;
 pub mod evaluate;
 pub mod meta;
 pub mod power;
+pub mod reports;
 pub mod simulation;
 
 use power::CityPower;
