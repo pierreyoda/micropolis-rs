@@ -61,6 +61,7 @@ pub const TILE_BURN_BIT: u16 = 0b_0010_0000_0000_0000;
 /// The tile is bulldozable if bit 12 is set.
 pub const TILE_BULL_BIT: u16 = 0b_0001_0000_0000_0000;
 pub const TILE_BURN_BULL_BIT: u16 = TILE_BURN_BIT | TILE_BULL_BIT;
+pub const TILE_BURN_BULL_CONDUCT_BIT: u16 = TILE_CONDUCT_BIT | TILE_BURN_BULL_BIT;
 /// The tile is animated if bit 11 is set.
 pub const TILE_ANIM_BIT: u16 = 0b_0000_1000_0000_0000;
 /// The tile is the center of its zone if bit 10 is set.
