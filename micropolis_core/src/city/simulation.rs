@@ -1,14 +1,38 @@
 use super::City;
-use crate::game::GameSpeed;
-use crate::map::{MapPosition, TileMap, TileType};
+use crate::game::{GameSpeed, GameSpeedPreset};
+use crate::map::{MapPosition, TileType};
 
 pub struct Simulation {
     speed: GameSpeed,
     speed_cycle: u16,
     phase_cycle: u8,
+    /// Number of passes through the similator loop.
+    passes: u32,
+    /// Current simulator loop pass counter.
+    pass_index: usize,
+    /// Incremented every time the map changes.
+    map_serial: u32,
 }
 
 impl Simulation {
+    pub fn new() -> Self {
+        Self {
+            speed: GameSpeed::from(GameSpeedPreset::Normal),
+            speed_cycle: 0,
+            phase_cycle: 0,
+            passes: 0,
+            pass_index: 0,
+            map_serial: 1,
+        }
+    }
+    pub fn reset_pass_counter(&mut self) {
+        self.pass_index = 0;
+    }
+
+    pub fn on_map_updated(&mut self) {
+        self.map_serial += 1;
+    }
+
     /// Advance the city simulation and its visualization by one frame tick.
     pub fn step(&mut self, city: &mut City) -> Result<(), String> {
         let sim_steps_per_update = self.speed.get_sim_steps_per_update();
@@ -41,7 +65,7 @@ impl Simulation {
         match self.phase_cycle {
             0 => {}
             // Scan 1/8th of the map for each of these 8 phases
-            1...8 => {
+            1..=8 => {
                 let phase_cycle = self.phase_cycle as usize;
                 self.scan_map_section(
                     city,
@@ -93,10 +117,10 @@ impl Simulation {
                 }
 
                 let position = MapPosition::new(x as i32, y as i32);
-                if tile_type_raw < TileType::HorizontalBridge as u16 {
-                    if tile_type_raw >= TileType::Fire as u16 {
-                        city.fires_count += 1;
-                    }
+                if tile_type_raw < TileType::HorizontalBridge as u16
+                    && tile_type_raw >= TileType::Fire as u16
+                {
+                    city.fires_count += 1;
                 }
             }
         }

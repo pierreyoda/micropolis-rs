@@ -6,6 +6,8 @@ use toolbox::{
     tool_rail, tool_road, tool_water, tool_wire,
 };
 
+use crate::city::budget::MoneyValue;
+
 use super::{buildings::BuildingType, tiles::TILE_LOW_MASK, MapPosition, Tile, TileMap};
 
 mod effects;
@@ -51,7 +53,7 @@ pub enum EditingTool {
 }
 
 impl EditingTool {
-    pub fn cost(&self) -> u32 {
+    pub fn cost(&self) -> MoneyValue {
         match *self {
             Residential => 100,
             Commercial => 100,
@@ -73,6 +75,32 @@ impl EditingTool {
             Water => 0,
             Land => 0,
             Forest => 0,
+        }
+    }
+
+    // TODO: remove duplicate constants with BuildingType
+    pub fn size(&self) -> u16 {
+        match *self {
+            Residential => 3,
+            Commercial => 3,
+            Industrial => 3,
+            FireStation => 3,
+            PoliceStation => 3,
+            Query => 1,
+            Wire => 1,
+            Bulldozer => 1,
+            Railroad => 1,
+            Road => 1,
+            Stadium => 4,
+            Park => 1,
+            Seaport => 4,
+            CoalPower => 4,
+            NuclearPower => 4,
+            Airport => 6,
+            Network => 1,
+            Water => 1,
+            Land => 1,
+            Forest => 1,
         }
     }
 }
@@ -215,6 +243,40 @@ impl ToolEffects {
     fn set_map_value_at(&mut self, position: &MapPosition, tile: Tile) {
         self.modifications.insert(position.clone(), tile);
     }
+}
+
+pub fn tool_down<R: Rng>(
+    rng: &mut R,
+    map: &mut TileMap,
+    position: &MapPosition,
+    tool: &EditingTool,
+    auto_bulldoze: bool,
+    animations_enabled: bool,
+    total_funds: u32,
+) -> Result<(), String> {
+    Ok(
+        match apply_tool(
+            rng,
+            map,
+            position,
+            tool,
+            auto_bulldoze,
+            animations_enabled,
+            total_funds,
+        )? {
+            ToolResult::NeedBulldoze => {
+                // TODO: send MESSAGE_BULLDOZE_AREA_FIRST
+                // TODO: play interface sound "UhUh" at (x << 4, y << 4
+                // TODO: played sound should only be heard by the calling user
+            }
+            ToolResult::NoMoney => {
+                // TODO: send MESSAGE_NOT_ENOUGH_FUNDS
+                // TODO: play interface sound "Sorry" at (x << 4, y << 4
+                // TODO: played sound should only be heard by the calling user
+            }
+            _ => {}
+        },
+    )
 }
 
 pub fn apply_tool<R: Rng>(
