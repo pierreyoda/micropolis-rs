@@ -57,7 +57,7 @@ impl GameSpeed {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum GameSpeedPreset {
     Paused,
     Slow,

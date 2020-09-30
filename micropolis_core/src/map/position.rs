@@ -1,7 +1,11 @@
 use std::{
+    cmp::max,
+    cmp::min,
     fmt,
     ops::{Add, Sub},
 };
+
+use num_traits::abs;
 
 /// Represents a position on a 2D map.
 ///
@@ -17,6 +21,17 @@ pub struct MapPosition {
 impl MapPosition {
     pub fn new(x: i32, y: i32) -> Self {
         Self { x, y }
+    }
+
+    pub fn get_x(&self) -> i32 {
+        self.x
+    }
+    pub fn get_y(&self) -> i32 {
+        self.y
+    }
+
+    pub fn as_tuple(&self) -> (i32, i32) {
+        (self.x, self.y)
     }
 
     pub fn with_offset(&self, offset_x: i8, offset_y: i8) -> Self {
@@ -37,6 +52,61 @@ impl MapPosition {
         Self {
             x: self.x,
             y: self.y + offset_y as i32,
+        }
+    }
+
+    pub fn unitary(&self, neutral_value: i32) -> MapPosition {
+        Self {
+            x: if self.x > 0 {
+                1
+            } else if self.x < 0 {
+                -1
+            } else {
+                neutral_value
+            },
+            y: if self.y > 0 {
+                1
+            } else if self.y < 0 {
+                -1
+            } else {
+                neutral_value
+            },
+        }
+    }
+
+    pub fn absolute(&self) -> MapPosition {
+        Self {
+            x: abs(self.x),
+            y: abs(self.y),
+        }
+    }
+
+    pub fn minimum_axis(&self) -> i32 {
+        min(self.x, self.y)
+    }
+    pub fn maximum_axis(&self) -> i32 {
+        max(self.x, self.y)
+    }
+
+    pub fn axis_equalities_with(&self, other: &MapPosition) -> (bool, bool) {
+        (self.x == other.x, self.y == other.y)
+    }
+}
+
+impl Into<MapPosition> for (i32, i32) {
+    fn into(self) -> MapPosition {
+        MapPosition {
+            x: self.0,
+            y: self.1,
+        }
+    }
+}
+
+impl Into<MapPosition> for (usize, usize) {
+    fn into(self) -> MapPosition {
+        MapPosition {
+            x: self.0 as i32,
+            y: self.0 as i32,
         }
     }
 }

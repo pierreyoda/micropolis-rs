@@ -1,12 +1,16 @@
 pub mod budget;
 pub mod evaluate;
 pub mod meta;
+pub mod population;
 pub mod power;
 pub mod reports;
 pub mod simulation;
 
+use budget::MoneyValue;
+use population::CityPopulation;
 use power::CityPower;
 use rand::rngs::OsRng;
+use simulation::Simulation;
 
 use crate::map::{Map, MapRectangle, TileMap, TileType};
 
@@ -14,25 +18,6 @@ pub enum CityInitializationState {
     Initialized = 0,
     JustCreated = 1,
     JustLoaded = 2,
-}
-
-pub struct CityPopulation {
-    /// Number of people in residential zones.
-    ///
-    /// Depends on the level of zone development.
-    residential: u32,
-    /// Number of people in commercial zones.
-    ///
-    /// Depends on the level of zone development.
-    commercial: u32,
-    /// Number of people in industrial zones.
-    ///
-    /// Depends on the level of zone development.
-    industrial: u32,
-    /// Total population.
-    ///
-    /// Formula = (residential population) / 8 + (commercial population) + (industrial population).
-    total: u32,
 }
 
 /// A Micropolis city.
@@ -64,6 +49,8 @@ pub struct City {
     fires_count: u32,
     /// Population counts.
     population: CityPopulation,
+    /// Global simulation.
+    sim: Simulation,
     /// Electricity simulation.
     power: CityPower,
 }
@@ -82,13 +69,31 @@ impl City {
             roads_total: 0,
             rail_total: 0,
             fires_count: 0,
-            population: CityPopulation {
-                residential: 0,
-                commercial: 0,
-                industrial: 0,
-                total: 0,
-            },
-            power,
+            population: CityPopulation::from_map(&map),
+            sim: Simulation::new(),
+            power: CityPower::from_map(&map),
         })
+    }
+
+    pub fn get_map(&self) -> &TileMap {
+        &self.map
+    }
+    pub fn get_map_mut(&mut self) -> &mut TileMap {
+        &mut self.map
+    }
+
+    pub fn get_sim(&self) -> &Simulation {
+        &self.sim
+    }
+    pub fn get_sim_mut(&mut self) -> &mut Simulation {
+        &mut self.sim
+    }
+
+    pub fn invalidate_map(&mut self) {
+        self.sim.on_map_updated();
+    }
+
+    pub fn total_funds(&self) -> MoneyValue {
+        todo!()
     }
 }
