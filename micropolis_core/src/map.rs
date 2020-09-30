@@ -114,8 +114,9 @@ impl<T> Map<T> {
     }
 
     pub fn set_tile_at(&mut self, position: &MapPosition, tile: T) -> bool {
-        if let Some(column) = self.data.get_mut(position.x as usize) {
-            if let Some(cell) = column.get_mut(position.y as usize) {
+        let transformed = self.clustering_strategy.transform(position);
+        if let Some(column) = self.data.get_mut(transformed.x as usize) {
+            if let Some(cell) = column.get_mut(transformed.y as usize) {
                 *cell = tile;
                 return true;
             }
