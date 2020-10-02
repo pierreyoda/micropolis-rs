@@ -11,6 +11,7 @@ pub enum CityQuery {
 pub struct CityReportBuilder;
 
 impl CityReportBuilder {
+    // TODO: query cost
     pub fn query_tile(&self, category: &CityQuery, at: &MapPosition) -> usize {
         todo!()
     }

@@ -54,4 +54,8 @@ impl CityPopulation {
     pub fn set_density_at(&mut self, at: &MapPosition, density: u8) -> bool {
         self.density_map.set_tile_at(at, density)
     }
+
+    pub fn total_population(&self) -> u32 {
+        self.total
+    }
 }
