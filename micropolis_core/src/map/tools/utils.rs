@@ -7,7 +7,7 @@ pub(super) fn check_border(
     map: &TileMap,
     position: &MapPosition,
     zone_size: &MapRectangle,
-    effects: ToolEffects,
+    mut effects: ToolEffects,
     auto_bulldoze: bool,
 ) -> Result<ToolResult, String> {
     let (zone_width, zone_height) = (zone_size.width as i8, zone_size.height as i8);
@@ -17,7 +17,7 @@ pub(super) fn check_border(
             map,
             &position.with_offset(top, -1),
             &ConnectTileCommand::Fix,
-            effects,
+            effects.clone(),
             auto_bulldoze,
         )?) {
             return Ok(result);
@@ -29,7 +29,7 @@ pub(super) fn check_border(
             map,
             &position.with_offset(-1, left),
             &ConnectTileCommand::Fix,
-            effects,
+            effects.clone(),
             auto_bulldoze,
         )?) {
             return Ok(result);
@@ -41,7 +41,7 @@ pub(super) fn check_border(
             map,
             &position.with_offset(bottom, zone_height),
             &ConnectTileCommand::Fix,
-            effects,
+            effects.clone(),
             auto_bulldoze,
         )?) {
             return Ok(result);
@@ -53,7 +53,7 @@ pub(super) fn check_border(
             map,
             &position.with_offset(zone_width, right),
             &ConnectTileCommand::Fix,
-            effects,
+            effects.clone(),
             auto_bulldoze,
         )?) {
             return Ok(result);
@@ -66,7 +66,7 @@ pub(super) fn check_border(
 /// Computes the size of the zone that the tile belongs to, or 0 if
 /// unknown tile value.
 pub(super) fn compute_size(tile: &Tile) -> Option<u8> {
-    match (*tile.get_type())?.to_u16()? {
+    match tile.clone().get_type().clone()?.to_u16().unwrap() {
         t if (t >= offseted_raw_type(&TileType::ResidentialBase, -1)?
             && t <= offseted_raw_type(&TileType::PortBase, -1)?)
             || (t >= offseted_raw_type(&TileType::LastPowerPlant, 1)?
@@ -94,7 +94,7 @@ pub(super) fn compute_size(tile: &Tile) -> Option<u8> {
 /// Returns the corrected position and the size of the zone clicked at
 /// (or 0 if cliked outside zone).
 pub(super) fn check_big_zone(tile: &Tile) -> Option<(MapPosition, u8)> {
-    match (*tile.get_type())?.to_u16()? {
+    match tile.get_type().clone()?.to_u16()? {
         t if [
             offseted_raw_type(&TileType::PowerPlant, 0)?,
             offseted_raw_type(&TileType::Port, 0)?,

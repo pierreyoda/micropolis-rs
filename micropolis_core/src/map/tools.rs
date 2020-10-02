@@ -35,7 +35,6 @@ pub enum EditingTool {
     Industrial,
     FireStation,
     PoliceStation,
-    Query,
     Wire,
     Bulldozer,
     Railroad,
@@ -53,14 +52,13 @@ pub enum EditingTool {
 }
 
 impl EditingTool {
-    pub fn cost(&self) -> MoneyValue {
-        match *self {
+    pub fn cost(self) -> MoneyValue {
+        match self {
             Residential => 100,
             Commercial => 100,
             Industrial => 100,
             FireStation => 500,
             PoliceStation => 500,
-            Query => 0,
             Wire => 5,
             Bulldozer => 1,
             Railroad => 20,
@@ -79,14 +77,13 @@ impl EditingTool {
     }
 
     // TODO: remove duplicate constants with BuildingType
-    pub fn size(&self) -> u16 {
-        match *self {
+    pub fn size(self) -> u16 {
+        match self {
             Residential => 3,
             Commercial => 3,
             Industrial => 3,
             FireStation => 3,
             PoliceStation => 3,
-            Query => 1,
             Wire => 1,
             Bulldozer => 1,
             Railroad => 1,
@@ -115,6 +112,22 @@ pub enum ToolResult {
     Failed,
     /// Build succeeded.
     Succeeded(ToolEffects),
+}
+
+impl ToolResult {
+    pub fn is_success(&self) -> bool {
+        match self {
+            &ToolResult::Succeeded(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn effects(self) -> Option<ToolEffects> {
+        match self {
+            ToolResult::Succeeded(effects) => Some(effects),
+            _ => None,
+        }
+    }
 }
 
 /// Structure for storing effects of applying a tool to the world.
@@ -158,16 +171,14 @@ impl ToolEffects {
         }
     }
 
-    #[must_use]
-    pub fn add_cost(self, cost: u32) -> Self {
+    pub fn add_cost(mut self, cost: u32) -> Self {
         if self.free {
             self.cost += cost;
         }
         self
     }
 
-    #[must_use]
-    pub fn add_modification(self, position: &MapPosition, tile: Tile) -> Self {
+    pub fn add_modification(mut self, position: &MapPosition, tile: Tile) -> Self {
         self.set_map_value_at(position, tile);
         self
     }
@@ -179,10 +190,18 @@ impl ToolEffects {
 
     /// Consume the given tool result to apply it to the current instance
     /// if it suceeded in order to continue modifications, or return the result as-is otherwise.
-    pub fn chain_or_return(self, result: ToolResult) -> Option<ToolResult> {
+    pub fn chain_or_return(&mut self, result: ToolResult) -> Option<ToolResult> {
         match result {
             ToolResult::Succeeded(other) => {
-                self = other;
+                self.free = self.free || other.free;
+                self.cost = self.cost + other.cost;
+                self.modifications = {
+                    let mut hm = self.modifications.clone();
+                    for (position, tile) in other.modifications.iter() {
+                        hm.insert(position.clone(), tile.clone());
+                    }
+                    hm
+                };
                 None
             }
             _ => Some(result),
@@ -214,7 +233,7 @@ impl ToolEffects {
     }
 
     /// Apply the modifications if there are enough funds.
-    pub fn modify_world_if_enough_money(&self, map: &mut TileMap, total_funds: u32) -> bool {
+    pub fn modify_world_if_enough_money(&mut self, map: &mut TileMap, total_funds: u32) -> bool {
         if self.cost < total_funds {
             false
         } else {
@@ -342,7 +361,7 @@ pub fn apply_tool<R: Rng>(
         Stadium => {
             apply_build_building(map, position, BuildingType::Stadium, effects, auto_bulldoze)
         }
-        Park => tool_park(rng, map, position, effects, auto_bulldoze),
+        Park => tool_park(rng, map, position, effects),
         Seaport => {
             apply_build_building(map, position, BuildingType::Seaport, effects, auto_bulldoze)
         }
@@ -383,8 +402,8 @@ pub fn apply_tool<R: Rng>(
         ),
     }?;
 
-    match result {
-        ToolResult::Succeeded(chained_effects) => {
+    match result.clone() {
+        ToolResult::Succeeded(mut chained_effects) => {
             if chained_effects.modify_world_if_enough_money(map, total_funds) {
                 Ok(result)
             } else {
@@ -399,7 +418,7 @@ fn apply_build_building(
     map: &TileMap,
     center: &MapPosition,
     building: BuildingType,
-    effects: ToolEffects,
+    mut effects: ToolEffects,
     auto_bulldoze: bool,
 ) -> Result<ToolResult, String> {
     tool_build_building(map, center, effects, &building.info()?, auto_bulldoze)

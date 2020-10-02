@@ -473,7 +473,7 @@ impl MapGenerator {
     pub fn smooth_trees_at(
         terrain: &TileMap,
         position: &MapPosition,
-        effects: ToolEffects,
+        mut effects: ToolEffects,
         preserve: bool,
     ) -> Result<ToolEffects, String> {
         if !effects

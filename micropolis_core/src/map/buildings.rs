@@ -3,15 +3,15 @@ use super::{tools::EditingTool, MapRectangle, Tile, TileType};
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct BuildingInfo {
     /// Tiles footprint.
-    size: MapRectangle,
+    pub(super) size: MapRectangle,
     /// Tile value at top-left in the map.
-    base_tile: Tile,
+    pub(super) base_tile: Tile,
     /// Tool needed for making the building.
-    tool: EditingTool,
+    pub(super) tool: EditingTool,
     /// Name of the tool needed for making the building.
-    tool_name: String,
+    pub(super) tool_name: String,
     /// Building has animated tiles?
-    is_animated: bool,
+    pub(super) is_animated: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

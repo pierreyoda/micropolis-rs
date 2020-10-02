@@ -1,16 +1,17 @@
 use rand::Rng;
 
 use crate::{
-    map::connect::TileMapConnector, map::tiles::TILE_ANIM_BIT, map::tiles::TILE_BULL_BIT,
-    map::tiles::TILE_BURN_BIT, map::tiles::TILE_CONDUCT_BIT, map::tiles::TILE_LOW_MASK,
-    map::tiles::TILE_ZONE_BIT, map::MapPosition, map::Tile, map::TileMap, map::TileType,
+    map::buildings::BuildingInfo, map::connect::TileMapConnector, map::tiles::TILE_ANIM_BIT,
+    map::tiles::TILE_BULL_BIT, map::tiles::TILE_BURN_BIT, map::tiles::TILE_CONDUCT_BIT,
+    map::tiles::TILE_LOW_MASK, map::tiles::TILE_ZONE_BIT, map::MapPosition, map::Tile,
+    map::TileMap, map::TileType,
 };
 
 use super::{
     effects::build_building, effects::put_down_forest, effects::put_down_land,
     effects::put_down_park, effects::put_down_water, effects::put_rubble, utils::check_big_zone,
-    utils::compute_size, utils::is_tile_auto_bulldozable, BuildingInfo, ConnectTileCommand,
-    EditingTool, ToolEffects, ToolResult,
+    utils::compute_size, utils::is_tile_auto_bulldozable, ConnectTileCommand, EditingTool,
+    ToolEffects, ToolResult,
 };
 
 /// Apply bulldozer tool (manual, with explosion animation for buildings).
@@ -18,7 +19,7 @@ pub(super) fn tool_bulldozer<R: Rng>(
     rng: &mut R,
     map: &TileMap,
     position: &MapPosition,
-    effects: ToolEffects,
+    mut effects: ToolEffects,
     auto_bulldoze: bool,
     animations_enabled: bool,
 ) -> Result<ToolResult, String> {
@@ -49,35 +50,39 @@ pub(super) fn tool_bulldozer<R: Rng>(
 
     if zone_size == 0 {
         // invalid zone
-        let result =
+        if let Some(result) = effects.chain_or_return(
             if tile.is_any_of_types(&[TileType::River, TileType::RiverEdge, TileType::Channel]) {
                 let result = TileMapConnector::connect_tile(
                     map,
                     position,
                     &ConnectTileCommand::Bulldoze,
-                    effects,
+                    effects.clone(),
                     auto_bulldoze,
                 )?;
-                if effects.get_map_tile_at(map, position).ok_or(format!(
-                    "tool_bulldozer: cannot read effects tile at {}",
-                    position
-                ))? != tile
+                if result.is_success()
+                    && effects.get_map_tile_at(map, position).ok_or(format!(
+                        "tool_bulldozer: cannot read effects tile at {}",
+                        position
+                    ))? != tile
                 {
-                    effects.add_cost(5);
+                    ToolResult::Succeeded(result.effects().unwrap().add_cost(5))
+                } else {
+                    result
                 }
-                result
             } else {
                 TileMapConnector::connect_tile(
                     map,
                     position,
                     &ConnectTileCommand::Bulldoze,
-                    effects,
+                    effects.clone(),
                     auto_bulldoze,
                 )?
-            };
+            },
+        ) {
+            return Ok(result);
+        }
     } else {
         effects = effects.add_cost(EditingTool::Bulldozer.cost());
-        let mut bulldozing_at = position.clone();
         let center = *position + delta;
 
         match zone_size {
@@ -125,20 +130,21 @@ pub(super) fn tool_bulldozer<R: Rng>(
 }
 
 /// Build arbitrary infrastructure at the given position.
-fn tool_build_wrapper<F: Fn(ToolEffects) -> Result<ToolResult, String>>(
+fn tool_build_wrapper<F: FnMut(ToolEffects) -> Result<ToolResult, String>>(
     map: &TileMap,
     position: &MapPosition,
-    effects: ToolEffects,
-    apply: F,
+    mut effects: ToolEffects,
+    mut apply: F,
     tool_message_id: &str,
 ) -> Result<ToolResult, String> {
     if !map.in_bounds(position) {
         return Ok(ToolResult::Failed);
     }
-    if let Some(result) = effects.chain_or_return(apply(effects)?) {
+    if let Some(result) = effects.chain_or_return(apply(effects.clone())?) {
         return Ok(result);
     }
     // TODO: send "didtool" message "(tool_message_id), (x, y)"
+    let id = tool_message_id.clone();
     Ok(ToolResult::Succeeded(effects))
 }
 
@@ -153,7 +159,7 @@ pub(super) fn tool_road(
         map,
         position,
         effects,
-        |e| {
+        |mut e| {
             TileMapConnector::connect_tile(
                 map,
                 position,
@@ -170,14 +176,14 @@ pub(super) fn tool_road(
 pub(super) fn tool_rail(
     map: &TileMap,
     position: &MapPosition,
-    effects: ToolEffects,
+    mut effects: ToolEffects,
     auto_bulldoze: bool,
 ) -> Result<ToolResult, String> {
     tool_build_wrapper(
         map,
         position,
         effects,
-        |e| {
+        |mut e| {
             TileMapConnector::connect_tile(
                 map,
                 position,
@@ -194,14 +200,14 @@ pub(super) fn tool_rail(
 pub(super) fn tool_wire(
     map: &TileMap,
     position: &MapPosition,
-    effects: ToolEffects,
+    mut effects: ToolEffects,
     auto_bulldoze: bool,
 ) -> Result<ToolResult, String> {
     tool_build_wrapper(
         map,
         position,
         effects,
-        |e| {
+        |mut e| {
             TileMapConnector::connect_tile(
                 map,
                 position,
@@ -220,13 +226,12 @@ pub(super) fn tool_park<R: Rng>(
     map: &TileMap,
     center: &MapPosition,
     effects: ToolEffects,
-    auto_bulldoze: bool,
 ) -> Result<ToolResult, String> {
     tool_build_wrapper(
         map,
         center,
         effects,
-        |e| put_down_park(rng, map, center, e),
+        |mut e| put_down_park(rng, map, center, e),
         "Park",
     )
 }
@@ -241,7 +246,7 @@ pub(super) fn tool_network(
         map,
         position,
         effects,
-        |e| put_down_network(map, position, e),
+        |mut e| put_down_network(map, position, e),
         "Park",
     )
 }
@@ -250,49 +255,49 @@ pub(super) fn tool_network(
 fn put_down_network(
     map: &TileMap,
     position: &MapPosition,
-    effects: ToolEffects,
+    mut effects: ToolEffects,
 ) -> Result<ToolResult, String> {
     let mut tile = effects
         .get_map_tile_at(map, position)
         .ok_or(format!("Cannot read tile at {}", position))?;
-    if !tile.is_dirt() {
-        if is_tile_auto_bulldozable(&tile).unwrap() {
-            effects = effects
-                .add_cost(EditingTool::Bulldozer.cost())
-                .add_modification(position, Tile::from_type(TileType::Dirt)?);
-            tile = Tile::from_type(TileType::Dirt).unwrap();
-        } else {
-            return Ok(ToolResult::NeedBulldoze);
-        }
+    if !tile.is_dirt() && is_tile_auto_bulldozable(&tile).unwrap() {
+        effects = effects
+            .add_cost(EditingTool::Bulldozer.cost())
+            .add_modification(position, Tile::from_type(TileType::Dirt)?);
+        tile = Tile::from_type(TileType::Dirt).unwrap();
     }
 
-    Ok(ToolResult::Succeeded(
-        effects
-            .add_cost(EditingTool::Network.cost())
-            .add_modification(
-                position,
-                Tile::from_raw(
-                    TileType::INDBASE2.to_u16().unwrap()
-                        | TILE_CONDUCT_BIT
-                        | TILE_BURN_BIT
-                        | TILE_BULL_BIT
-                        | TILE_ANIM_BIT,
-                )?,
-            ),
-    ))
+    if !tile.is_of_type(&TileType::Dirt) {
+        Ok(ToolResult::NeedBulldoze)
+    } else {
+        Ok(ToolResult::Succeeded(
+            effects
+                .add_cost(EditingTool::Network.cost())
+                .add_modification(
+                    position,
+                    Tile::from_raw(
+                        TileType::INDBASE2.to_u16().unwrap()
+                            | TILE_CONDUCT_BIT
+                            | TILE_BURN_BIT
+                            | TILE_BULL_BIT
+                            | TILE_ANIM_BIT,
+                    )?,
+                ),
+        ))
+    }
 }
 
 /// Place water at the give position.
 pub(super) fn tool_water(
     map: &TileMap,
     position: &MapPosition,
-    effects: ToolEffects,
+    mut effects: ToolEffects,
 ) -> Result<ToolResult, String> {
     tool_build_wrapper(
         map,
         position,
         effects,
-        |e| put_down_water(map, position, e),
+        |mut e| put_down_water(map, position, e),
         "Net",
     )
 }
@@ -310,18 +315,18 @@ pub(super) fn tool_land<R: Rng>(
         map,
         position,
         effects,
-        |e| {
+        |mut e| {
             if let Some(result) = e.chain_or_return(tool_bulldozer(
                 rng,
                 map,
                 position,
-                e,
+                e.clone(),
                 auto_bulldoze,
                 animations_enabled,
             )?) {
                 return Ok(result);
             }
-            put_down_land(map, position, effects)
+            put_down_land(map, position, e)
         },
         "Land",
     )
@@ -332,7 +337,7 @@ pub(super) fn tool_forest<R: Rng>(
     rng: &mut R,
     map: &TileMap,
     position: &MapPosition,
-    effects: ToolEffects,
+    mut effects: ToolEffects,
     auto_bulldoze: bool,
     animations_enabled: bool,
 ) -> Result<ToolResult, String> {
@@ -340,7 +345,7 @@ pub(super) fn tool_forest<R: Rng>(
         map,
         position,
         effects,
-        |e| {
+        |mut e| {
             let tile = e.get_map_value_at(map, position).ok_or(format!(
                 "tool_forest: cannot read effects tile at {}",
                 position
@@ -356,7 +361,7 @@ pub(super) fn tool_forest<R: Rng>(
                     rng,
                     map,
                     position,
-                    effects,
+                    e.clone(),
                     auto_bulldoze,
                     animations_enabled,
                 )?) {
@@ -383,7 +388,7 @@ pub(super) fn tool_forest<R: Rng>(
 pub(super) fn tool_build_building(
     map: &TileMap,
     center: &MapPosition,
-    effects: ToolEffects,
+    mut effects: ToolEffects,
     building_info: &BuildingInfo,
     auto_bulldoze: bool,
 ) -> Result<ToolResult, String> {
@@ -391,7 +396,7 @@ pub(super) fn tool_build_building(
         map,
         center,
         effects,
-        |e| build_building(map, center, &building_info, effects, auto_bulldoze),
+        |mut e| build_building(map, center, &building_info, e, auto_bulldoze),
         &*building_info.tool_name,
     )
 }
