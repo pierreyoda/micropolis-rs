@@ -68,7 +68,7 @@ impl TileMapConnector {
         map: &TileMap,
         position: &MapPosition,
         command: &ConnectTileCommand,
-        effects: ToolEffects,
+        mut effects: ToolEffects,
         auto_bulldoze: bool,
     ) -> Result<ToolResult, String> {
         if !map.in_bounds(position) {
@@ -119,7 +119,7 @@ impl TileMapConnector {
                 if let Some(result) = effects.chain_or_return(Self::bulldoze_tile(
                     map,
                     position,
-                    effects,
+                    effects.clone(),
                     auto_bulldoze,
                 )?) {
                     return Ok(result);
@@ -138,7 +138,7 @@ impl TileMapConnector {
     fn bulldoze_tile(
         map: &TileMap,
         position: &MapPosition,
-        effects: ToolEffects,
+        mut effects: ToolEffects,
         auto_bulldoze: bool,
     ) -> Result<ToolResult, String> {
         let mut tile_raw = effects
@@ -193,7 +193,7 @@ impl TileMapConnector {
     fn lay_down_road(
         map: &TileMap,
         position: &MapPosition,
-        effects: ToolEffects,
+        mut effects: ToolEffects,
     ) -> Result<ToolResult, String> {
         let mut cost: u32 = 0;
         let (x, y) = (position.x, position.y);
@@ -254,7 +254,7 @@ impl TileMapConnector {
     fn fix_zone(
         map: &TileMap,
         position: &MapPosition,
-        effects: ToolEffects,
+        mut effects: ToolEffects,
     ) -> Result<ToolEffects, String> {
         effects = Self::fix_single_tile(map, position, effects)?;
         let (x, y) = (position.x, position.y);
@@ -280,7 +280,7 @@ impl TileMapConnector {
     fn fix_single_tile(
         map: &TileMap,
         position: &MapPosition,
-        effects: ToolEffects,
+        mut effects: ToolEffects,
     ) -> Result<ToolEffects, String> {
         let mut adjacent_tiles: usize = 0;
         let (x, y) = (position.x, position.y);

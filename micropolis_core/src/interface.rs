@@ -1,5 +1,3 @@
-use std::cmp::min;
-
 use rand::Rng;
 
 use crate::{
@@ -25,6 +23,7 @@ impl MicropolisCoreInterfacer {
         position: &MapPosition,
         tool: &EditingTool,
     ) -> Result<(), String> {
+        let total_funds = self.city.total_funds();
         tool_down(
             rng,
             self.city.get_map_mut(),
@@ -32,7 +31,7 @@ impl MicropolisCoreInterfacer {
             tool,
             self.options.auto_bulldoze,
             self.options.animations_enabled,
-            self.city.total_funds(),
+            total_funds,
         )?;
 
         self.city.get_sim_mut().reset_pass_counter();
@@ -43,7 +42,7 @@ impl MicropolisCoreInterfacer {
 
     /// Drag a tool from one tile to another.
     pub fn tool_drag<R: Rng>(
-        &self,
+        &mut self,
         rng: &mut R,
         map: &mut TileMap,
         from: &MapPosition,
@@ -54,7 +53,7 @@ impl MicropolisCoreInterfacer {
         total_funds: u32,
     ) -> Result<(), String> {
         // do not drag big tools
-        if tool.size() > 1 {
+        if tool.clone().size() > 1 {
             apply_tool(
                 rng,
                 map,
@@ -121,7 +120,7 @@ impl MicropolisCoreInterfacer {
             _ => {
                 let delta = (*to - *from).unitary(0).absolute();
                 let sub_steps_count = delta.minimum_axis();
-                let (mut sub_x, sub_y) = (0, 0); // each X/Y step is DX/DY sub-steps
+                let (mut sub_x, mut sub_y) = (0, 0); // each X/Y step is DX/DY sub-steps
                 while current_from != current_to {
                     sub_x += sub_steps_count;
                     if sub_x >= delta.get_y() {
@@ -141,7 +140,7 @@ impl MicropolisCoreInterfacer {
                     sub_y += sub_steps_count;
                     if sub_y >= delta.get_x() {
                         sub_y -= delta.get_x();
-                        current_from = current_from.with_x_offset(direction.getyx() as i8);
+                        current_from = current_from.with_x_offset(direction.get_y() as i8);
                         apply_tool(
                             rng,
                             map,

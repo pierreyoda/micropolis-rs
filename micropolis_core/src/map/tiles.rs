@@ -1,19 +1,10 @@
 use serde::Serialize;
 use std::{fmt, rc::Rc};
 
-use super::tiles_type::{TileType, WOODS_HIGH, WOODS_LOW};
-use super::MapRectangle;
-
-#[derive(Clone, Debug)]
-pub struct BuildingInfo {
-    size: MapRectangle,
-}
-
-impl BuildingInfo {
-    pub fn get_size(&self) -> &MapRectangle {
-        &self.size
-    }
-}
+use super::{
+    buildings::BuildingInfo,
+    tiles_type::{TileType, WOODS_HIGH, WOODS_LOW},
+};
 
 #[derive(Clone, Debug)]
 pub struct TileSpec {
@@ -154,12 +145,16 @@ impl Tile {
     }
 
     pub fn is_of_type(&self, tile_type: &TileType) -> bool {
-        self.tile_type == Some(*tile_type)
+        if let Some(t) = &self.tile_type {
+            t == tile_type
+        } else {
+            false
+        }
     }
 
     pub fn is_any_of_types(&self, tile_types: &[TileType]) -> bool {
-        if let Some(tile_type) = self.tile_type {
-            tile_types.iter().any(|t| *t == tile_type)
+        if let Some(tile_type) = &self.tile_type {
+            tile_types.iter().any(|t| t == tile_type)
         } else {
             false
         }
