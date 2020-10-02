@@ -1,8 +1,13 @@
+use parameters::SimulationParameters;
+
 use super::City;
 use crate::game::{GameSpeed, GameSpeedPreset};
 use crate::map::{MapPosition, TileType};
 
+pub mod parameters;
+
 pub struct Simulation {
+    parameters: SimulationParameters,
     speed: GameSpeed,
     speed_cycle: u16,
     phase_cycle: u8,
@@ -17,6 +22,7 @@ pub struct Simulation {
 impl Simulation {
     pub fn new() -> Self {
         Self {
+            parameters: Default::default(),
             speed: GameSpeed::from(GameSpeedPreset::Normal),
             speed_cycle: 0,
             phase_cycle: 0,

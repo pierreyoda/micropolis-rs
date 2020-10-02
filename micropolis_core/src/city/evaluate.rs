@@ -106,7 +106,7 @@ impl CityEvaluator {
     }
 
     pub fn classify_city(population: &CityPopulation) -> CityClass {
-        match population.total {
+        match population.total_population() {
             n if n <= 2000 => CityClass::Village,
             n if n <= 10000 => CityClass::Town,
             n if n <= 50000 => CityClass::City,

@@ -58,6 +58,7 @@ pub struct City {
 impl City {
     pub fn new(name: String) -> Result<Self, String> {
         let map = Map::tilemap_with_dimensions(&MapRectangle::new(120, 100), TileType::Dirt)?; // TODO: loading
+        let population = CityPopulation::from_map(&map);
         let power = CityPower::from_map(&map);
         Ok(City {
             rng: OsRng,
@@ -69,9 +70,9 @@ impl City {
             roads_total: 0,
             rail_total: 0,
             fires_count: 0,
-            population: CityPopulation::from_map(&map),
+            population,
             sim: Simulation::new(),
-            power: CityPower::from_map(&map),
+            power,
         })
     }
 

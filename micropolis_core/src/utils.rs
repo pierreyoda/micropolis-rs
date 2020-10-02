@@ -1,6 +1,6 @@
 use std::cmp::min;
 
-use num_traits::Unsigned;
+use num_traits::Num;
 use rand::{distributions::uniform::SampleUniform, Rng};
 
 #[derive(Clone, Debug, PartialEq)]
@@ -21,8 +21,14 @@ impl Percentage {
     }
 }
 
+impl Into<Percentage> for f64 {
+    fn into(self) -> Percentage {
+        Percentage(self)
+    }
+}
+
 /// Generate a random integer in the given inclusive range.
-pub fn random_in_range<U: Unsigned + Ord + SampleUniform, R: Rng>(
+pub fn random_in_range<U: Copy + Num + Ord + SampleUniform, R: Rng>(
     rng: &mut R,
     lower: U,
     upper: U,
@@ -32,7 +38,7 @@ pub fn random_in_range<U: Unsigned + Ord + SampleUniform, R: Rng>(
 
 /// Generate a random integer in the given inclusive range with a bias
 /// towards smaller values.
-pub fn erandom_in_range<U: Unsigned + Ord + SampleUniform, R: Rng>(
+pub fn erandom_in_range<U: Copy + Num + Ord + SampleUniform, R: Rng>(
     rng: &mut R,
     lower: U,
     upper: U,
@@ -51,6 +57,10 @@ mod tests {
         assert_eq!(Percentage::from_integer(0).unwrap().value(), 0f64);
         assert_eq!(Percentage::from_integer(29).unwrap().value(), 0.29f64);
         assert_eq!(Percentage::from_integer(100).unwrap().value(), 1f64);
+        assert_eq!(
+            (Percentage)(0.79f64.into()),
+            Percentage::from_integer(79).unwrap()
+        );
         assert_eq!(Percentage::from_integer(103), None);
     }
 }
