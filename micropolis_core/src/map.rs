@@ -1,5 +1,6 @@
 use serde::Serialize;
 
+pub mod animations;
 pub mod buildings;
 pub mod connect;
 pub mod generator;
@@ -98,6 +99,10 @@ impl<T> Map<T> {
 
     pub fn tiles(&self) -> &MapData<T> {
         &self.data
+    }
+
+    pub fn tiles_mut(&mut self) -> &mut MapData<T> {
+        &mut self.data
     }
 
     pub fn get_tile_at(&self, position: &MapPosition) -> Option<&T> {

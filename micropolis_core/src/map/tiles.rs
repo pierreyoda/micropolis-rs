@@ -63,6 +63,13 @@ pub const TILE_BLBNBIT_MASK: u16 = TILE_BULL_BIT | TILE_BURN_BIT;
 pub const TILE_TYPE_MASK: u16 = 0b_0000_0011_1111_1111;
 /// Bits containing the status of the tile.
 pub const TILE_STATUS_MASK: u16 = TILE_TYPE_MASK ^ 0xFFFF;
+/// Mask for the bits-part of the tile.
+pub const TILE_ALL_BITS: u16 = TILE_ZONE_BIT
+    | TILE_ANIM_BIT
+    | TILE_BULL_BIT
+    | TILE_BURN_BIT
+    | TILE_CONDUCT_BIT
+    | TILE_POWER_BIT;
 /// Mask for the `MapTileCharacters` part of the tile.
 pub const TILE_LOW_MASK: u16 = 0x03ff;
 

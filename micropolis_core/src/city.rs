@@ -12,7 +12,7 @@ use power::CityPower;
 use rand::rngs::OsRng;
 use simulation::Simulation;
 
-use crate::map::{Map, MapRectangle, TileMap, TileType};
+use crate::map::{animations::TileMapAnimator, Map, MapRectangle, TileMap, TileType};
 
 pub enum CityInitializationState {
     Initialized = 0,
@@ -27,6 +27,8 @@ pub struct City {
     init_status: CityInitializationState,
     /// TileMap describing the city and its surroundings.
     map: TileMap,
+    /// TileMap animator.
+    map_animator: TileMapAnimator,
     /// Name of the city.
     name: String,
     /// Starting year of the city.
@@ -64,6 +66,7 @@ impl City {
             rng: OsRng,
             init_status: CityInitializationState::JustCreated,
             map,
+            map_animator: TileMapAnimator::load()?,
             name,
             starting_year: 1900,
             city_time: 0,
