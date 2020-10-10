@@ -1,4 +1,7 @@
-use std::{fs::File, io::BufRead, io::BufReader, io::Lines, path::Path};
+use std::{
+    collections::HashMap, convert::TryInto, fs::File, io::BufRead, io::BufReader, io::Lines,
+    path::Path,
+};
 
 const MAX_TILE_VALUE: usize = 1024;
 
@@ -9,14 +12,16 @@ pub(super) fn load_sequences_from_file<P: AsRef<Path>>(
 ) -> Result<TileAnimatorSequences, String> {
     let file = File::open(file_path).map_err(|why| why.to_string())?;
     let lines = BufReader::new(file).lines();
-    Ok(load_sequences(lines)?)
+    let parsed_lines = load_lines(lines)?;
+    Ok(load_sequences(parsed_lines)?)
 }
 
-fn load_sequences(lines: Lines<BufReader<File>>) -> Result<[u16; MAX_TILE_VALUE], String> {
-    let mut sequences = [0u16; MAX_TILE_VALUE];
-    let mut sequence_index: usize = 0;
+fn load_lines(lines: Lines<BufReader<File>>) -> Result<Vec<(usize, Vec<u16>)>, String> {
+    let mut line_number: usize = 0;
+    let mut parsed_lines: Vec<(usize, Vec<u16>)> = vec![];
 
     for line in lines {
+        line_number = line_number + 1;
         let mut line_string = match line {
             Ok(str) => str,
             Err(why) => return Err(why.to_string()),
@@ -29,17 +34,53 @@ fn load_sequences(lines: Lines<BufReader<File>>) -> Result<[u16; MAX_TILE_VALUE]
         if line_string.is_empty() {
             continue;
         }
+        let mut values: Vec<u16> = vec![];
         for value_raw in line_string.split("->").map(|v| v.trim()) {
-            let value = decode_sequence_value(value_raw)?;
-            *sequences.get_mut(sequence_index).ok_or(format!(
-                "TileAnimator::load_sequences: out of bounds tile sequence index {}",
-                sequence_index
-            ))? = value;
-            sequence_index += 1;
+            let tile_value = decode_sequence_value(value_raw)?;
+            values.push(tile_value);
+        }
+        parsed_lines.push((line_number, values));
+    }
+
+    Ok(parsed_lines)
+}
+
+fn load_sequences(parsed_lines: Vec<(usize, Vec<u16>)>) -> Result<[u16; MAX_TILE_VALUE], String> {
+    let mut next_hash = HashMap::new();
+    let mut line_hash = HashMap::new();
+
+    for (line_number, values) in parsed_lines {
+        let mut previous: Option<u16> = None;
+        for tile_value in values {
+            if let Some(previous_value) = previous {
+                if !next_hash.contains_key(&tile_value) {
+                    next_hash.insert(previous_value, tile_value);
+                    line_hash.insert(previous_value, line_number);
+                } else if next_hash.get(&previous_value) != Some(&tile_value) {
+                    return Err(
+                        format!("map.animations.loader::load_sequences: impossible sequence, two 'next' tiles for tile value {:0>4X} (at lines {:?} and {}).", previous_value, line_hash.get(&previous_value), line_number),
+                    );
+                } // else: entry already in table and same successor -> no-op
+            };
+            previous = Some(tile_value);
         }
     }
 
-    Ok(sequences)
+    let mut sequences: Vec<u16> = vec![];
+    for sequence_index in 0..MAX_TILE_VALUE {
+        sequences.push(
+            if let Some(tile_value) = next_hash.get(&(sequence_index as u16)) {
+                *tile_value
+            } else {
+                sequence_index as u16
+            },
+        );
+    }
+
+    let mut sequences_buffer: [u16; MAX_TILE_VALUE] = [0x00; MAX_TILE_VALUE];
+    sequences_buffer.copy_from_slice(&sequences[0..MAX_TILE_VALUE]);
+
+    Ok(sequences_buffer)
 }
 
 fn decode_sequence_value(raw: &str) -> Result<u16, String> {
@@ -52,7 +93,7 @@ fn decode_sequence_value(raw: &str) -> Result<u16, String> {
     }
     .map_err(|why| {
         format!(
-            "TileAnimator::decode_sequence_value('{}'): cannot parse as unsigned integer: {}",
+            "map.animations.loader::decode_sequence_value('{}'): cannot parse as unsigned integer: {}",
             raw,
             why.to_string()
         )
@@ -60,7 +101,7 @@ fn decode_sequence_value(raw: &str) -> Result<u16, String> {
     // sanity check
     if value as usize >= MAX_TILE_VALUE {
         Err(format!(
-            "TileAnimator::decode_sequence_value('{}'): value {} is too big",
+            "map.animations.loader::decode_sequence_value('{}'): value {} is too big",
             raw, value
         ))
     } else {
