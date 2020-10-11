@@ -2,10 +2,14 @@ use std::{
     cmp::max,
     cmp::min,
     fmt,
-    ops::{Add, Sub},
+    ops::{Add, AddAssign, Div, Mul, Shl, Shr, Sub, SubAssign},
 };
 
+use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::abs;
+use num_traits::{FromPrimitive as FromPrimitiveTrait, ToPrimitive as ToPrimitiveTrait};
+
+const DIRECTION_GD_TAB: [usize; 13] = [0, 3, 2, 1, 3, 4, 5, 7, 6, 5, 7, 8, 1];
 
 /// Represents a position on a 2D map.
 ///
@@ -28,6 +32,13 @@ impl MapPosition {
     }
     pub fn get_y(&self) -> i32 {
         self.y
+    }
+
+    pub fn set_x(&mut self, x: i32) {
+        self.x = x;
+    }
+    pub fn set_y(&mut self, y: i32) {
+        self.y = y;
     }
 
     pub fn as_tuple(&self) -> (i32, i32) {
@@ -91,6 +102,50 @@ impl MapPosition {
     pub fn axis_equalities_with(&self, other: &MapPosition) -> (bool, bool) {
         (self.x == other.x, self.y == other.y)
     }
+
+    /// Compute the Manhattan distance between the two positions.
+    pub fn distance_with(&self, other: &MapPosition) -> u32 {
+        let diff = (*self - *other).absolute();
+        (diff.x + diff.y) as u32
+    }
+
+    /// Compute the distance & direction to get from this position to the given destination.
+    pub fn direction_towards(&self, destination: &MapPosition) -> (u32, MapPositionOffset) {
+        let diff = *destination - *self;
+        let mut z = match diff.as_tuple() {
+            (x, y) if x < 0 => {
+                if y < 0 {
+                    11
+                } else {
+                    8
+                }
+            }
+            (_, y) => {
+                if y < 0 {
+                    2
+                } else {
+                    5
+                }
+            }
+        };
+
+        let (diff_x, diff_y) = diff.absolute().as_tuple();
+        z = if diff_x * 2 < diff_y {
+            z + 1
+        } else if diff_y * 2 < diff_y {
+            // TODO: always false!
+            z - 1
+        } else if z < 0 || z > 12 {
+            0
+        } else {
+            z
+        };
+
+        (
+            (diff_x + diff_y) as u32,
+            MAP_POSITION_DIRECTIONS[DIRECTION_GD_TAB[z]],
+        )
+    }
 }
 
 impl Into<MapPosition> for (i32, i32) {
@@ -122,6 +177,13 @@ impl Add for MapPosition {
     }
 }
 
+impl AddAssign for MapPosition {
+    fn add_assign(&mut self, rhs: MapPosition) {
+        self.x += rhs.x;
+        self.y += rhs.y;
+    }
+}
+
 impl Sub for MapPosition {
     type Output = Self;
 
@@ -129,6 +191,57 @@ impl Sub for MapPosition {
         Self {
             x: self.x - other.x,
             y: self.y - other.y,
+        }
+    }
+}
+
+impl SubAssign for MapPosition {
+    fn sub_assign(&mut self, rhs: MapPosition) {
+        self.x -= rhs.x;
+        self.y -= rhs.y;
+    }
+}
+
+impl Shl<usize> for MapPosition {
+    type Output = Self;
+
+    fn shl(self, rhs: usize) -> Self::Output {
+        Self {
+            x: self.x << rhs,
+            y: self.y << rhs,
+        }
+    }
+}
+
+impl Shr<usize> for MapPosition {
+    type Output = Self;
+
+    fn shr(self, rhs: usize) -> Self::Output {
+        Self {
+            x: self.x >> rhs,
+            y: self.y >> rhs,
+        }
+    }
+}
+
+impl Mul<i32> for MapPosition {
+    type Output = Self;
+
+    fn mul(self, rhs: i32) -> Self::Output {
+        Self {
+            x: self.x * rhs,
+            y: self.y * rhs,
+        }
+    }
+}
+
+impl Div<i32> for MapPosition {
+    type Output = Self;
+
+    fn div(self, rhs: i32) -> Self::Output {
+        Self {
+            x: self.x / rhs,
+            y: self.y / rhs,
         }
     }
 }
@@ -190,7 +303,7 @@ impl fmt::Display for MapRectangle {
 }
 
 /// Describes a tile position relative to an adjacent tile.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, FromPrimitive, ToPrimitive)]
 pub enum MapPositionOffset {
     None,
     NorthWest,
@@ -288,6 +401,17 @@ impl MapPositionOffset {
             South => North,
             SouthWest => NorthEast,
             West => East,
+        }
+    }
+
+    pub fn from_usize(value: usize) -> Option<Self> {
+        FromPrimitiveTrait::from_usize(value)
+    }
+
+    pub fn to_usize(&self) -> Option<usize> {
+        match self {
+            MapPositionOffset::None => None,
+            _ => ToPrimitiveTrait::to_usize(self),
         }
     }
 }

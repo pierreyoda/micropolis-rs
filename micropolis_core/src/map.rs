@@ -13,6 +13,8 @@ pub use position::*;
 pub use tiles::Tile;
 pub use tiles_type::TileType;
 
+use self::tiles::TILE_LOW_MASK;
+
 pub const WORLD_WIDTH: usize = 120;
 pub const WORLD_HEIGHT: usize = 100;
 
@@ -77,11 +79,12 @@ impl<T> Map<T> {
     }
 
     pub fn in_bounds(&self, position: &MapPosition) -> bool {
-        if position.x < 0 || position.y < 0 || position.x >= self.data.len() as i32 {
+        let transformed = self.clustering_strategy.transform(position);
+        if transformed.x < 0 || transformed.y < 0 || transformed.x >= self.data.len() as i32 {
             false
         } else {
             match self.data.first() {
-                Some(first) => position.y < first.len() as i32,
+                Some(first) => transformed.y < first.len() as i32,
                 None => false,
             }
         }
@@ -143,5 +146,10 @@ impl Map<Tile> {
             data: tilemap,
             clustering_strategy: MapClusteringStrategy::BlockSize8,
         })
+    }
+
+    pub fn get_tile_char_at(&self, position: &MapPosition) -> Option<u16> {
+        self.get_tile_at(position)
+            .and_then(|t| Some(t.get_raw() & TILE_LOW_MASK))
     }
 }

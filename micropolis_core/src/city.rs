@@ -1,10 +1,13 @@
 pub mod budget;
+pub mod disasters;
 pub mod evaluate;
 pub mod meta;
 pub mod population;
 pub mod power;
 pub mod reports;
 pub mod simulation;
+pub mod sprite;
+pub mod traffic;
 
 use budget::MoneyValue;
 use population::CityPopulation;
