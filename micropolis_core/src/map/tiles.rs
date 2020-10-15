@@ -170,6 +170,15 @@ impl Tile {
     pub fn is_conductive(&self) -> bool {
         self.get_type_raw() & TILE_POWER_BIT == TILE_POWER_BIT
     }
+
+    /// Can the given tile be used as a road?
+    pub fn is_driveable(&self) -> bool {
+        let tile_value = self.get_type_raw() & TILE_LOW_MASK;
+        tile_value >= TileType::HorizontalBridge.to_u16().unwrap()
+            && tile_value <= TileType::VerticalRailRoad.to_u16().unwrap()
+            && (tile_value < TileType::HorizontalPower.to_u16().unwrap()
+                || tile_value >= TileType::RailVerticalPowerHorizontal.to_u16().unwrap())
+    }
 }
 
 #[cfg(test)]

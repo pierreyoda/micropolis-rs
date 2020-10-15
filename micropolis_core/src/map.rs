@@ -131,6 +131,26 @@ impl<T> Map<T> {
         }
         false
     }
+
+    pub fn get_neighboring_tile_at(
+        &self,
+        position: &MapPosition,
+        direction: &MapPositionOffset,
+        default_if_out_of_bounds: &T,
+    ) -> &T {
+        if direction.is_cardinal() {
+            if let Some(neighboring_position) = direction.apply_with_bounds(position, self.bounds())
+            {
+                self.get_tile_at(&neighboring_position)
+                    .or(Some(default_if_out_of_bounds))
+                    .unwrap()
+            } else {
+                default_if_out_of_bounds
+            }
+        } else {
+            default_if_out_of_bounds
+        }
+    }
 }
 
 pub type TileMap = Map<Tile>;

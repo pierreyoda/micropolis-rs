@@ -388,6 +388,22 @@ impl MapPositionOffset {
         }
     }
 
+    /// Get the direction rotated by 90 degrees clock-wise.
+    pub fn rotated_90(&self) -> MapPositionOffset {
+        use MapPositionOffset::*;
+        match self {
+            None => None,
+            NorthWest => NorthEast,
+            North => East,
+            NorthEast => SouthEast,
+            East => South,
+            SouthEast => SouthWest,
+            South => West,
+            SouthWest => NorthWest,
+            West => North,
+        }
+    }
+
     /// Get the direction rotated by 180 degrees clock-wise.
     pub fn rotated_180(&self) -> MapPositionOffset {
         use MapPositionOffset::*;
@@ -414,11 +430,19 @@ impl MapPositionOffset {
             _ => ToPrimitiveTrait::to_usize(self),
         }
     }
+
+    pub fn is_cardinal(&self) -> bool {
+        use MapPositionOffset::*;
+        match self {
+            North | East | South | West => true,
+            _ => false,
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{MapPosition, MapRectangle};
+    use super::{MapPosition, MapPositionOffset, MapRectangle};
 
     #[test]
     fn test_position_addition() {
@@ -463,5 +487,17 @@ mod tests {
     #[test]
     fn test_rectangle_tuple() {
         assert_eq!(MapRectangle::new(120, 100).get_tuple(), (120, 100),);
+    }
+
+    #[test]
+    fn test_cardinal_directions() {
+        assert_eq!(MapPositionOffset::North.is_cardinal(), true);
+        assert_eq!(MapPositionOffset::East.is_cardinal(), true);
+        assert_eq!(MapPositionOffset::South.is_cardinal(), true);
+        assert_eq!(MapPositionOffset::West.is_cardinal(), true);
+        assert_eq!(MapPositionOffset::NorthEast.is_cardinal(), true);
+        assert_eq!(MapPositionOffset::NorthWest.is_cardinal(), true);
+        assert_eq!(MapPositionOffset::SouthEast.is_cardinal(), true);
+        assert_eq!(MapPositionOffset::SouthWest.is_cardinal(), true);
     }
 }

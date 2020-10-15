@@ -8,6 +8,7 @@ pub mod reports;
 pub mod simulation;
 pub mod sprite;
 pub mod traffic;
+pub mod zoning;
 
 use budget::MoneyValue;
 use population::CityPopulation;
