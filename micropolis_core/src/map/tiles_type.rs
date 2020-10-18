@@ -362,6 +362,10 @@ impl TileType {
         FromPrimitiveTrait::from_u16(value)
     }
 
+    pub fn from_usize(value: usize) -> Option<Self> {
+        FromPrimitiveTrait::from_usize(value)
+    }
+
     pub fn to_i16(&self) -> Option<i16> {
         ToPrimitiveTrait::to_i16(self)
     }
@@ -370,6 +374,13 @@ impl TileType {
         match self {
             TileType::Invalid => None,
             _ => ToPrimitiveTrait::to_u16(self),
+        }
+    }
+
+    pub fn to_usize(&self) -> Option<usize> {
+        match self {
+            TileType::Invalid => None,
+            _ => ToPrimitiveTrait::to_usize(self),
         }
     }
 }

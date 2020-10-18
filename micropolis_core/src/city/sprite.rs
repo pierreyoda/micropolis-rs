@@ -287,43 +287,43 @@ impl SpriteType {
 /// A Sprite is a moveable, animatable entity on the map.
 pub struct Sprite {
     /// Entity type of the sprite.
-    kind: SpriteType,
+    pub(crate) kind: SpriteType,
     /// Name of the sprite.
-    name: String,
+    pub(crate) name: String,
     /// Current frame (0 means non-active sprite).
-    frame: u32,
+    pub(crate) frame: u32,
     /// Position in **pixels**,
-    position: MapPosition,
+    pub(crate) position: MapPosition,
     /// Size in **pixels**.
-    size: MapRectangle,
+    pub(crate) size: MapRectangle,
     /// Offset.
-    offset: MapPosition,
+    pub(crate) offset: MapPosition,
     /// Offset of the hot-sport, relative to `position`.
-    hot_offset: MapPosition,
+    pub(crate) hot_offset: MapPosition,
     /// Origin.
-    origin: MapPosition,
+    pub(crate) origin: MapPosition,
     /// Destination.
-    destination: MapPosition,
+    pub(crate) destination: MapPosition,
     /// TODO: ?
-    count: u32,
+    pub(crate) count: u32,
     /// TODO: ?
-    sound_count: u32,
+    pub(crate) sound_count: u32,
     /// Direction.
-    direction: usize,
+    pub(crate) direction: usize,
     /// New direction.
-    new_direction: usize,
+    pub(crate) new_direction: usize,
     /// TODO: ?
-    step: u32,
+    pub(crate) step: u32,
     /// TODO: ?
-    flag: u32,
+    pub(crate) flag: u32,
     /// TODO: ?
-    control: i32,
+    pub(crate) control: i32,
     /// TODO: ?
-    turn: u32,
+    pub(crate) turn: u32,
     /// Speed.
-    speed: u32,
+    pub(crate) speed: u32,
     /// Acceleration.
-    acceleration: u32,
+    pub(crate) acceleration: u32,
 }
 
 impl Sprite {
@@ -413,6 +413,13 @@ impl ActiveSpritesList {
     /// Returns the sprite of the given type, if available and active.
     pub fn get_sprite(&self, kind: &SpriteType) -> Option<&Sprite> {
         self.pool.iter().find(|s| s.kind == *kind && s.frame != 0)
+    }
+
+    /// Returns the mutable sprite of the given type, if available and active.
+    pub fn get_sprite_mut(&self, kind: &SpriteType) -> Option<&mut Sprite> {
+        self.pool
+            .iter_mut()
+            .find(|s| s.kind == *kind && s.frame != 0)
     }
 
     /// Destroy all sprites by de-activating them all (by setting their `frame` to 0).
