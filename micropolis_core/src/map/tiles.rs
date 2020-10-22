@@ -171,13 +171,28 @@ impl Tile {
         self.get_type_raw() & TILE_POWER_BIT == TILE_POWER_BIT
     }
 
-    /// Can the given tile be used as a road?
+    /// Can the current tile be used as a road?
     pub fn is_driveable(&self) -> bool {
         let tile_value = self.get_type_raw() & TILE_LOW_MASK;
         tile_value >= TileType::HorizontalBridge.to_u16().unwrap()
             && tile_value <= TileType::VerticalRailRoad.to_u16().unwrap()
             && (tile_value < TileType::HorizontalPower.to_u16().unwrap()
                 || tile_value >= TileType::RailVerticalPowerHorizontal.to_u16().unwrap())
+    }
+
+    /// Is the current tile vulnerable to an earthquake?
+    pub fn is_vulnerable(&self) -> bool {
+        let tile_value = self.get_type_raw() & TILE_LOW_MASK;
+        tile_value >= TileType::ResidentialBase.to_u16().unwrap()
+            && tile_value <= TileType::LastZone.to_u16().unwrap()
+            && tile_value & TILE_ZONE_BIT == 0x00
+    }
+
+    /// Is the current tile floodable?
+    pub fn is_floodable(&self) -> bool {
+        let tile_value = self.get_type_raw() & TILE_LOW_MASK;
+        tile_value == TileType::Dirt.to_u16().unwrap()
+            || (tile_value & (TILE_BULL_BIT | TILE_BURN_BIT) == TILE_BULL_BIT | TILE_BURN_BIT)
     }
 }
 

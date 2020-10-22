@@ -1,8 +1,12 @@
 use parameters::SimulationParameters;
 
 use super::City;
-use crate::game::{GameSpeed, GameSpeedPreset};
 use crate::map::{MapPosition, TileType};
+use crate::{
+    game::{GameSpeed, GameSpeedPreset},
+    map::Tile,
+    utils::clamp,
+};
 
 pub mod parameters;
 
@@ -132,5 +136,12 @@ impl Simulation {
         }
 
         Ok(())
+    }
+
+    /// Handle a zone on fire.
+    ///
+    /// Decreases rate of growth of the zone, and makes remaining tiles bulldozable.
+    pub fn fire_zone(position: &MapPosition, tile: &Tile) -> Result<(), String> {
+        let mut value = clamp();
     }
 }

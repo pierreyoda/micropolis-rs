@@ -8,6 +8,9 @@ use std::{
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::abs;
 use num_traits::{FromPrimitive as FromPrimitiveTrait, ToPrimitive as ToPrimitiveTrait};
+use rand::Rng;
+
+use crate::utils::random_in_range;
 
 const DIRECTION_GD_TAB: [usize; 13] = [0, 3, 2, 1, 3, 4, 5, 7, 6, 5, 7, 8, 1];
 
@@ -25,6 +28,13 @@ pub struct MapPosition {
 impl MapPosition {
     pub fn new(x: i32, y: i32) -> Self {
         Self { x, y }
+    }
+
+    pub fn new_random<R: Rng>(rng: &mut R, bounds: &MapRectangle) -> Self {
+        Self {
+            x: random_in_range(rng, 0, bounds.width as i32),
+            y: random_in_range(rng, 0, bounds.height as i32),
+        }
     }
 
     pub fn get_x(&self) -> i32 {

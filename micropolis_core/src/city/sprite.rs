@@ -410,6 +410,11 @@ impl ActiveSpritesList {
         }
     }
 
+    /// Add a new sprite to the pool.
+    pub fn add_sprite(&mut self, sprite: Sprite) {
+        self.pool.push(sprite);
+    }
+
     /// Returns the sprite of the given type, if available and active.
     pub fn get_sprite(&self, kind: &SpriteType) -> Option<&Sprite> {
         self.pool.iter().find(|s| s.kind == *kind && s.frame != 0)

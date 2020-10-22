@@ -27,6 +27,17 @@ impl Into<Percentage> for f64 {
     }
 }
 
+/// Clamp a value between [min, max].
+pub fn clamp<U: Num + Ord>(value: U, lower: U, upper: U) -> U {
+    if value < lower {
+        lower
+    } else if value > upper {
+        upper
+    } else {
+        value
+    }
+}
+
 /// Generate a random integer in the given inclusive range.
 pub fn random_in_range<U: Copy + Num + Ord + SampleUniform, R: Rng>(
     rng: &mut R,
@@ -34,6 +45,11 @@ pub fn random_in_range<U: Copy + Num + Ord + SampleUniform, R: Rng>(
     upper: U,
 ) -> U {
     rng.gen_range(lower, upper + U::one())
+}
+
+/// Get a random 16 bit integer.
+pub fn random_16<R: Rng>(rng: &mut R) -> u16 {
+    rng.gen_range(0, u16::MAX)
 }
 
 /// Generate a random integer in the given inclusive range with a bias
