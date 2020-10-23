@@ -24,11 +24,11 @@ impl PowerMap {
 }
 
 pub struct CityPower {
-    power_grid_map: PowerMap,
+    pub(crate) power_grid_map: PowerMap,
     /// Number of coal power plants on the map.
-    coal_generators_count: usize,
+    pub(crate) coal_generators_count: usize,
     /// Number of nuclear power plants on the map.
-    nuclear_generators_count: usize,
+    pub(crate) nuclear_generators_count: usize,
     /// Stack used to find powered tiles by tracking conductive tiles.
     ///
     /// Points to top-most item in the power stack.
