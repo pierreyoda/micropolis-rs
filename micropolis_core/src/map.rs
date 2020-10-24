@@ -70,7 +70,7 @@ pub struct Map<T> {
     data: MapData<T>,
 }
 
-impl<T> Map<T> {
+impl<T: Clone> Map<T> {
     pub fn with_data(data: MapData<T>, clustering_strategy: MapClusteringStrategy) -> Self {
         Self {
             data,
@@ -136,13 +136,15 @@ impl<T> Map<T> {
         &self,
         position: &MapPosition,
         direction: &MapPositionOffset,
-        default_if_out_of_bounds: &T,
-    ) -> &T {
+        default_if_out_of_bounds: T,
+    ) -> T {
         if direction.is_cardinal() {
-            if let Some(neighboring_position) = direction.apply_with_bounds(position, self.bounds())
+            if let Some(neighboring_position) =
+                direction.apply_with_bounds(position, &self.bounds())
             {
                 self.get_tile_at(&neighboring_position)
-                    .or(Some(default_if_out_of_bounds))
+                    .or(Some(&default_if_out_of_bounds))
+                    .cloned()
                     .unwrap()
             } else {
                 default_if_out_of_bounds

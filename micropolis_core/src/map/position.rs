@@ -313,7 +313,7 @@ impl fmt::Display for MapRectangle {
 }
 
 /// Describes a tile position relative to an adjacent tile.
-#[derive(Clone, Debug, PartialEq, Eq, FromPrimitive, ToPrimitive)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, FromPrimitive, ToPrimitive)]
 pub enum MapPositionOffset {
     None,
     NorthWest,

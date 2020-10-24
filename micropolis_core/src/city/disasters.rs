@@ -55,11 +55,12 @@ impl CityDisasters {
             }
             GameScenario::Hamburg if self.disaster_timer % 10 == 0 => Self::make_fire_bombs(rng)?,
             GameScenario::Bern => (),
-            GameScenario::Tokyo if self.disaster_timer == 1 => Self::make_monster(),
-            GameScenario::Detroit => (),
-            GameScenario::Boston if self.disaster_timer == 1 => Self::make_meltdown(),
-            GameScenario::Rio if (self.disaster_timer % 24) == 0 => Self::make_flood(),
+            // GameScenario::Tokyo if self.disaster_timer == 1 => Self::make_monster(),
+            // GameScenario::Detroit => (),
+            // GameScenario::Boston if self.disaster_timer == 1 => Self::make_meltdown(),
+            // GameScenario::Rio if (self.disaster_timer % 24) == 0 => Self::make_flood(),
             GameScenario::None => unreachable!(),
+            _ => todo!(),
         }
 
         if self.disaster_timer > 0 {
@@ -142,8 +143,9 @@ impl CityDisasters {
             random_in_range(rng, 0, (WORLD_WIDTH - 1) as i32),
             random_in_range(rng, 0, (WORLD_HEIGHT - 1) as i32),
         );
-        Self::make_explosion(map, &crash_position)
+        // Self::make_explosion(map, &crash_position)
         // TODO: sendMessage(MESSAGE_FIREBOMBING, crash_position, true, true)
+        todo!()
     }
 
     /// Throw several bombs onto the city.
@@ -296,10 +298,10 @@ impl CityDisasters {
                 }
             }
         } else {
-            if random_16(rng) & 0x0F == 0x00 {
-                // 1/16 chance
-                map.set_tile_at(position, Tile::from_type(TileType::Dirt)?);
-            }
+            // if random_16(rng) & 0x0F == 0x00 {
+            //     // 1/16 chance
+            //     map.set_tile_at(position, Tile::from_type(TileType::Dirt)?);
+            // }
         }
 
         Ok(())
@@ -310,10 +312,10 @@ impl CityDisasters {
         if !map.in_bounds(at) {
             return;
         }
-        Self::make_explosion_at(&MapPosition::new(
-            (at.get_x() << 4) + 8,
-            (at.get_y() << 4) + 8,
-        ))
+        // Self::make_explosion_at(&MapPosition::new(
+        //     (at.get_x() << 4) + 8,
+        //     (at.get_y() << 4) + 8,
+        // ))
     }
 
     /// Construct an explosion sprite.
@@ -326,7 +328,7 @@ impl CityDisasters {
         sprites.add_sprite(Sprite::new(
             rng,
             "".into(),
-            SpriteType::Explosion,
+            &SpriteType::Explosion,
             *at - (40, 16).into(),
             &max_pollution_at,
         ))

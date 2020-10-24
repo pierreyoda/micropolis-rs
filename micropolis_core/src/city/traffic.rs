@@ -156,7 +156,7 @@ impl CityTraffic {
         let mut previous_direction = MapPositionOffset::None;
         let mut current_position = from.clone();
 
-        for distance in 0..MAX_TRAFFIC_LOOKUP_DISTANCE {
+        for mut distance in 0..MAX_TRAFFIC_LOOKUP_DISTANCE {
             let direction =
                 Self::try_random_driving(rng, map, &current_position, &previous_direction)?;
             if direction != MapPositionOffset::None {
@@ -202,7 +202,7 @@ impl CityTraffic {
                 let adjacent_tile = map.get_neighboring_tile_at(
                     from,
                     &direction,
-                    &Tile::from_type(TileType::Dirt).unwrap(),
+                    Tile::from_type(TileType::Dirt).unwrap(),
                 );
                 if adjacent_tile.is_driveable() {
                     // found a road in an allowed direction

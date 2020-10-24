@@ -12,7 +12,6 @@ use crate::{
         tiles::{TILE_CONDUCT_BIT, TILE_POWER_BIT, TILE_ZONE_BIT},
         Map, MapClusteringStrategy, MapPosition, TileMap, TileType,
     },
-    utils::random_in_range,
 };
 use crate::{
     game::{GameSpeed, GameSpeedPreset},
@@ -293,7 +292,7 @@ impl Simulation {
             TileType::Nuclear => {
                 // if disasters_enabled && random_in_range(rng, 0, ZONE_MELTDOWN_TABLE[])
             }
-            todo!()
+            _ => todo!(),
         }
 
         Ok(())

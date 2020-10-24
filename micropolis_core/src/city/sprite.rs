@@ -32,7 +32,7 @@ impl SpriteType {
     pub fn init_sprite<R: Rng>(
         &self,
         rng: &mut R,
-        sprite: Sprite,
+        mut sprite: Sprite,
         max_pollution_at: &MapPosition,
     ) -> Sprite {
         use SpriteType::*;
@@ -138,7 +138,8 @@ impl SpriteType {
         use SpriteType::*;
         match self {
             &Train => self.update_train(rng, map, sprite, sprite_cycle),
-            &Helicopter => self.update_helicopter(rng, map, sprite, sprite_cycle),
+            // &Helicopter => self.update_helicopter(rng, map, sprite, sprite_cycle),
+            _ => todo!(),
         }
     }
 
@@ -330,14 +331,14 @@ impl Sprite {
     pub fn new<R: Rng>(
         rng: &mut R,
         name: String,
-        kind: SpriteType,
+        kind: &SpriteType,
         position: MapPosition,
         max_pollution_at: &MapPosition,
     ) -> Self {
         kind.init_sprite(
             rng,
             Self {
-                kind,
+                kind: kind.clone(),
                 name,
                 frame: 0,
                 position,

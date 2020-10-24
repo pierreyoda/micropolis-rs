@@ -78,7 +78,7 @@ impl City {
             rail_total: 0,
             fires_count: 0,
             population,
-            sim: Simulation::new(),
+            sim: Simulation::new(&map),
             power,
         })
     }

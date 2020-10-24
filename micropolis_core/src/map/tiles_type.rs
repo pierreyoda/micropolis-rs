@@ -71,6 +71,7 @@ pub enum TileType {
     Roads2 = 67,
     Roads3 = 68,
     Roads4 = 69,
+    Roads5 = 70,
     Roads6 = 71,
     Roads7 = 72,
     Roads8 = 73,
