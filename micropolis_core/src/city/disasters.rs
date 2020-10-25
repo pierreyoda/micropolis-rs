@@ -150,7 +150,7 @@ impl CityDisasters {
 
     /// Throw several bombs onto the city.
     fn make_fire_bombs<R: Rng>(rng: &mut R) -> Result<(), String> {
-        let count = 2 + random_in_range(rng, 0, u16::MAX);
+        let mut count = 2 + random_in_range(rng, 0, u16::MAX);
         while count > 0 {
             Self::fire_bomb(rng)?;
             count -= 1;

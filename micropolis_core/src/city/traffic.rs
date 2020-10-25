@@ -54,7 +54,7 @@ impl CityTraffic {
     ///
     /// Returns true if connection found.
     pub fn spawn_traffic_at<R: Rng>(
-        &self,
+        &mut self,
         rng: &mut R,
         map: &TileMap,
         at: &MapPosition,

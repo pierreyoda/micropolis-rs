@@ -23,10 +23,10 @@ pub mod parameters;
 
 const ZONE_MELTDOWN_TABLE: [i16; 3] = [30000, 20000, 10000];
 const SMOKE_TILES: [u16; 4] = [
-    TileType::CoalSmoke1.to_u16().unwrap(),
-    TileType::CoalSmoke2.to_u16().unwrap(),
-    TileType::CoalSmoke3.to_u16().unwrap(),
-    TileType::CoalSmoke4.to_u16().unwrap(),
+    916, // TileType::CoalSmoke1.to_u16().unwrap(),
+    920, // TileType::CoalSmoke2.to_u16().unwrap(),
+    924, // TileType::CoalSmoke3.to_u16().unwrap(),
+    928, // TileType::CoalSmoke4.to_u16().unwrap(),
 ];
 const SMOKE_DX: [i32; 4] = [1, 2, 1, 2];
 const SMOKE_DY: [i32; 4] = [-1, -1, 0, 0];

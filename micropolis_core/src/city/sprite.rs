@@ -422,7 +422,7 @@ impl ActiveSpritesList {
     }
 
     /// Returns the mutable sprite of the given type, if available and active.
-    pub fn get_sprite_mut(&self, kind: &SpriteType) -> Option<&mut Sprite> {
+    pub fn get_sprite_mut(&mut self, kind: &SpriteType) -> Option<&mut Sprite> {
         self.pool
             .iter_mut()
             .find(|s| s.kind == *kind && s.frame != 0)

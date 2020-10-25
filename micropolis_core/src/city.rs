@@ -55,10 +55,10 @@ pub struct City {
     fires_count: u32,
     /// Population counts.
     population: CityPopulation,
-    /// Global simulation.
-    sim: Simulation,
     /// Electricity simulation.
     power: CityPower,
+    /// Global simulation.
+    sim: Simulation,
 }
 
 impl City {
@@ -66,6 +66,7 @@ impl City {
         let map = Map::tilemap_with_dimensions(&MapRectangle::new(120, 100), TileType::Dirt)?; // TODO: loading
         let population = CityPopulation::from_map(&map);
         let power = CityPower::from_map(&map);
+        let sim = Simulation::new(&map);
         Ok(City {
             rng: OsRng,
             init_status: CityInitializationState::JustCreated,
@@ -78,8 +79,8 @@ impl City {
             rail_total: 0,
             fires_count: 0,
             population,
-            sim: Simulation::new(&map),
             power,
+            sim,
         })
     }
 

@@ -1,3 +1,5 @@
+#![feature(const_option)]
+
 pub mod city;
 pub mod game;
 pub mod interface;
