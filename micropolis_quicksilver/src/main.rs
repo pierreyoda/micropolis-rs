@@ -1,7 +1,5 @@
 mod tiles;
 
-// use std::panic;
-
 use quicksilver::{
     graphics::Color, input::Event, input::Key, run, Graphics, Input, Result, Settings, Window,
 };
@@ -12,7 +10,7 @@ use micropolis_rs_core::map::MapRectangle;
 use micropolis_rs_core::utils::Percentage;
 use tiles::TilesRenderer;
 
-async fn micropolis_client(mut window: Window, mut gfx: Graphics, mut input: Input) -> Result<()> {
+async fn micropolis_client(window: Window, mut gfx: Graphics, mut input: Input) -> Result<()> {
     println!("Initializing micropolis-rs...");
 
     // init terrain generator
@@ -54,10 +52,12 @@ async fn micropolis_client(mut window: Window, mut gfx: Graphics, mut input: Inp
 }
 
 fn main() {
+    // let root_path = env::current_dir().unwrap();
+    // let icon_path = format!("{:?}/test.png", root_path);
     run(
         Settings {
             title: "micropolis-rs",
-            icon_path: Some("test.png"),
+            // icon_path: Some(&icon_path[..]),
             ..Settings::default()
         },
         micropolis_client,
