@@ -1,6 +1,7 @@
 {
     "presets": [
       "next/babel",
+      "@babel/preset-typescript",
       "@emotion/babel-preset-css-prop"
     ],
     "env": {
