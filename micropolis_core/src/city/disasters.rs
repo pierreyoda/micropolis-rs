@@ -91,7 +91,7 @@ impl CityDisasters {
         Ok(())
     }
 
-    fn do_meltdown<R: Rng>(
+    pub fn do_meltdown<R: Rng>(
         rng: &mut R,
         map: &mut TileMap,
         position: &MapPosition,

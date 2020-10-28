@@ -1,7 +1,7 @@
 use parameters::SimulationParameters;
 use rand::Rng;
 
-use super::{power::CityPower, City};
+use super::{disasters::CityDisasters, power::CityPower, City};
 use crate::{
     game::GameLevelDifficulty,
     map::{
@@ -12,6 +12,7 @@ use crate::{
         tiles::{TILE_CONDUCT_BIT, TILE_POWER_BIT, TILE_ZONE_BIT},
         Map, MapClusteringStrategy, MapPosition, TileMap, TileType,
     },
+    utils::random_in_range,
 };
 use crate::{
     game::{GameSpeed, GameSpeedPreset},
@@ -265,6 +266,7 @@ impl Simulation {
     /// Update special zones.
     fn do_special_zone<R: Rng>(
         &mut self,
+        rng: &mut R,
         map: &mut TileMap,
         power: &mut CityPower,
         at: &MapPosition,
@@ -284,13 +286,17 @@ impl Simulation {
             TileType::PowerPlant => {
                 power.coal_generators_count += 1;
                 if self.city_time & 0x07 == 0x00 {
-                    self.repair_zone(map, at, 4);
+                    self.repair_zone(map, at, 4)?;
                 }
-                power.push_power_stack(at.clone());
+                power.push_power_stack(*at);
                 self.coal_smoke(map, at)?
             }
             TileType::Nuclear => {
-                // if disasters_enabled && random_in_range(rng, 0, ZONE_MELTDOWN_TABLE[])
+                // if disasters_enabled
+                //     && random_in_range(rng, 0, ZONE_MELTDOWN_TABLE[difficulty.to_usize().unwrap()])
+                // {
+                //     CityDisasters::do_meltdown(rng, map, at)?;
+                // }
             }
             _ => todo!(),
         }
