@@ -1,0 +1,10 @@
+**/.git
+**/github
+**/vscode
+**/target
+
+**/node_modules
+
+.dockerignore
+Dockerfile
+docker-compose.yml
