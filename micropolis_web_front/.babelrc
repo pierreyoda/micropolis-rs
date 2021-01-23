@@ -1,24 +1,16 @@
 {
     "presets": [
       "next/babel",
-      "@babel/preset-typescript",
-      "@emotion/babel-preset-css-prop"
+      "@babel/preset-typescript"
     ],
     "env": {
       "production": {
         "plugins": [
-          "emotion",
           "macros"
         ]
       },
       "development": {
         "plugins": [
-          [
-            "emotion",
-            {
-              "sourceMap": true
-            }
-          ],
           "macros"
         ]
       }

@@ -1,6 +1,4 @@
 import React, { useCallback, FunctionComponent } from "react";
-import tw from "tailwind.macro";
-import styled from "@emotion/styled";
 
 export interface TextInputProps {
   value: string;
@@ -8,25 +6,22 @@ export interface TextInputProps {
   placeholder?: string;
 }
 
-const CustomInput = styled.input`
-  ${tw`w-full block appearance-none leading-normal`};
-  ${tw`bg-white border border-gray-300 rounded-lg py-2 px-4`};
-  &:focus {
-    ${tw`outline-none shadow-outline`};
-  }
-`;
+const inputClasses =
+  "w-full block appearance-none leading-normal" +
+  "bg-white border border-gray-300 rounded-lg py-2 px-4";
 
 const TextInput: FunctionComponent<TextInputProps> = ({
   value,
   onChange,
   placeholder = "",
 }) => (
-  <CustomInput
+  <input
     tabIndex={0}
     type="text"
     value={value}
     onChange={useCallback(e => onChange(e.target.value), [onChange])}
     placeholder={placeholder}
+    className={`${inputClasses} focus:outline-none focus:shadow-outline`}
   />
 );
 

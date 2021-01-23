@@ -24,7 +24,7 @@
       "ecmaVersion": 2018,
       "sourceType": "module"
     },
-    "plugins": ["@typescript-eslint", "react", "react-hooks", "prettier", "emotion"],
+    "plugins": ["@typescript-eslint", "react", "react-hooks", "prettier"],
     "rules": {
       // "prettier/prettier": "error",
       "react/jsx-one-expression-per-line": "off",
