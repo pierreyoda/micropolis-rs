@@ -1,17 +1,13 @@
-FROM rust:latest
+FROM rust:1.49-slim
 
-RUN apt-get update && apt-get install -y libudev-dev
+WORKDIR /usr/src/micropolis-rs/
 
-RUN ["cargo", "install", "cargo-web"]
+COPY Cargo.toml \
+    Cargo.lock \
+    micropolis_core/Cargo.toml \
+    micropolis_wasm/Cargo.toml \
+    ./
+COPY micropolis_core ./
+RUN cargo build
 
-COPY . /usr/src/micropolis-app/
-
-WORKDIR /usr/src/micropolis-app/
-
-RUN ["cargo", "build"]
-
-WORKDIR /usr/src/micropolis-app/micropolis_quicksilver/
-
-CMD ["cargo web start", "--features quicksilver/stdweb]
-
-EXPOSE 8000
+COPY . .

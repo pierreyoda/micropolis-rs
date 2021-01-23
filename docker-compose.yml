@@ -1,7 +1,5 @@
-version: "3.8"
+version: "3.7"
 
 services:
-  micropolis-rust-client:
+  micropolis-rust-core:
     build: .
-    ports:
-      - "8000:8000"
