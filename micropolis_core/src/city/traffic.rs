@@ -52,7 +52,7 @@ impl CityTraffic {
 
     /// Spawn traffic starting from the road tile a the given position.
     ///
-    /// Returns true if connection found.
+    /// Returns true if a connection was found.
     pub fn spawn_traffic_at<R: Rng>(
         &mut self,
         rng: &mut R,
@@ -61,13 +61,38 @@ impl CityTraffic {
         destination_zone: &ZoneType,
         sprites: &mut ActiveSpritesList,
     ) -> Result<bool, String> {
-        let position = at.clone();
+        let position = *at;
         if self.try_driving_to(rng, map, &position, destination_zone)? {
             self.add_to_traffic_density_map(rng, map, sprites)?;
             Ok(true)
         } else {
             Ok(false)
         }
+    }
+
+    /// Find a connection over a road from the given position.
+    ///
+    /// Returns Some(true) if a connection was found, Some(false) if not and None if
+    /// no connection to a road was found.
+    pub fn spawn_traffic<R: Rng>(
+        &mut self,
+        rng: &mut R,
+        map: &TileMap,
+        starting_at: &MapPosition,
+        destination_zone: &ZoneType,
+        sprites: &mut ActiveSpritesList,
+    ) -> Result<Option<bool>, String> {
+        self.positions_stack_pointer = 0;
+
+        let position = *starting_at;
+        if Self::find_perimeter_road(map, &position)?.0 {
+            if self.try_driving_to(rng, map, &position, destination_zone)? {
+                self.add_to_traffic_density_map(rng, map, sprites)?;
+                return Ok(Some(true));
+            }
+            return Ok(Some(false));
+        }
+        return Ok(None);
     }
 
     /// Update the traffic density map from the positions stack.
@@ -96,7 +121,7 @@ impl CityTraffic {
 
                     // check for heavy traffic
                     if traffic >= 240 && random_in_range(rng, 0, 5) == 0 {
-                        let traffic_max = position.clone();
+                        let traffic_max = position;
                         // direct helicopter towards heavy traffic
                         if let Some(sprite) = sprites.get_sprite_mut(&SpriteType::Helicopter) {
                             if sprite.control == -1 {
@@ -129,7 +154,7 @@ impl CityTraffic {
         todo!()
     }
 
-    /// Find a connection to a road at the perimeter.
+    /// Find a connection to a road at the given perimeter position.
     fn find_perimeter_road(
         map: &TileMap,
         position: &MapPosition,
@@ -154,7 +179,7 @@ impl CityTraffic {
         destination_zone: &ZoneType,
     ) -> Result<bool, String> {
         let mut previous_direction = MapPositionOffset::None;
-        let mut current_position = from.clone();
+        let mut current_position = *from;
 
         for mut distance in 0..MAX_TRAFFIC_LOOKUP_DISTANCE {
             let direction =
@@ -240,7 +265,7 @@ impl CityTraffic {
         Ok(directions[i])
     }
 
-    /// Has the journey arrived at its destination.
+    /// Has the journey arrived at its destination?
     fn is_driving_done(
         map: &TileMap,
         position: &MapPosition,
