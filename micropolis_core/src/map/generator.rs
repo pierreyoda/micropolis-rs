@@ -597,7 +597,7 @@ impl MapGenerator {
     // TODO: make this into enum standard distribution
     fn random_direction<R: Rng>(rng: &mut R) -> MapPositionOffset {
         use MapPositionOffset::*;
-        match rng.gen_range(0u8, 8u8) {
+        match rng.gen_range(0u8..8u8) {
             0 => NorthWest,
             1 => North,
             2 => NorthEast,
@@ -612,7 +612,7 @@ impl MapGenerator {
 
     fn random_straight_direction<R: Rng>(rng: &mut R) -> MapPositionOffset {
         use MapPositionOffset::*;
-        match rng.gen_range(0u8, 4u8) {
+        match rng.gen_range(0u8..4u8) {
             0 => North,
             1 => East,
             2 => South,

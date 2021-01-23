@@ -14,6 +14,6 @@ quicksilver = "0.4.0"
 # console_error_panic_hook = "0.1.6" # crash with cargo web
 
 [dependencies.rand]
-version = "0.7.3"
-default-features = false
-features = ["std", "stdweb"]
+version = "0.8.2"
+getrandom = { version = "0.2", features = ["js"] }
+
