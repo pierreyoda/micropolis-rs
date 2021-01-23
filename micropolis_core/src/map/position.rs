@@ -505,9 +505,9 @@ mod tests {
         assert_eq!(MapPositionOffset::East.is_cardinal(), true);
         assert_eq!(MapPositionOffset::South.is_cardinal(), true);
         assert_eq!(MapPositionOffset::West.is_cardinal(), true);
-        assert_eq!(MapPositionOffset::NorthEast.is_cardinal(), true);
-        assert_eq!(MapPositionOffset::NorthWest.is_cardinal(), true);
-        assert_eq!(MapPositionOffset::SouthEast.is_cardinal(), true);
-        assert_eq!(MapPositionOffset::SouthWest.is_cardinal(), true);
+        assert_eq!(MapPositionOffset::NorthEast.is_cardinal(), false);
+        assert_eq!(MapPositionOffset::NorthWest.is_cardinal(), false);
+        assert_eq!(MapPositionOffset::SouthEast.is_cardinal(), false);
+        assert_eq!(MapPositionOffset::SouthWest.is_cardinal(), false);
     }
 }
