@@ -1,7 +1,16 @@
+use std::todo;
+
 use parameters::SimulationParameters;
 use rand::Rng;
+use statistics::SimulationStatistics;
 
-use super::{disasters::CityDisasters, power::CityPower, City};
+use super::{
+    disasters::CityDisasters,
+    power::CityPower,
+    sprite::{ActiveSpritesList, SpriteType},
+    traffic::CityTraffic,
+    City,
+};
 use crate::{
     game::GameLevelDifficulty,
     map::{
@@ -21,6 +30,7 @@ use crate::{
 };
 
 pub mod parameters;
+pub mod statistics;
 
 const ZONE_MELTDOWN_TABLE: [i16; 3] = [30000, 20000, 10000];
 const SMOKE_TILES: [u16; 4] = [
@@ -34,6 +44,7 @@ const SMOKE_DY: [i32; 4] = [-1, -1, 0, 0];
 
 pub struct Simulation {
     parameters: SimulationParameters,
+    statistics: SimulationStatistics,
     speed: GameSpeed,
     speed_cycle: u16,
     phase_cycle: u8,
@@ -55,6 +66,23 @@ pub struct Simulation {
     /// explosions from sprites, fire spreading. Doesn't seem to
     /// actually feed back into the simulation. Output only.
     rate_of_growth: Map<i16>,
+    /// Fire station map.
+    ///
+    /// Effectivity of fire control in each area.
+    /// Affected by fire stations (powered or not), fire funding ratio and road access.
+    /// Affects how long fires burn.
+    fire_station_map: Map<i16>,
+    /// Police station map.
+    ///
+    /// Effectivity of police in fighting crime.
+    /// Affected by police stations (powered or not), police funding ratio and road access.
+    /// Affects crime rate.
+    police_station_map: Map<i16>,
+    /// Commercial rate map.
+    ///
+    /// Depends on distance to city center.
+    /// Affects commercial zone evaluation.
+    commercial_rate_map: Map<i16>,
 }
 
 impl Simulation {
@@ -62,6 +90,7 @@ impl Simulation {
         let dimensions = map.bounds();
         Self {
             parameters: Default::default(),
+            statistics: Default::default(),
             speed: GameSpeed::from(GameSpeedPreset::Normal),
             speed_cycle: 0,
             phase_cycle: 0,
@@ -70,6 +99,18 @@ impl Simulation {
             map_serial: 1,
             city_time: 0,
             rate_of_growth: Map::with_data(
+                vec![vec![0x00; dimensions.get_height()]; dimensions.get_width()],
+                MapClusteringStrategy::BlockSize8,
+            ),
+            fire_station_map: Map::with_data(
+                vec![vec![0x00; dimensions.get_height()]; dimensions.get_width()],
+                MapClusteringStrategy::BlockSize8,
+            ),
+            police_station_map: Map::with_data(
+                vec![vec![0x00; dimensions.get_height()]; dimensions.get_width()],
+                MapClusteringStrategy::BlockSize8,
+            ),
+            commercial_rate_map: Map::with_data(
                 vec![vec![0x00; dimensions.get_height()]; dimensions.get_width()],
                 MapClusteringStrategy::BlockSize8,
             ),
@@ -226,13 +267,17 @@ impl Simulation {
     }
 
     /// Repair the zone at the given position.
+    ///
+    /// - at: center-tile position of the zone
+    /// - zone_center: type of the center-tile
     fn repair_zone(
         &self,
         map: &mut TileMap,
         at: &MapPosition,
+        zone_center: TileType,
         zone_size: u16,
     ) -> Result<(), String> {
-        let mut tile_raw = zone_size - 2 - zone_size;
+        let mut tile_raw = zone_center.to_u16().unwrap() - 2 - zone_size;
 
         // y and x loops one position shifted to compensate for the center-tile position.
         for y in -1..(zone_size as i32) - 1 {
@@ -269,6 +314,7 @@ impl Simulation {
         rng: &mut R,
         map: &mut TileMap,
         power: &mut CityPower,
+        sprites: &mut ActiveSpritesList,
         at: &MapPosition,
         is_zone_powered: bool,
         disasters_enabled: bool,
@@ -279,33 +325,180 @@ impl Simulation {
             .map(|t| t.get_raw() & TILE_LOW_MASK)
             .map(|r| {
                 TileType::from_u16(r)
-                    .ok_or(format!("Simulation::do_special_zone invalid tile type"))
+                    .ok_or("Simulation::do_special_zone invalid tile type".to_string())
             })
-            .ok_or(format!("Simulation::do_special_zone cannot read tile"))??;
-        match tile_type {
+            .ok_or("Simulation::do_special_zone cannot read tile".to_string())??;
+        Ok(match tile_type {
             TileType::PowerPlant => {
+                // coal power generation
                 power.coal_generators_count += 1;
                 if self.city_time & 0x07 == 0x00 {
-                    self.repair_zone(map, at, 4)?;
+                    self.repair_zone(map, at, TileType::PowerPlant, 4)?;
                 }
                 power.push_power_stack(*at);
-                self.coal_smoke(map, at)?
+                Self::coal_smoke(map, at)?;
             }
             TileType::Nuclear => {
-                // if disasters_enabled
-                //     && random_in_range(rng, 0, ZONE_MELTDOWN_TABLE[difficulty.to_usize().unwrap()])
-                // {
-                //     CityDisasters::do_meltdown(rng, map, at)?;
-                // }
-            }
-            _ => todo!(),
-        }
+                // trigger nuclear meltdown?
+                if disasters_enabled
+                    && (random_in_range(
+                        rng,
+                        0,
+                        ZONE_MELTDOWN_TABLE[difficulty.to_usize().unwrap()],
+                    ) == 0x00)
+                {
+                    CityDisasters::do_meltdown(rng, map, at)?;
+                    return Ok(());
+                }
 
-        Ok(())
+                // otherwise, nuclear power generation
+                power.nuclear_generators_count += 1;
+                if self.city_time & 0x07 == 0x00 {
+                    self.repair_zone(map, at, TileType::Nuclear, 4)?;
+                }
+                power.push_power_stack(*at);
+            }
+            TileType::FireStation => {
+                self.statistics.fire_station_count += 1;
+                if self.city_time & 0x07 == 0x00 {
+                    self.repair_zone(map, at, TileType::FireStation, 3)?;
+                }
+
+                let mut z = (self.parameters.get_fire_effect()
+                    / if is_zone_powered {
+                        1 // powered effect
+                    } else {
+                        2 // otherwise: from the funding ratio
+                    }) as i16;
+
+                let (found_road, road_position) = CityTraffic::find_perimeter_road(map, at)?;
+                if !found_road {
+                    z /= 2;
+                }
+
+                let fire_control =
+                    self.fire_station_map
+                        .get_tile_at(&road_position)
+                        .ok_or(format!(
+                        "Simulation.do_special_zone cannot get fire_station_map tile value at {}",
+                        road_position
+                    ))? + z;
+                self.fire_station_map
+                    .set_tile_at(&road_position, fire_control);
+            }
+            TileType::PoliceStation => {
+                self.statistics.police_station_count += 1;
+                if self.city_time & 0x07 == 0x00 {
+                    self.repair_zone(map, at, TileType::PoliceStation, 3)?;
+                }
+
+                let mut z = (self.parameters.get_police_effect()
+                    / if is_zone_powered {
+                        1 // powered effect
+                    } else {
+                        2 // otherwise: from the funding ratio
+                    }) as i16;
+
+                let (found_road, road_position) = CityTraffic::find_perimeter_road(map, at)?;
+                if !found_road {
+                    z /= 2;
+                }
+
+                let police_efficiency =
+                    self.police_station_map
+                        .get_tile_at(&road_position)
+                        .ok_or(format!(
+                        "Simulation.do_special_zone cannot get police_station_map tile value at {}",
+                        road_position
+                    ))? + z;
+                self.police_station_map
+                    .set_tile_at(&road_position, police_efficiency);
+            }
+            // Empty stadium
+            TileType::Stadium => {
+                self.statistics.stadium_count += 1;
+
+                if self.city_time & 0x0F == 0x00 {
+                    self.repair_zone(map, at, TileType::Stadium, 4)?;
+                }
+
+                if is_zone_powered {
+                    // start a match every now and then
+                    if (self.city_time as i32 + at.get_x() + at.get_y()) & 0x1F == 0x00 {
+                        Self::draw_stadium(map, at, TileType::FullStadium)?;
+                        map.set_tile_at(
+                            &(*at + (1, 0).into()),
+                            Tile::from_raw(
+                                TileType::FootballGame1.to_u16().unwrap() + TILE_ANIM_BIT,
+                            )?,
+                        );
+                        map.set_tile_at(
+                            &(*at + (1, 1).into()),
+                            Tile::from_raw(
+                                TileType::FootballGame2.to_u16().unwrap() + TILE_ANIM_BIT,
+                            )?,
+                        );
+                    }
+                }
+            }
+            // Full stadium
+            TileType::FullStadium => {
+                self.statistics.stadium_count += 1;
+
+                if (self.city_time as i32 + at.get_x() + at.get_y()) & 0x07 == 0x00 {
+                    // stop the match
+                    Self::draw_stadium(map, at, TileType::Stadium)?;
+                }
+            }
+            TileType::Airport => {
+                self.statistics.airport_count += 1;
+
+                if self.city_time & 0x07 == 0x00 {
+                    self.repair_zone(map, at, TileType::Airport, 6)?;
+
+                    // display a rotating radar if powered
+                    let radar_position = *at + (1, -1).into();
+                    let radar_tile = map.get_tile_mut_at(&radar_position).ok_or(format!(""))?;
+                    if is_zone_powered {
+                        if radar_tile.get_raw() & TILE_LOW_MASK == TileType::Radar.to_u16().unwrap()
+                        {
+                            radar_tile.set_raw(
+                                TileType::HBRDG_END.to_u16().unwrap()
+                                    + TILE_ANIM_BIT
+                                    + TILE_CONDUCT_BIT
+                                    + TILE_BURN_BIT,
+                            );
+                        }
+                    } else {
+                        radar_tile.set_raw(
+                            TileType::Radar.to_u16().unwrap() + TILE_CONDUCT_BIT + TILE_BURN_BIT,
+                        );
+                    }
+
+                    // handle the airport activity if powered
+                    if is_zone_powered {
+                        Self::do_airport(at)?;
+                    }
+                }
+            }
+            TileType::Port => {
+                self.statistics.seaport_count += 1;
+
+                if self.city_time & 0x15 == 0x00 {
+                    self.repair_zone(map, at, TileType::Port, 4)?;
+                }
+
+                // if no ship and powered, generate a new one
+                if is_zone_powered && sprites.get_sprite(&SpriteType::Ship).is_none() {
+                    todo!()
+                }
+            }
+            _ => (),
+        })
     }
 
     /// Draw coal smoke tiles around the given coal power plant position.
-    fn coal_smoke(&self, map: &mut TileMap, at: &MapPosition) -> Result<(), String> {
+    fn coal_smoke(map: &mut TileMap, at: &MapPosition) -> Result<(), String> {
         for i in 0..4 {
             map.set_tile_at(
                 &(*at + (SMOKE_DX[i], SMOKE_DY[i]).into()),
@@ -319,5 +512,43 @@ impl Simulation {
             );
         }
         Ok(())
+    }
+
+    /// Draw a stadium (either full or empty).
+    fn draw_stadium(
+        map: &mut TileMap,
+        center: &MapPosition,
+        base_value: TileType,
+    ) -> Result<(), String> {
+        debug_assert!(base_value.to_u16().unwrap() >= 5);
+
+        // Center
+        let tile = map.get_tile_mut_at(center).ok_or(format!(
+            "Simulation::draw_stadium cannot access center tile at position {}",
+            center,
+        ))?;
+        tile.set_raw(tile.get_raw() | TILE_ZONE_BIT | TILE_POWER_BIT);
+
+        // Other tiles
+        let mut value = base_value.to_u16().unwrap() - 5;
+        let (center_x, center_y) = center.as_tuple();
+        for y in center_y - 1..center_y + 3 {
+            for x in center_x - 1..center_x + 3 {
+                let at = (x, y).into();
+                let tile = map.get_tile_mut_at(&at).ok_or(format!(
+                    "Simulation::draw_stadium cannot access tile at position {}",
+                    at,
+                ))?;
+                tile.set_raw(value | TILE_BURN_BIT | TILE_CONDUCT_BIT);
+                value += 1;
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Generate a airplane or helicopter every now and then.
+    fn do_airport(position: &MapPosition) -> Result<(), String> {
+        todo!()
     }
 }

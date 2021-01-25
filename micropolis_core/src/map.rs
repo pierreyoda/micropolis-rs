@@ -121,6 +121,19 @@ impl<T: Clone> Map<T> {
         }
     }
 
+    pub fn get_tile_mut_at(&mut self, position: &MapPosition) -> Option<&mut T> {
+        if self.in_bounds(position) {
+            let transformed = self.clustering_strategy.transform(position);
+            Some(
+                self.data
+                    .get_mut(transformed.x as usize)?
+                    .get_mut(transformed.y as usize)?,
+            )
+        } else {
+            None
+        }
+    }
+
     pub fn set_tile_at(&mut self, position: &MapPosition, tile: T) -> bool {
         let transformed = self.clustering_strategy.transform(position);
         if let Some(column) = self.data.get_mut(transformed.x as usize) {

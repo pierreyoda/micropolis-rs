@@ -194,11 +194,11 @@ impl ToolEffects {
         match result {
             ToolResult::Succeeded(other) => {
                 self.free = self.free || other.free;
-                self.cost = self.cost + other.cost;
+                self.cost += other.cost;
                 self.modifications = {
                     let mut hm = self.modifications.clone();
                     for (position, tile) in other.modifications.iter() {
-                        hm.insert(position.clone(), tile.clone());
+                        hm.insert(*position, tile.clone());
                     }
                     hm
                 };

@@ -92,7 +92,7 @@ impl CityTraffic {
             }
             return Ok(Some(false));
         }
-        return Ok(None);
+        Ok(None)
     }
 
     /// Update the traffic density map from the positions stack.
@@ -155,7 +155,7 @@ impl CityTraffic {
     }
 
     /// Find a connection to a road at the given perimeter position.
-    fn find_perimeter_road(
+    pub fn find_perimeter_road(
         map: &TileMap,
         position: &MapPosition,
     ) -> Result<(bool, MapPosition), String> {
