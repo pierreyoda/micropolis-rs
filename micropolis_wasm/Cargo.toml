@@ -19,6 +19,3 @@ getrandom = { version = "0.2", features = ["js"] }
 [dependencies.wasm-bindgen]
 version = "0.2.69"
 features = ["serde-serialize"]
-
-[dependencies.rand]
-version = "0.8.2"

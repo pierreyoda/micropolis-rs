@@ -2,7 +2,7 @@ use crate::map::tiles::TILE_BULL_BIT;
 use crate::map::tiles_type::TileType;
 
 /// Default radius of an island.
-pub const ISLAND_RADIUS: usize = 10;
+pub const ISLAND_RADIUS: i16 = 18;
 
 pub const SMOOTH_TILES_DX: [i32; 4] = [-1, 0, 1, 0];
 pub const SMOOTH_TILES_DY: [i32; 4] = [0, 1, 0, -1];

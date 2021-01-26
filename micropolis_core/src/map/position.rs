@@ -158,6 +158,15 @@ impl MapPosition {
     }
 }
 
+impl Into<MapPosition> for (i16, i16) {
+    fn into(self) -> MapPosition {
+        MapPosition {
+            x: self.0 as i32,
+            y: self.1 as i32,
+        }
+    }
+}
+
 impl Into<MapPosition> for (i32, i32) {
     fn into(self) -> MapPosition {
         MapPosition {
