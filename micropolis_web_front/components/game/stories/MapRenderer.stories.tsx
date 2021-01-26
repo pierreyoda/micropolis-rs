@@ -21,8 +21,8 @@ storiesOf("Game/Map", module)
     </StoryWrapper>
   ))
   .add("Map Renderer", () => {
-    const width = number("Map width", 50, { min: 5, max: 500, step: 5 });
-    const height = number("Map height", 50, { min: 5, max: 500, step: 5 });
+    const width = number("Map width", 25, { min: 5, max: 500, step: 5 });
+    const height = number("Map height", 25, { min: 5, max: 500, step: 5 });
     const map = useMemo(() => generateMapStub(width, height), [width, height]);
 
     return (

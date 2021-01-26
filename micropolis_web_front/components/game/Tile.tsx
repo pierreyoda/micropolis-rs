@@ -30,14 +30,12 @@ const Tile: FunctionComponent<TileProps> = ({ row, column, tileIndex, atlasImage
     <img
       src={atlasImage}
       style={{
-        position: "fixed",
-        left: positionX,
-        top: positionY,
         width: TILE_SIZE,
         height: TILE_SIZE,
         objectFit: "none",
         objectPosition: `-${atlasX}px -${atlasY}px`,
       }}
+      className="img-no-selection"
     />
   );
 };
