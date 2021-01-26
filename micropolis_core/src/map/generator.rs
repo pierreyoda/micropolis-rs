@@ -1,24 +1,24 @@
 pub mod constants;
 
-use rand::Rng;
-
 use super::tiles::{TILE_BLBNBIT_MASK, TILE_BURN_BULL_BIT};
 use super::tiles_type::{WOODS_HIGH, WOODS_LOW};
 use super::{
     Map, MapClusteringStrategy, MapPosition, MapPositionOffset, MapRectangle, Tile, TileMap,
     TileType,
 };
-use crate::map::tools::ToolEffects;
-use crate::utils::{erandom_in_range, random_in_range, Percentage};
+use crate::utils::Percentage;
+use crate::{map::tools::ToolEffects, utils::random::MicropolisRandom};
 
-/// Should the map generated as an island?
+/// Should the map generator form an island?
+#[derive(Clone, Debug, PartialEq)]
 pub enum GeneratorCreateIsland {
     Never,
     Always,
-    /// X% of the time (10% by default).
+    /// X% of the time. 10% by default.
     Sometimes(Percentage),
 }
 
+#[derive(Debug, PartialEq)]
 /// Random map terrain generator.
 pub struct MapGenerator {
     /// Controls how often the generated terrain should be an island.
@@ -28,19 +28,31 @@ pub struct MapGenerator {
     /// -1 => default number of trees.
     ///  0 => no trees.
     /// >0 => roughly equal to the remaining number of trees to randomly place.
-    level_trees: i32,
+    level_trees: i16,
     /// Controls the level of river curviness.
     ///
     /// -1 => default curve level.
     ///  0 => no rivers.
     /// >0 => curvier rivers.
-    level_river_curves: i32,
+    level_river_curves: i16,
     /// Level for lakes creation.
     ///
     /// -1 => default number of lakes.
     ///  0 => no lakes.
     /// >0 => extra lakes.
-    level_lakes: i32,
+    level_lakes: i16,
+}
+
+#[derive(Debug)]
+pub struct GeneratedTileMap {
+    generation_seed: i32,
+    pub generated_terrain: TileMap,
+}
+
+impl GeneratedTileMap {
+    pub fn get_seed(&self) -> i32 {
+        self.generation_seed
+    }
 }
 
 impl MapGenerator {
@@ -53,20 +65,30 @@ impl MapGenerator {
         }
     }
 
-    pub fn random_map_terrain<R: Rng>(
+    pub fn random_map_terrain(
         &self,
-        rng: &mut R,
+        rng: &mut MicropolisRandom,
+        seed: i32,
         dimensions: &MapRectangle,
-    ) -> Result<TileMap, String> {
+    ) -> Result<GeneratedTileMap, String> {
+        // random setup
+        rng.seed(seed);
+
         // initial landscape
         let mut terrain = match &self.create_island {
             GeneratorCreateIsland::Never => {
                 Map::tilemap_with_dimensions(dimensions, TileType::Dirt)?
             }
-            GeneratorCreateIsland::Always => self.make_naked_island(rng, dimensions),
+            GeneratorCreateIsland::Always => {
+                Self::make_naked_island(rng, self.level_lakes, dimensions)
+            }
             GeneratorCreateIsland::Sometimes(chance) => {
-                if rng.gen_bool(chance.value()) {
-                    return self.make_island(rng, dimensions);
+                if (rng.get_random(100) as f64) / 100f64 < chance.value() {
+                    let generated_terrain = self.generate_terrain_as_island(rng, dimensions)?;
+                    return Ok(GeneratedTileMap {
+                        generation_seed: seed,
+                        generated_terrain,
+                    });
                 } else {
                     Map::tilemap_with_dimensions(dimensions, TileType::Dirt)?
                 }
@@ -75,84 +97,95 @@ impl MapGenerator {
 
         // generate some rivers
         if self.level_river_curves != 0 {
-            let start_position = MapPosition {
-                x: 40 + random_in_range(rng, 0, dimensions.width as i32 - 80),
-                y: 33 + random_in_range(rng, 0, dimensions.height as i32 - 67),
-            };
-            self.make_rivers(rng, &mut terrain, &start_position);
+            let starting_position = MapPosition::new(
+                40 + rng.get_random(dimensions.width as i16 - 80) as i32,
+                33 + rng.get_random(dimensions.height as i16 - 67) as i32,
+            );
+            Self::make_rivers(
+                rng,
+                self.level_river_curves,
+                &mut terrain,
+                &starting_position,
+            );
         }
 
         // generate a few lakes
         if self.level_lakes != 0 {
-            self.make_lakes(rng, &mut terrain);
+            Self::make_lakes(rng, self.level_lakes, &mut terrain);
         }
 
         Self::smooth_rivers(rng, &mut terrain)?;
 
         // plant some trees
         if self.level_trees != 0 {
-            self.make_forests(rng, &mut terrain)?;
+            Self::make_forests(rng, self.level_trees, &mut terrain)?;
         }
 
-        Ok(terrain)
+        Ok(GeneratedTileMap {
+            generation_seed: seed,
+            generated_terrain: terrain,
+        })
     }
 
-    fn make_island<R: Rng>(
+    fn generate_terrain_as_island(
         &self,
-        rng: &mut R,
+        rng: &mut MicropolisRandom,
         dimensions: &MapRectangle,
     ) -> Result<TileMap, String> {
-        let mut terrain = self.make_naked_island(rng, dimensions);
+        let mut terrain = Self::make_naked_island(rng, self.level_lakes, dimensions);
         Self::smooth_rivers(rng, &mut terrain)?;
-        self.make_forests(rng, &mut terrain)?;
+        Self::make_forests(rng, self.level_trees, &mut terrain)?;
         Ok(terrain)
     }
 
     /// Generate a plain island surrounded by 5 tiles of river.
-    fn make_naked_island<R: Rng>(&self, rng: &mut R, dimensions: &MapRectangle) -> TileMap {
+    fn make_naked_island(
+        rng: &mut MicropolisRandom,
+        level_lakes: i16,
+        dimensions: &MapRectangle,
+    ) -> TileMap {
         // rectangular island
         let (x_max, y_max) = (dimensions.width as i32 - 5, dimensions.height as i32 - 5);
         let tilemap: Vec<Vec<Tile>> = (0..dimensions.width)
             .map(|x| {
                 (0..dimensions.height)
                     .map(|y| {
-                        if x >= 5 && x < x_max as usize && y >= 5 && y < y_max as usize {
-                            Tile::from_type(TileType::Dirt).unwrap()
-                        } else {
-                            Tile::from_type(TileType::River).unwrap()
-                        }
+                        Tile::from_type(
+                            if x >= 5 && x < x_max as usize && y >= 5 && y < y_max as usize {
+                                TileType::Dirt
+                            } else {
+                                TileType::River
+                            },
+                        )
+                        .unwrap()
                     })
                     .collect()
             })
             .collect();
         let mut terrain = TileMap {
-            data: tilemap,
             clustering_strategy: MapClusteringStrategy::BlockSize8,
+            data: tilemap,
         };
 
         for x in (0..x_max).step_by(2) {
-            let y1 = erandom_in_range(rng, 0, constants::ISLAND_RADIUS as i32);
-            Self::plop_big_river(&mut terrain, &MapPosition { x, y: y1 });
-            let y2 = erandom_in_range(rng, 0, constants::ISLAND_RADIUS as i32);
-            Self::plop_big_river(&mut terrain, &MapPosition { x, y: y2 });
+            let y1 = rng.get_e_random(constants::ISLAND_RADIUS);
+            Self::plop_big_river(&mut terrain, &(x, y1 as i32).into());
 
-            Self::plop_small_river(&mut terrain, &MapPosition { x, y: 0 });
-            Self::plop_small_river(
-                &mut terrain,
-                &MapPosition {
-                    x,
-                    y: dimensions.height as i32 - 6,
-                },
-            );
+            let y2 = (dimensions.height as i16 - 10) - rng.get_e_random(constants::ISLAND_RADIUS);
+            Self::plop_big_river(&mut terrain, &(x, y2 as i32).into());
+
+            Self::plop_small_river(&mut terrain, &(x, 0).into());
+            Self::plop_small_river(&mut terrain, &(x, dimensions.height as i32 - 6).into());
         }
 
         for y in (0..y_max).step_by(2) {
-            let x1 = erandom_in_range(rng, 0, constants::ISLAND_RADIUS as i32);
-            Self::plop_big_river(&mut terrain, &MapPosition { x: x1, y });
-            let x2 = erandom_in_range(rng, 0, constants::ISLAND_RADIUS as i32);
-            Self::plop_big_river(&mut terrain, &MapPosition { x: x2, y });
+            let x1 = rng.get_e_random(constants::ISLAND_RADIUS);
+            Self::plop_big_river(&mut terrain, &(x1 as i32, y).into());
 
-            Self::plop_small_river(&mut terrain, &MapPosition { x: 0, y });
+            let x2 = (dimensions.width as i16 - 10) - rng.get_e_random(constants::ISLAND_RADIUS);
+            Self::plop_big_river(&mut terrain, &(x2 as i32, y).into());
+
+            Self::plop_small_river(&mut terrain, &(0, y).into());
             Self::plop_small_river(
                 &mut terrain,
                 &MapPosition {
@@ -165,83 +198,109 @@ impl MapGenerator {
         terrain
     }
 
-    fn make_lakes<R: Rng>(&self, rng: &mut R, map: &mut TileMap) {
-        let mut remaining_lakes: i32 = if self.level_lakes < 0 {
-            random_in_range(rng, 0, 10)
+    fn make_lakes(rng: &mut MicropolisRandom, level_lakes: i16, map: &mut TileMap) {
+        let mut remaining_lakes = if level_lakes < 0 {
+            rng.get_random(10)
         } else {
-            self.level_lakes / 2
+            level_lakes / 2
         };
 
         let map_size = map.bounds();
         while remaining_lakes > 0 {
-            let x = 10 + random_in_range(rng, 0, map_size.width as i32 - 21);
-            let y = 10 + random_in_range(rng, 0, map_size.width as i32 - 20);
-            self.make_single_lake(rng, map, MapPosition { x, y });
+            let x = 10 + rng.get_random(map_size.width as i16 - 21);
+            let y = 10 + rng.get_random(map_size.width as i16 - 20);
+            Self::make_single_lake(rng, map, (x as i32, y as i32).into());
             remaining_lakes -= 1;
         }
     }
 
     /// Generate a single lake around the given rough position.
-    fn make_single_lake<R: Rng>(&self, rng: &mut R, terrain: &mut TileMap, at: MapPosition) {
-        let mut num_plops = 2 + random_in_range(rng, 0, 12);
+    fn make_single_lake(rng: &mut MicropolisRandom, terrain: &mut TileMap, at: MapPosition) {
+        let mut num_plops = 2 + rng.get_random(12);
         while num_plops > 0 {
-            let offset_x = random_in_range(rng, 0, 12) - 6;
-            let offset_y = random_in_range(rng, 0, 12) - 6;
+            let offset_x = rng.get_random(12) - 6;
+            let offset_y = rng.get_random(12) - 6;
             let plop_position = MapPosition {
-                x: at.x + offset_x,
-                y: at.y + offset_y,
+                x: at.x + offset_x as i32,
+                y: at.y + offset_y as i32,
             };
-            // TODO: check equivalence with C++ code
-            match rng.gen_ratio(4, 5) {
-                true => Self::plop_small_river(terrain, &plop_position),
-                false => Self::plop_big_river(terrain, &plop_position),
+
+            if rng.get_random(4) > 0 {
+                Self::plop_small_river(terrain, &plop_position)
+            } else {
+                Self::plop_big_river(terrain, &plop_position)
             };
             num_plops -= 1;
         }
     }
 
-    fn make_rivers<R: Rng>(&self, rng: &mut R, terrain: &mut TileMap, start: &MapPosition) {
+    fn make_rivers(
+        rng: &mut MicropolisRandom,
+        level_river_curves: i16,
+        terrain: &mut TileMap,
+        start: &MapPosition,
+    ) {
         let mut global_direction = Self::random_straight_direction(rng);
-        self.make_big_river(rng, terrain, start, &global_direction, &global_direction);
+        Self::make_big_river(
+            rng,
+            level_river_curves,
+            terrain,
+            start,
+            &global_direction,
+            &global_direction,
+        );
 
         global_direction = global_direction.rotated_180();
-        let local_direction =
-            self.make_big_river(rng, terrain, start, &global_direction, &global_direction);
+        let local_direction = Self::make_big_river(
+            rng,
+            level_river_curves,
+            terrain,
+            start,
+            &global_direction,
+            &global_direction,
+        );
 
         global_direction = Self::random_straight_direction(rng);
-        self.make_small_river(rng, terrain, start, &global_direction, &local_direction);
+        Self::make_small_river(
+            rng,
+            level_river_curves,
+            terrain,
+            start,
+            &global_direction,
+            &local_direction,
+        );
     }
 
     /// Make a big river.
     ///
     /// Returns the last local river direction.
-    fn make_big_river<R: Rng>(
-        &self,
-        rng: &mut R,
+    fn make_big_river(
+        rng: &mut MicropolisRandom,
+        level_river_curves: i16,
         terrain: &mut TileMap,
         start: &MapPosition,
         global_direction: &MapPositionOffset,
         local_direction: &MapPositionOffset,
     ) -> MapPositionOffset {
-        let (rate1, rate2) = match self.level_river_curves {
+        let (rate1, rate2) = match level_river_curves {
             level if level < 0 => (100, 200),
             level => (10 + level, 100 + level),
         };
 
-        let mut position = start.clone();
-        let mut last_local_direction = local_direction.clone();
+        let mut position = *start;
+        let mut last_local_direction = *local_direction;
         while terrain.in_bounds(&MapPosition {
             x: position.x + 4,
             y: position.y + 4,
         }) {
             Self::plop_big_river(terrain, &position);
-            if random_in_range(rng, 0, rate1) < 10 {
-                last_local_direction = global_direction.clone();
+            if rng.get_random(rate1) < 10 {
+                last_local_direction = *global_direction;
             } else {
-                if random_in_range(rng, 0, rate2) > 90 {
+                if rng.get_random(rate2) > 90 {
                     last_local_direction = last_local_direction.rotated_45();
                 }
-                if random_in_range(rng, 0, rate2) > 90 {
+                if rng.get_random(rate2) > 90 {
                     // FIXME: C++ code has a 7 'count' parameter?
                     last_local_direction = last_local_direction.rotated_45();
                 }
@@ -252,15 +311,15 @@ impl MapGenerator {
     }
 
     // TODO: factorize code with make_big_river (macro/closures)
-    fn make_small_river<R: Rng>(
-        &self,
-        rng: &mut R,
+    fn make_small_river(
+        rng: &mut MicropolisRandom,
+        level_river_curves: i16,
         terrain: &mut TileMap,
         start: &MapPosition,
         global_direction: &MapPositionOffset,
         local_direction: &MapPositionOffset,
     ) -> MapPositionOffset {
-        let (rate1, rate2) = match self.level_river_curves {
+        let (rate1, rate2) = match level_river_curves {
             level if level < 0 => (100, 200),
             level => (10 + level, 100 + level),
         };
@@ -272,13 +331,13 @@ impl MapGenerator {
             y: position.y + 3,
         }) {
             Self::plop_small_river(terrain, &position);
-            if random_in_range(rng, 0, rate1) < 10 {
+            if rng.get_random(rate1) < 10 {
                 last_local_direction = global_direction.clone();
             } else {
-                if random_in_range(rng, 0, rate2) > 90 {
+                if rng.get_random(rate2) > 90 {
                     last_local_direction = last_local_direction.rotated_45();
                 }
-                if random_in_range(rng, 0, rate2) > 90 {
+                if rng.get_random(rate2) > 90 {
                     // FIXME: C++ code has a 7 'count' parameter?
                     last_local_direction = last_local_direction.rotated_45();
                 }
@@ -288,7 +347,7 @@ impl MapGenerator {
         last_local_direction
     }
 
-    fn smooth_rivers<R: Rng>(rng: &mut R, terrain: &mut TileMap) -> Result<(), String> {
+    fn smooth_rivers(rng: &mut MicropolisRandom, terrain: &mut TileMap) -> Result<(), String> {
         let map_size = terrain.bounds();
         let dirt_type_raw = TileType::Dirt
             .to_u16()
@@ -319,7 +378,7 @@ impl MapGenerator {
                 }
                 let mut bit_index = 0;
                 for i in 0..4 {
-                    bit_index = bit_index << 1;
+                    bit_index <<= 1;
                     let temp_position = MapPosition {
                         x: x as i32 + constants::SMOOTH_TILES_DX[i],
                         y: y as i32 + constants::SMOOTH_TILES_DY[i],
@@ -343,13 +402,13 @@ impl MapGenerator {
                     if temp_tile_type_raw == dirt_type_raw {
                         continue;
                     }
-                    if temp_tile_type_raw < WOODS_LOW || temp_tile_type_raw > WOODS_HIGH {
+                    if !(WOODS_LOW..=WOODS_HIGH).contains(&temp_tile_type_raw) {
                         bit_index += 1;
                     }
                 }
                 let tile = terrain.data.get_mut(x).unwrap().get_mut(y).unwrap();
                 let mut tile_raw = constants::SMOOTH_RIVER_EDGES_TABLE[bit_index & 0x000F];
-                if tile_raw != river_type_raw && rng.gen_ratio(1, 2) {
+                if tile_raw != river_type_raw && rng.get_random(1) > 0 {
                     tile_raw += 1;
                 }
                 tile.set_raw(tile_raw);
@@ -358,20 +417,25 @@ impl MapGenerator {
         Ok(())
     }
 
-    fn make_forests<R: Rng>(&self, rng: &mut R, terrain: &mut TileMap) -> Result<(), String> {
-        let amount: i32 = match self.level_trees {
-            level if level < 0 => 50 + random_in_range(rng, 0, 100),
+    fn make_forests(
+        rng: &mut MicropolisRandom,
+        level_trees: i16,
+        terrain: &mut TileMap,
+    ) -> Result<(), String> {
+        let amount = match level_trees {
+            level if level < 0 => 50 + rng.get_random(100),
             level => 3 + level,
         };
         let map_size = terrain.bounds();
         for _ in 0..amount {
-            let x = random_in_range(rng, 0, map_size.width as i32 - 1);
-            let y = random_in_range(rng, 0, map_size.height as i32 - 1);
-            self.splash_trees(rng, terrain, &MapPosition { x, y });
+            let x = rng.get_random(map_size.width as i16 - 1);
+            let y = rng.get_random(map_size.height as i16 - 1);
+            Self::splash_trees(rng, level_trees, terrain, &(x, y).into());
         }
 
         Self::smooth_trees(terrain)?;
         Self::smooth_trees(terrain)?; // TODO: why the repetition ?
+
         Ok(())
     }
 
@@ -379,15 +443,22 @@ impl MapGenerator {
     ///
     /// The amount of trees generated depends on `level_trees`.
     /// Note: trees are not smoothed.
+    ///
     /// TODO: function generates trees even if `level_trees` is 0 (original bug).
-    fn splash_trees<R: Rng>(&self, rng: &mut R, terrain: &mut TileMap, at: &MapPosition) {
-        let mut num_trees: i32 = match self.level_trees {
-            level if level < 0 => 50 + random_in_range(rng, 0, 150),
-            level => 50 + random_in_range(rng, 0, 100 + level * 2),
+    fn splash_trees(
+        rng: &mut MicropolisRandom,
+        level_trees: i16,
+        terrain: &mut TileMap,
+        at: &MapPosition,
+    ) {
+        let mut trees_count = match level_trees {
+            level if level < 0 => 50 + rng.get_random(150),
+            level => 50 + rng.get_random(100 + level * 2),
         };
-        let mut tree_position = at.clone();
+        let mut tree_position = *at;
         let woods_type_raw = TileType::Woods.to_u16().unwrap();
-        while num_trees > 0 {
+
+        while trees_count > 0 {
             let direction = Self::random_direction(rng);
             tree_position = direction.apply(&tree_position);
             if !terrain.in_bounds(&tree_position) {
@@ -402,7 +473,7 @@ impl MapGenerator {
             if tile.get_type() == &Some(TileType::Dirt) {
                 tile.set_raw(TILE_BLBNBIT_MASK | woods_type_raw);
             }
-            num_trees -= 1;
+            trees_count -= 1;
         }
     }
 
@@ -431,7 +502,7 @@ impl MapGenerator {
                 }
                 let mut bit_index = 0;
                 for i in 0..4 {
-                    bit_index = bit_index << 1;
+                    bit_index <<= 1;
                     let temp_position = MapPosition {
                         x: x as i32 + constants::SMOOTH_TILES_DX[i],
                         y: y as i32 + constants::SMOOTH_TILES_DY[i],
@@ -595,9 +666,9 @@ impl MapGenerator {
     }
 
     // TODO: make this into enum standard distribution
-    fn random_direction<R: Rng>(rng: &mut R) -> MapPositionOffset {
+    fn random_direction(rng: &mut MicropolisRandom) -> MapPositionOffset {
         use MapPositionOffset::*;
-        match rng.gen_range(0u8..8u8) {
+        match rng.get_random(7) {
             0 => NorthWest,
             1 => North,
             2 => NorthEast,
@@ -610,9 +681,9 @@ impl MapGenerator {
         }
     }
 
-    fn random_straight_direction<R: Rng>(rng: &mut R) -> MapPositionOffset {
+    fn random_straight_direction(rng: &mut MicropolisRandom) -> MapPositionOffset {
         use MapPositionOffset::*;
-        match rng.gen_range(0u8..4u8) {
+        match rng.get_random(3) {
             0 => North,
             1 => East,
             2 => South,

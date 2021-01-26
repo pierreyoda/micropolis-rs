@@ -1,9 +1,11 @@
-use rand::rngs::OsRng;
 use wasm_bindgen::prelude::*;
 
-use micropolis_rs_core::map::generator::{GeneratorCreateIsland, MapGenerator};
 use micropolis_rs_core::map::{Map, MapRectangle, Tile};
 use micropolis_rs_core::utils::Percentage;
+use micropolis_rs_core::{
+    map::generator::{GeneratorCreateIsland, MapGenerator},
+    utils::random::MicropolisRandom,
+};
 
 /// Wrapper for the new game screen where
 /// one or more map(s) can be randomly generated.
@@ -29,11 +31,13 @@ pub fn generate_new_map(
     width: usize,
     height: usize,
 ) -> Result<Box<[u16]>, JsValue> {
-    let mut rng = OsRng;
+    let mut rng = MicropolisRandom::from_random_system_seed();
     let dimensions = MapRectangle::new(width, height);
-    let result = wrapper.generator.random_map_terrain(&mut rng, &dimensions);
-    if let Ok(map) = result {
-        let tilemap = map.tiles();
+    let result = wrapper
+        .generator
+        .random_map_terrain(&mut rng, 12345, &dimensions);
+    if let Ok(generated) = result {
+        let tilemap = generated.generated_terrain.tiles();
         let tiles: Vec<u16> = tilemap
             .iter()
             .flat_map(|column| column.iter())
