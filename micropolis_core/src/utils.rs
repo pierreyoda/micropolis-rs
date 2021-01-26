@@ -3,6 +3,8 @@ use std::cmp::min;
 use num_traits::Num;
 use rand::{distributions::uniform::SampleUniform, Rng};
 
+pub mod random;
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct Percentage(f64);
 
