@@ -149,7 +149,7 @@ pub(super) fn put_down_forest(
 ///
 /// This function performs some basic sanity checks, and implements
 /// the auto-bulldoze functionality to prepare the site.
-fn prepare_bulding_site(
+fn prepare_building_site(
     map: &TileMap,
     position: &MapPosition,
     size: &MapRectangle,
@@ -233,7 +233,7 @@ pub(super) fn build_building(
     // compute top-left 'anchor'
     let anchor = center.with_offset(-1, -1);
     // prepare building site
-    if let Some(prepareResult) = effects.chain_or_return(prepare_bulding_site(
+    if let Some(prepareResult) = effects.chain_or_return(prepare_building_site(
         map,
         &anchor,
         &building_info.size,
