@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::utils::{random_in_range, Percentage};
+use crate::utils::{random::MicropolisRandom, Percentage};
 
 use super::CityPopulation;
 
@@ -19,7 +19,6 @@ pub enum CityVotingProblem {
     Fire,
 }
 
-use rand::Rng;
 use CityVotingProblem::*;
 
 pub const CITY_VOTING_PROBLEMS: [CityVotingProblem; 7] = [
@@ -91,11 +90,11 @@ impl CityEvaluator {
         todo!()
     }
 
-    pub fn survey_mayor_approval<R: Rng>(&mut self, rng: &mut R, score: CityScore) {
+    pub fn survey_mayor_approval(&mut self, rng: &mut MicropolisRandom, score: CityScore) {
         let city_score = score.current as i32;
         self.mayor_approval_rate = Percentage::from_integer(
             (0..100)
-                .filter(|_| random_in_range(rng, 0, 1000) < city_score)
+                .filter(|_| (rng.get_random(1000) as i32) < city_score)
                 .count() as u8,
         )
         .unwrap()

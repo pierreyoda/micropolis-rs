@@ -1,8 +1,6 @@
-use rand::Rng;
-
 use crate::{
     map::{MapPosition, MapRectangle, TileMap, TileType, WORLD_HEIGHT, WORLD_WIDTH},
-    utils::random_in_range,
+    utils::random::MicropolisRandom,
 };
 
 use super::traffic::TrafficDensityMap;
@@ -29,9 +27,9 @@ pub enum SpriteType {
 }
 
 impl SpriteType {
-    pub fn init_sprite<R: Rng>(
+    pub fn init_sprite(
         &self,
-        rng: &mut R,
+        rng: &mut MicropolisRandom,
         mut sprite: Sprite,
         max_pollution_at: &MapPosition,
     ) -> Sprite {
@@ -85,8 +83,8 @@ impl SpriteType {
                 sprite.frame = 5;
                 sprite.count = 1500;
                 sprite.destination = MapPosition::new(
-                    random_in_range(rng, 0, ((WORLD_WIDTH as i32) << 4) - 1),
-                    random_in_range(rng, 0, ((WORLD_HEIGHT as i32) << 4) - 1),
+                    rng.get_random(((WORLD_WIDTH as i16) << 4) - 1) as i32,
+                    rng.get_random(((WORLD_HEIGHT as i16) << 4) - 1) as i32,
                 );
                 sprite.origin = sprite.position - (30, 0).into();
             }
@@ -128,9 +126,9 @@ impl SpriteType {
         sprite
     }
 
-    pub fn update_sprite<R: Rng>(
+    pub fn update_sprite(
         &self,
-        rng: &mut R,
+        rng: &mut MicropolisRandom,
         map: &TileMap,
         sprite: &mut Sprite,
         sprite_cycle: u16,
@@ -143,9 +141,9 @@ impl SpriteType {
         }
     }
 
-    fn update_train<R: Rng>(
+    fn update_train(
         &self,
-        rng: &mut R,
+        rng: &mut MicropolisRandom,
         map: &TileMap,
         sprite: &mut Sprite,
         sprite_cycle: u16,
@@ -160,7 +158,7 @@ impl SpriteType {
             return Ok(());
         }
 
-        let direction = (random_in_range(rng, 0, u16::MAX) & 0x03) as usize;
+        let direction = (rng.get_random_16() & 0x03) as usize;
         for z in direction..(direction + 4) {
             let direction2: usize = z & 0x03;
             if sprite.direction != 4 && direction2 == ((sprite.direction + 2) & 0x03) {
@@ -207,9 +205,9 @@ impl SpriteType {
         Ok(())
     }
 
-    fn update_helicopter<R: Rng>(
+    fn update_helicopter(
         &self,
-        rng: &mut R,
+        rng: &mut MicropolisRandom,
         map: &TileMap,
         sprite: &mut Sprite,
         sprite_cycle: u16,
@@ -263,7 +261,7 @@ impl SpriteType {
                             "SpriteType::update_helicopter: cannot get traffic density at {}",
                             chopper_position
                         ))?;
-                if traffic_density > 170 && random_in_range(rng, 0, u16::MAX) & 0x07 == 0 {
+                if traffic_density > 170 && rng.get_random_16() & 0x07 == 0 {
                     // TODO: sendMessage(HEAVY_TRAFFIC, chopper_position, picture=true)
                     // TODO: makeSound("city", "HeavyTraffic", chipper_position)
                     sprite.sound_count = 200;
@@ -328,8 +326,8 @@ pub struct Sprite {
 }
 
 impl Sprite {
-    pub fn new<R: Rng>(
-        rng: &mut R,
+    pub fn new(
+        rng: &mut MicropolisRandom,
         name: String,
         kind: &SpriteType,
         position: MapPosition,

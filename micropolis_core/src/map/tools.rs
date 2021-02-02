@@ -1,12 +1,11 @@
 use std::collections::HashMap;
 
-use rand::Rng;
 use toolbox::{
     tool_build_building, tool_bulldozer, tool_forest, tool_land, tool_network, tool_park,
     tool_rail, tool_road, tool_water, tool_wire,
 };
 
-use crate::city::budget::MoneyValue;
+use crate::{city::budget::MoneyValue, utils::random::MicropolisRandom};
 
 use super::{buildings::BuildingType, tiles::TILE_LOW_MASK, MapPosition, Tile, TileMap};
 
@@ -264,8 +263,8 @@ impl ToolEffects {
     }
 }
 
-pub fn tool_down<R: Rng>(
-    rng: &mut R,
+pub fn tool_down(
+    rng: &mut MicropolisRandom,
     map: &mut TileMap,
     position: &MapPosition,
     tool: &EditingTool,
@@ -298,8 +297,8 @@ pub fn tool_down<R: Rng>(
     )
 }
 
-pub fn apply_tool<R: Rng>(
-    rng: &mut R,
+pub fn apply_tool(
+    rng: &mut MicropolisRandom,
     map: &mut TileMap,
     position: &MapPosition,
     tool: &EditingTool,

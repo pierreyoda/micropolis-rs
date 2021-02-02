@@ -1,13 +1,11 @@
 use std::cmp;
 
-use rand::Rng;
-
 use crate::{
     map::{
         tiles::TILE_LOW_MASK, Map, MapClusteringStrategy, MapPosition, MapPositionOffset,
         MapRectangle, Tile, TileMap, TileType, WORLD_HEIGHT, WORLD_WIDTH,
     },
-    utils::random_in_range,
+    utils::random::MicropolisRandom,
 };
 
 use super::{sprite::ActiveSpritesList, sprite::SpriteType, zoning::ZoneType};
@@ -53,9 +51,9 @@ impl CityTraffic {
     /// Spawn traffic starting from the road tile a the given position.
     ///
     /// Returns true if a connection was found.
-    pub fn spawn_traffic_at<R: Rng>(
+    pub fn spawn_traffic_at(
         &mut self,
-        rng: &mut R,
+        rng: &mut MicropolisRandom,
         map: &TileMap,
         at: &MapPosition,
         destination_zone: &ZoneType,
@@ -74,9 +72,9 @@ impl CityTraffic {
     ///
     /// Returns Some(true) if a connection was found, Some(false) if not and None if
     /// no connection to a road was found.
-    pub fn spawn_traffic<R: Rng>(
+    pub fn spawn_traffic(
         &mut self,
-        rng: &mut R,
+        rng: &mut MicropolisRandom,
         map: &TileMap,
         starting_at: &MapPosition,
         destination_zone: &ZoneType,
@@ -96,9 +94,9 @@ impl CityTraffic {
     }
 
     /// Update the traffic density map from the positions stack.
-    fn add_to_traffic_density_map<R: Rng>(
+    fn add_to_traffic_density_map(
         &mut self,
-        rng: &mut R,
+        rng: &mut MicropolisRandom,
         map: &TileMap,
         sprites: &mut ActiveSpritesList,
     ) -> Result<(), String> {
@@ -120,7 +118,7 @@ impl CityTraffic {
                     self.density_map.set_tile_at(&position, traffic);
 
                     // check for heavy traffic
-                    if traffic >= 240 && random_in_range(rng, 0, 5) == 0 {
+                    if traffic >= 240 && rng.get_random(5) == 0 {
                         let traffic_max = position;
                         // direct helicopter towards heavy traffic
                         if let Some(sprite) = sprites.get_sprite_mut(&SpriteType::Helicopter) {
@@ -171,9 +169,9 @@ impl CityTraffic {
     }
 
     /// Try to drive to the given destination.
-    fn try_driving_to<R: Rng>(
+    fn try_driving_to(
         &mut self,
-        rng: &mut R,
+        rng: &mut MicropolisRandom,
         map: &TileMap,
         from: &MapPosition,
         destination_zone: &ZoneType,
@@ -211,8 +209,8 @@ impl CityTraffic {
     }
 
     /// Try to drive one tile in a random direction.
-    fn try_random_driving<R: Rng>(
-        rng: &mut R,
+    fn try_random_driving(
+        rng: &mut MicropolisRandom,
         map: &TileMap,
         from: &MapPosition,
         from_direction: &MapPositionOffset,
@@ -258,7 +256,7 @@ impl CityTraffic {
         }
 
         // more than one choice: draw a random number
-        let mut i: usize = random_in_range(rng, 0, u16::MAX as usize) & 0x03;
+        let mut i: usize = (rng.get_random_16() as usize) & 0x03;
         while directions[i] == MapPositionOffset::None {
             i = (i + 1) & 0x03;
         }

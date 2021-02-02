@@ -1,10 +1,8 @@
-use rand::Rng;
-
 use crate::{
     map::buildings::BuildingInfo, map::connect::TileMapConnector, map::tiles::TILE_ANIM_BIT,
     map::tiles::TILE_BULL_BIT, map::tiles::TILE_BURN_BIT, map::tiles::TILE_CONDUCT_BIT,
     map::tiles::TILE_LOW_MASK, map::tiles::TILE_ZONE_BIT, map::MapPosition, map::Tile,
-    map::TileMap, map::TileType,
+    map::TileMap, map::TileType, utils::random::MicropolisRandom,
 };
 
 use super::{
@@ -15,8 +13,8 @@ use super::{
 };
 
 /// Apply bulldozer tool (manual, with explosion animation for buildings).
-pub(super) fn tool_bulldozer<R: Rng>(
-    rng: &mut R,
+pub(super) fn tool_bulldozer(
+    rng: &mut MicropolisRandom,
     map: &TileMap,
     position: &MapPosition,
     mut effects: ToolEffects,
@@ -221,8 +219,8 @@ pub(super) fn tool_wire(
 }
 
 /// Build at park.
-pub(super) fn tool_park<R: Rng>(
-    rng: &mut R,
+pub(super) fn tool_park(
+    rng: &mut MicropolisRandom,
     map: &TileMap,
     center: &MapPosition,
     effects: ToolEffects,
@@ -303,8 +301,8 @@ pub(super) fn tool_water(
 }
 
 /// Place land at the give position.
-pub(super) fn tool_land<R: Rng>(
-    rng: &mut R,
+pub(super) fn tool_land(
+    rng: &mut MicropolisRandom,
     map: &TileMap,
     position: &MapPosition,
     effects: ToolEffects,
@@ -333,8 +331,8 @@ pub(super) fn tool_land<R: Rng>(
 }
 
 /// Place a forest at the given position.
-pub(super) fn tool_forest<R: Rng>(
-    rng: &mut R,
+pub(super) fn tool_forest(
+    rng: &mut MicropolisRandom,
     map: &TileMap,
     position: &MapPosition,
     mut effects: ToolEffects,

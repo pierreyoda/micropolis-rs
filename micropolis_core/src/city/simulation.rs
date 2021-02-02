@@ -1,7 +1,6 @@
 use std::todo;
 
 use parameters::SimulationParameters;
-use rand::Rng;
 use statistics::SimulationStatistics;
 
 use super::{
@@ -21,7 +20,7 @@ use crate::{
         tiles::{TILE_CONDUCT_BIT, TILE_POWER_BIT, TILE_ZONE_BIT},
         Map, MapClusteringStrategy, MapPosition, TileMap, TileType,
     },
-    utils::random_in_range,
+    utils::random::MicropolisRandom,
 };
 use crate::{
     game::{GameSpeed, GameSpeedPreset},
@@ -309,9 +308,9 @@ impl Simulation {
     }
 
     /// Update special zones.
-    fn do_special_zone<R: Rng>(
+    fn do_special_zone(
         &mut self,
-        rng: &mut R,
+        rng: &mut MicropolisRandom,
         map: &mut TileMap,
         power: &mut CityPower,
         sprites: &mut ActiveSpritesList,
@@ -341,11 +340,7 @@ impl Simulation {
             TileType::Nuclear => {
                 // trigger nuclear meltdown?
                 if disasters_enabled
-                    && (random_in_range(
-                        rng,
-                        0,
-                        ZONE_MELTDOWN_TABLE[difficulty.to_usize().unwrap()],
-                    ) == 0x00)
+                    && (rng.get_random(ZONE_MELTDOWN_TABLE[difficulty.to_usize().unwrap()]) == 0x00)
                 {
                     CityDisasters::do_meltdown(rng, map, at)?;
                     return Ok(());
