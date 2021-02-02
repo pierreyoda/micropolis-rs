@@ -1,8 +1,7 @@
-use rand::Rng;
-
 use crate::{
     city::City,
     map::{tools::apply_tool, tools::tool_down, tools::EditingTool, MapPosition, TileMap},
+    utils::random::MicropolisRandom,
 };
 
 pub struct MicropolisCoreOptions {
@@ -17,9 +16,9 @@ pub struct MicropolisCoreInterfacer {
 }
 
 impl MicropolisCoreInterfacer {
-    pub fn tool_down<R: Rng>(
+    pub fn tool_down(
         &mut self,
-        rng: &mut R,
+        rng: &mut MicropolisRandom,
         position: &MapPosition,
         tool: &EditingTool,
     ) -> Result<(), String> {
@@ -41,9 +40,9 @@ impl MicropolisCoreInterfacer {
     }
 
     /// Drag a tool from one tile to another.
-    pub fn tool_drag<R: Rng>(
+    pub fn tool_drag(
         &mut self,
-        rng: &mut R,
+        rng: &mut MicropolisRandom,
         map: &mut TileMap,
         from: &MapPosition,
         to: &MapPosition,

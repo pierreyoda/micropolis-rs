@@ -1,4 +1,4 @@
-use rand::Rng;
+use std::todo;
 
 use crate::{
     game::{GameLevelDifficulty, GameScenario},
@@ -13,7 +13,7 @@ use crate::{
     map::TileType,
     map::WORLD_HEIGHT,
     map::WORLD_WIDTH,
-    utils::{random_16, random_in_range},
+    utils::random::MicropolisRandom,
 };
 
 use super::sprite::{ActiveSpritesList, Sprite, SpriteType};
@@ -47,13 +47,19 @@ impl CityDisasters {
         if self.disaster_event != GameScenario::None {}
     }
 
-    fn scenario_disaster<R: Rng>(&mut self, rng: &mut R, map: &mut TileMap) -> Result<(), String> {
+    fn scenario_disaster(
+        &mut self,
+        rng: &mut MicropolisRandom,
+        map: &mut TileMap,
+    ) -> Result<(), String> {
         match self.disaster_event {
             GameScenario::Dullsville => (),
             GameScenario::SanFrancisco if self.disaster_timer == 1 => {
                 Self::make_earthquake(rng, map)?
             }
-            GameScenario::Hamburg if self.disaster_timer % 10 == 0 => Self::make_fire_bombs(rng)?,
+            GameScenario::Hamburg if self.disaster_timer % 10 == 0 => {
+                Self::make_fire_bombs(rng, map)?
+            }
             GameScenario::Bern => (),
             // GameScenario::Tokyo if self.disaster_timer == 1 => Self::make_monster(),
             // GameScenario::Detroit => (),
@@ -74,7 +80,7 @@ impl CityDisasters {
 
     /// Make a nuclear power plant melt.
     /// TODO: randomize which nuke plant melts down
-    fn make_meltdown<R: Rng>(rng: &mut R, map: &mut TileMap) -> Result<(), String> {
+    fn make_meltdown(rng: &mut MicropolisRandom, map: &mut TileMap) -> Result<(), String> {
         for x in 0..WORLD_WIDTH - 1 {
             for y in 0..WORLD_HEIGHT - 1 {
                 let position = MapPosition::new(x as i32, y as i32);
@@ -91,8 +97,8 @@ impl CityDisasters {
         Ok(())
     }
 
-    pub fn do_meltdown<R: Rng>(
-        rng: &mut R,
+    pub fn do_meltdown(
+        rng: &mut MicropolisRandom,
         map: &mut TileMap,
         position: &MapPosition,
     ) -> Result<(), String> {
@@ -112,8 +118,8 @@ impl CityDisasters {
         // add lots of radiation tiles around the plant
         for z in 0..200 {
             let radiation_position = MapPosition::new(
-                position.get_x() - 20 + random_in_range(rng, 0, 40),
-                position.get_y() - 15 + random_in_range(rng, 0, 30),
+                position.get_x() - 20 + rng.get_random(40) as i32,
+                position.get_y() - 15 + rng.get_random(30) as i32,
             );
 
             if let Some(tile) = map.get_tile_at(&radiation_position) {
@@ -138,21 +144,21 @@ impl CityDisasters {
     }
 
     /// Let a fire bomb explode at a random location.
-    fn fire_bomb<R: Rng>(rng: &mut R) -> Result<(), String> {
+    fn fire_bomb(rng: &mut MicropolisRandom, map: &TileMap) -> Result<(), String> {
         let crash_position = MapPosition::new(
-            random_in_range(rng, 0, (WORLD_WIDTH - 1) as i32),
-            random_in_range(rng, 0, (WORLD_HEIGHT - 1) as i32),
+            rng.get_random((WORLD_WIDTH - 1) as i16) as i32,
+            rng.get_random((WORLD_HEIGHT - 1) as i16) as i32,
         );
-        // Self::make_explosion(map, &crash_position)
+        Self::make_explosion(map, &crash_position)?;
         // TODO: sendMessage(MESSAGE_FIREBOMBING, crash_position, true, true)
-        todo!()
+        Ok(())
     }
 
     /// Throw several bombs onto the city.
-    fn make_fire_bombs<R: Rng>(rng: &mut R) -> Result<(), String> {
-        let mut count = 2 + random_in_range(rng, 0, u16::MAX);
+    fn make_fire_bombs(rng: &mut MicropolisRandom, map: &TileMap) -> Result<(), String> {
+        let mut count = 2 + (rng.get_random_16() & 0x01);
         while count > 0 {
-            Self::fire_bomb(rng)?;
+            Self::fire_bomb(rng, map)?;
             count -= 1;
         }
 
@@ -162,20 +168,20 @@ impl CityDisasters {
 
     /// Tell the front-end to show an earthquake to the user
     /// (shaking the map for some time).
-    fn do_earthquake(strength: i32) {
+    fn do_earthquake(strength: i16) {
         // TODO: makeSound("city", "ExplosionLow")
         // TODO: callback("startEarthquake", "d", strength)
     }
 
     /// Change random tiles to fire or dirt as a result of the earthquake.
-    fn make_earthquake<R: Rng>(rng: &mut R, map: &mut TileMap) -> Result<(), String> {
-        let strength = random_in_range(rng, 0, 700) + 300;
+    fn make_earthquake(rng: &mut MicropolisRandom, map: &mut TileMap) -> Result<(), String> {
+        let strength = rng.get_random(700) + 300;
         Self::do_earthquake(strength);
         // TODO: sendMessage(MESSAGE_EARTHQUAKE, city_center, true)
         for z in 0..strength {
             let position = MapPosition::new(
-                random_in_range(rng, 0, (WORLD_WIDTH - 1) as i32),
-                random_in_range(rng, 0, (WORLD_HEIGHT - 1) as i32),
+                rng.get_random((WORLD_WIDTH - 1) as i16) as i32,
+                rng.get_random((WORLD_HEIGHT - 1) as i16) as i32,
             );
             if let Some(tile) = map.get_tile_at(&position) {
                 if tile.is_vulnerable() {
@@ -197,7 +203,7 @@ impl CityDisasters {
     }
 
     /// Start a fire at a random place, random disaster or scenario.
-    fn set_fire<R: Rng>(rng: &mut R, map: &mut TileMap) -> Result<(), String> {
+    fn set_fire(rng: &mut MicropolisRandom, map: &mut TileMap) -> Result<(), String> {
         let at = MapPosition::new_random(rng, &map.bounds());
         if let Some(tile) = map.get_tile_at(&at) {
             let mut z = tile.get_raw() & TILE_ZONE_BIT;
@@ -214,7 +220,7 @@ impl CityDisasters {
     }
 
     /// Start a fire at a random place, requested by the user.
-    fn make_fire<R: Rng>(rng: &mut R, map: &mut TileMap) -> Result<(), String> {
+    fn make_fire(rng: &mut MicropolisRandom, map: &mut TileMap) -> Result<(), String> {
         for t in 0..40 {
             let at = MapPosition::new_random(rng, &map.bounds());
             if let Some(tile) = map.get_tile_at(&at) {
@@ -235,7 +241,7 @@ impl CityDisasters {
 
     /// Flood many tiles.
     /// TODO: use direction and some form of XYPosition class here
-    fn make_flood<R: Rng>(&mut self, rng: &mut R, map: &mut TileMap) -> Result<(), String> {
+    fn make_flood(&mut self, rng: &mut MicropolisRandom, map: &mut TileMap) -> Result<(), String> {
         for z in 0..300 {
             let at = MapPosition::new_random(rng, &map.bounds());
             let mut c = map
@@ -266,15 +272,15 @@ impl CityDisasters {
     }
 
     /// Flood around the given position.
-    fn do_flood<R: Rng>(
+    fn do_flood(
         &mut self,
-        rng: &mut R,
+        rng: &mut MicropolisRandom,
         map: &mut TileMap,
         at: &MapPosition,
     ) -> Result<(), String> {
         if self.flood_count > 0 {
             for z in 0..4 {
-                if random_16(rng) & 0x07 != 0x00 {
+                if rng.get_random_16() & 0x07 != 0x00 {
                     continue;
                 }
                 // 12.5% chance
@@ -291,7 +297,7 @@ impl CityDisasters {
                         map.set_tile_at(
                             &current_position,
                             Tile::from_raw(
-                                TileType::Flood.to_u16().unwrap() + random_in_range(rng, 0, 2),
+                                TileType::Flood.to_u16().unwrap() + rng.get_random(2) as u16,
                             )?,
                         );
                     }
@@ -308,10 +314,11 @@ impl CityDisasters {
     }
 
     /// Construct an explosion sprite at the given position.
-    fn make_explosion(map: &TileMap, at: &MapPosition) {
-        if !map.in_bounds(at) {
-            return;
-        }
+    fn make_explosion(map: &TileMap, at: &MapPosition) -> Result<(), String> {
+        todo!()
+        // if !map.in_bounds(at) {
+        //     return;
+        // }
         // Self::make_explosion_at(&MapPosition::new(
         //     (at.get_x() << 4) + 8,
         //     (at.get_y() << 4) + 8,
@@ -319,8 +326,8 @@ impl CityDisasters {
     }
 
     /// Construct an explosion sprite.
-    pub fn make_explosion_at<R: Rng>(
-        rng: &mut R,
+    pub fn make_explosion_at(
+        rng: &mut MicropolisRandom,
         sprites: &mut ActiveSpritesList,
         at: &MapPosition,
         max_pollution_at: &MapPosition,
@@ -334,13 +341,11 @@ impl CityDisasters {
         ))
     }
 
-    fn random_fire<R: Rng>(rng: &mut R) -> u16 {
-        TileType::Fire.to_u16().unwrap()
-            + ((random_in_range(rng, 0, u16::MAX) & 0x07) | TILE_ANIM_BIT)
+    fn random_fire(rng: &mut MicropolisRandom) -> u16 {
+        TileType::Fire.to_u16().unwrap() + ((rng.get_random_16() & 0x07) as u16 | TILE_ANIM_BIT)
     }
 
-    fn random_rubble<R: Rng>(rng: &mut R) -> u16 {
-        TileType::Rubble.to_u16().unwrap()
-            + ((random_in_range(rng, 0, u16::MAX) & 0x03) | TILE_BULL_BIT)
+    fn random_rubble(rng: &mut MicropolisRandom) -> u16 {
+        TileType::Rubble.to_u16().unwrap() + ((rng.get_random_16() & 0x03) as u16 | TILE_BULL_BIT)
     }
 }

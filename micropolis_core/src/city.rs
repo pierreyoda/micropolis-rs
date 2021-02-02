@@ -13,10 +13,12 @@ pub mod zoning;
 use budget::MoneyValue;
 use population::CityPopulation;
 use power::CityPower;
-use rand::rngs::OsRng;
 use simulation::Simulation;
 
-use crate::map::{animations::TileMapAnimator, Map, MapRectangle, TileMap, TileType};
+use crate::{
+    map::{animations::TileMapAnimator, Map, MapRectangle, TileMap, TileType},
+    utils::random::MicropolisRandom,
+};
 
 pub enum CityInitializationState {
     Initialized = 0,
@@ -26,7 +28,7 @@ pub enum CityInitializationState {
 
 /// A Micropolis city.
 pub struct City {
-    rng: OsRng,
+    rng: MicropolisRandom,
     /// Status of the city's initialization (`initSimLoad` in the C++ code).
     init_status: CityInitializationState,
     /// TileMap describing the city and its surroundings.
@@ -68,7 +70,7 @@ impl City {
         let power = CityPower::from_map(&map);
         let sim = Simulation::new(&map);
         Ok(City {
-            rng: OsRng,
+            rng: MicropolisRandom::from_random_system_seed(),
             init_status: CityInitializationState::JustCreated,
             map,
             map_animator: TileMapAnimator::load()?,

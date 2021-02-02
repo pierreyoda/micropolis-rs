@@ -608,10 +608,7 @@ impl MapGenerator {
     fn plop_big_river(terrain: &mut TileMap, base: &MapPosition) {
         for x in 0..9 {
             for y in 0..9 {
-                let position = MapPosition {
-                    x: base.x + x as i32,
-                    y: base.y + y as i32,
-                };
+                let position = *base + (x, y).into();
                 if !terrain.in_bounds(&position) {
                     continue;
                 }
@@ -625,10 +622,7 @@ impl MapGenerator {
     fn plop_small_river(terrain: &mut TileMap, base: &MapPosition) {
         for x in 0..6 {
             for y in 0..6 {
-                let position = MapPosition {
-                    x: base.x + x as i32,
-                    y: base.y + y as i32,
-                };
+                let position = *base + (x, y).into();
                 if !terrain.in_bounds(&position) {
                     continue;
                 }
@@ -690,5 +684,38 @@ impl MapGenerator {
             3 => West,
             _ => unreachable!(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::map::tiles_type::TileType;
+    use crate::map::MapRectangle;
+
+    #[test]
+    fn test_temp_print() {
+        let mut rng = MicropolisRandom::from_random_system_seed();
+        let generator = MapGenerator::with_options(GeneratorCreateIsland::Never);
+        let generated = generator
+            .random_map_terrain(&mut rng, 12345, &MapRectangle::new(120, 100))
+            .unwrap();
+        let tiles = generated.generated_terrain.tiles();
+        println!("TEMP: generating map for console print...");
+        let mut repr = String::new();
+        for row in tiles.iter() {
+            repr.push('/');
+            for tile in row.iter() {
+                repr.push(match tile.get_type() {
+                    Some(TileType::River) => '~',
+                    Some(TileType::RiverEdge) => '&',
+                    Some(TileType::Channel) => '#',
+                    Some(TileType::Dirt) => '.',
+                    _ => 'T',
+                });
+            }
+            repr.push_str("/\n");
+        }
+        println!("{}", repr);
     }
 }

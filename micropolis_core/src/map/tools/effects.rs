@@ -1,5 +1,3 @@
-use rand::Rng;
-
 use crate::{
     map::{
         buildings::BuildingInfo, generator::MapGenerator, tiles::TILE_ANIM_BIT,
@@ -7,7 +5,7 @@ use crate::{
         tiles::TILE_CONDUCT_BIT, tiles::TILE_ZONE_BIT, MapPosition, MapRectangle, Tile, TileMap,
         TileType,
     },
-    utils::random_in_range,
+    utils::random::MicropolisRandom,
 };
 
 use super::{
@@ -16,8 +14,8 @@ use super::{
 
 /// Make a square of rubble tiles of the given size.
 #[must_use]
-pub(super) fn put_rubble<R: Rng>(
-    rng: &mut R,
+pub(super) fn put_rubble(
+    rng: &mut MicropolisRandom,
     map: &TileMap,
     anchor: &MapPosition,
     size: i8,
@@ -43,7 +41,7 @@ pub(super) fn put_rubble<R: Rng>(
                 &current_position,
                 Tile::from_raw(
                     if animations_enabled {
-                        TileType::TINYEXP.to_u16().unwrap() + random_in_range(rng, 0, 2)
+                        TileType::TINYEXP.to_u16().unwrap() + rng.get_random(2) as u16
                     } else {
                         TileType::SOMETINYEXP.to_u16().unwrap()
                     } | TILE_ANIM_BIT
@@ -56,13 +54,13 @@ pub(super) fn put_rubble<R: Rng>(
 }
 
 /// Put down a park at the given position.
-pub(super) fn put_down_park<R: Rng>(
-    rng: &mut R,
+pub(super) fn put_down_park(
+    rng: &mut MicropolisRandom,
     map: &TileMap,
     position: &MapPosition,
     mut effects: ToolEffects,
 ) -> Result<ToolResult, String> {
-    let value: u16 = random_in_range(rng, 0, 4);
+    let value = rng.get_random(4) as u16;
     let tile_raw = TILE_BURN_BIT
         | TILE_BULL_BIT
         | match value {

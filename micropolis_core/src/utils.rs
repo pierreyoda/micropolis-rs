@@ -1,7 +1,4 @@
-use std::cmp::min;
-
 use num_traits::Num;
-use rand::{distributions::uniform::SampleUniform, Rng};
 
 pub mod random;
 
@@ -38,32 +35,6 @@ pub fn clamp<U: Num + Ord>(value: U, lower: U, upper: U) -> U {
     } else {
         value
     }
-}
-
-/// Generate a random integer in the given inclusive range.
-pub fn random_in_range<U: Copy + Num + Ord + SampleUniform, R: Rng>(
-    rng: &mut R,
-    lower: U,
-    upper: U,
-) -> U {
-    rng.gen_range(lower..=upper + U::one())
-}
-
-/// Get a random 16 bit integer.
-pub fn random_16<R: Rng>(rng: &mut R) -> u16 {
-    rng.gen_range(0..=u16::MAX)
-}
-
-/// Generate a random integer in the given inclusive range with a bias
-/// towards smaller values.
-pub fn erandom_in_range<U: Copy + Num + Ord + SampleUniform, R: Rng>(
-    rng: &mut R,
-    lower: U,
-    upper: U,
-) -> U {
-    let z = random_in_range(rng, lower, upper);
-    let x = random_in_range(rng, lower, upper);
-    min(z, x)
 }
 
 #[cfg(test)]
