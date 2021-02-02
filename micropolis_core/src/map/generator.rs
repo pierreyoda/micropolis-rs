@@ -232,14 +232,14 @@ mod tests {
     use crate::map::MapRectangle;
 
     #[test]
-    fn test_temp_print() {
+    fn test_map_generator() {
         let mut rng = MicropolisRandom::from_random_system_seed();
         let generator = MapGenerator::with_options(GeneratorCreateIsland::Never);
         let generated = generator
-            .random_map_terrain(&mut rng, 12345, &MapRectangle::new(120, 100))
+            .random_map_terrain(&mut rng, 456789, &MapRectangle::new(120, 100))
             .unwrap();
         let tiles = generated.generated_terrain.tiles();
-        println!("TEMP: generating map for console print...");
+        println!("generating map for console print...");
         let mut repr = String::new();
         for row in tiles.iter() {
             repr.push('/');
