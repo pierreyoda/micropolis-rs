@@ -1,6 +1,6 @@
 use crate::{
     map::{
-        buildings::BuildingInfo, generator::MapGenerator, tiles::TILE_ANIM_BIT,
+        buildings::BuildingInfo, generator::trees::smooth_trees_at, tiles::TILE_ANIM_BIT,
         tiles::TILE_BULL_BIT, tiles::TILE_BURN_BIT, tiles::TILE_BURN_BULL_BIT,
         tiles::TILE_CONDUCT_BIT, tiles::TILE_ZONE_BIT, MapPosition, MapRectangle, Tile, TileMap,
         TileType,
@@ -136,7 +136,7 @@ pub(super) fn put_down_forest(
         if map.in_bounds(
             &(*position + MapPosition::new(*FOREST_DX.get(i).unwrap(), *FOREST_DY.get(i).unwrap())),
         ) {
-            effects = MapGenerator::smooth_trees_at(map, position, effects, true)?;
+            effects = smooth_trees_at(map, position, effects, true)?;
         }
     }
 
