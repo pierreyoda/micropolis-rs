@@ -67,12 +67,12 @@ impl MicropolisRandom {
 
     /// Draw a random number in the given upper inclusive range.
     pub fn get_random(&mut self, range: i16) -> i16 {
-        let local_range: i32 = range as i32 + 1;
+        let local_range = range as u16 + 1;
         let max_multiple = (0xFFFF / local_range) * local_range; // TODO: ?
 
-        let mut r_number: i32 = 0;
+        let mut r_number: u16 = 0;
         loop {
-            r_number = self.get_random_16() as i32;
+            r_number = self.get_random_16() as u16;
             if r_number < max_multiple {
                 break;
             }
@@ -87,7 +87,7 @@ impl MicropolisRandom {
         cmp::min(self.get_random(range), self.get_random(range))
     }
 
-    /// Draw a random 16-bit number.
+    /// Draw a random unsigned 16-bit number.
     pub fn get_random_16(&mut self) -> i16 {
         (self.sim_random() & 0x0000FFFF) as i16
     }
