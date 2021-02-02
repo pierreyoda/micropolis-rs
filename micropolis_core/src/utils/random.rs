@@ -1,8 +1,43 @@
 use std::cmp;
 
+/// See https://rosettacode.org/wiki/Elementary_cellular_automaton/Random_Number_Generator
+struct ElementaryCA {
+    rule: u8,
+    state: u64,
+}
+impl ElementaryCA {
+    fn new(rule: u8) -> (u64, ElementaryCA) {
+        let out = ElementaryCA { rule, state: 1 };
+        (out.state, out)
+    }
+    fn next(&mut self) -> u64 {
+        let mut next_state = 0u64;
+        let state = self.state;
+        for i in 0..64 {
+            next_state |=
+                (((self.rule as u64) >> (7 & (state.rotate_left(1).rotate_right(i as u32)))) & 1)
+                    << i;
+        }
+        self.state = next_state;
+        self.state
+    }
+}
+fn rep_u64(val: u64) -> String {
+    let mut out = String::new();
+    for i in (0..64).rev() {
+        if 1 << i & val != 0 {
+            out += "\u{2588}";
+        } else {
+            out += "-";
+        }
+    }
+    out
+}
+
 pub struct MicropolisRandom {
     seed: i32,
     next_random: u64,
+    inner_prng: ElementaryCA,
 }
 
 impl MicropolisRandom {
@@ -10,10 +45,11 @@ impl MicropolisRandom {
         // simulate gettimeofday
         // TODO: check this, especially with WASM
         let now = chrono::Utc::now();
-        let seed = (now.timestamp_nanos() * 1000) ^ now.timestamp();
+        let seed = (now.timestamp_nanos() / 1000) ^ now.timestamp();
 
         // build the corresponding seed
         let final_seed = seed as i32;
+        // Self::from_seed(final_seed)
         Self::from_seed(final_seed)
     }
 
@@ -21,6 +57,7 @@ impl MicropolisRandom {
         Self {
             seed,
             next_random: seed as u64,
+            inner_prng: ElementaryCA::new(30).1,
         }
     }
 
@@ -67,7 +104,7 @@ impl MicropolisRandom {
 
     /// Draw a random 32-bit number (internal function).
     fn sim_random(&mut self) -> i32 {
-        self.next_random = self.next_random * 1103515245 + 12345;
+        self.next_random = self.inner_prng.next();
         ((self.next_random & 0xFFFF00) >> 8) as i32
     }
 }
