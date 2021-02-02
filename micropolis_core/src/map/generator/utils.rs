@@ -29,7 +29,7 @@ pub fn random_straight_direction(rng: &mut MicropolisRandom) -> MapPositionOffse
     }
 }
 
-/// Put the given tile type on the map terrain.
+/// Put the given tile type on the map terrain, **if possible**.
 pub fn put_tile_on_terrain(
     terrain: &mut TileMap,
     new_tile_type: TileType,
@@ -38,13 +38,17 @@ pub fn put_tile_on_terrain(
     if new_tile_type == TileType::Dirt {
         return Ok(());
     }
-    let row = terrain
-        .data
-        .get_mut(at.x as usize)
-        .ok_or("MapGenerator.set_tile map X overflow")?;
-    let tile = row
-        .get_mut(at.y as usize)
-        .ok_or("MapGenerator.set_tile map Y overflow")?;
+    let row = terrain.data.get_mut(at.x as usize);
+    if row.is_none() {
+        return Ok(());
+    }
+
+    let tile_option = row.unwrap().get_mut(at.y as usize);
+    if tile_option.is_none() {
+        return Ok(());
+    }
+
+    let tile = tile_option.unwrap();
     match tile.get_type() {
         Some(TileType::Dirt) => tile.set_type(new_tile_type),
         Some(TileType::River) if new_tile_type != TileType::Channel => Ok(()),
