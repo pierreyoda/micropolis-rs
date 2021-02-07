@@ -1,5 +1,5 @@
 use core::panic;
-use std::{fs::File, io::Write, path::Path};
+use std::{fs::File, io::Write, path::PathBuf};
 
 use clap::Clap;
 use serde_json;
@@ -7,6 +7,7 @@ use serde_json;
 use micropolis_rs_core::{
     map::{
         generator::{GeneratorCreateIsland, MapGenerator},
+        tiles_type::TileType,
         MapRectangle,
     },
     utils::{random::MicropolisRandom, Percentage},
@@ -66,21 +67,29 @@ fn main() {
                 .iter()
                 .map(|t| {
                     t.iter()
-                        .map(|t| t.get_type().as_ref().unwrap().to_u16().unwrap())
+                        .map(|t| {
+                            t.get_type()
+                                .as_ref()
+                                .unwrap_or(&TileType::Dirt)
+                                .to_u16()
+                                .unwrap()
+                        })
                         .collect()
                 })
                 .collect();
             let json = serde_json::to_string(&tiles_data).unwrap();
 
             // output
-            let path = Path::new("./output/test-front-map.json");
-            let mut file = match File::create(&path) {
-                Err(why) => panic!("could not create file {}: {}", path.display(), why),
+            let mut filepath = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+            filepath.push("./output/test-front-map.json");
+
+            let mut file = match File::create(&filepath) {
+                Err(why) => panic!("could not create file {}: {}", filepath.display(), why),
                 Ok(file) => file,
             };
             match file.write_all(json.as_bytes()) {
-                Err(why) => panic!("could not write to file {}: {}", path.display(), why),
-                Ok(_) => println!("successfully wrote to file {}", path.display()),
+                Err(why) => panic!("could not write to file {}: {}", filepath.display(), why),
+                Ok(_) => println!("successfully wrote to file {}", filepath.display()),
             };
         }
     }
