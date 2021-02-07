@@ -5,7 +5,7 @@ import { number } from "@storybook/addon-knobs";
 import Tile from "../Tile";
 import MapRenderer from "../MapRenderer";
 import AtlasImage from "@/assets/game/tiles.png";
-import { generateMapStub } from "../NewGameScreen";
+import { generateMapStub, getTestMap } from "@/game/utils";
 
 export default {
   title: "Game/Map",
@@ -26,4 +26,9 @@ export const RandomMap = () => {
   const map = useMemo(() => generateMapStub(width, height), [width, height]);
 
   return map && <MapRenderer map={map} />;
+};
+
+const testMap = getTestMap();
+export const TestMap = () => {
+  return <MapRenderer map={testMap} />;
 };

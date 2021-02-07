@@ -1,7 +1,7 @@
 const path = require("path");
 const withCSS = require("@zeit/next-css");
 const CopyPlugin = require("copy-webpack-plugin");
-const WasmPackPlugin = require("@wasm-tool/wasm-pack-plugin");
+// const WasmPackPlugin = require("@wasm-tool/wasm-pack-plugin");
 
 module.exports = () => withCSS({
   trailingSlash: true,
@@ -25,6 +25,10 @@ module.exports = () => withCSS({
           {
             from: path.join(__dirname, "../img/"),
             to: path.join(__dirname, "./public/game/"),
+          },
+          {
+            from: path.join(__dirname, "../micropolis_utils/output/"),
+            to: path.join(__dirname, "./public/utils-output/"),
           },
         ],
       }),
