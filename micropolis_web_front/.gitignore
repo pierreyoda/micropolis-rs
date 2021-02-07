@@ -13,3 +13,4 @@
 
 # game assets
 /public/game/*
+/public/utils-output/*

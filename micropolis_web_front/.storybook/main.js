@@ -5,6 +5,8 @@ module.exports = {
     "@storybook/addon-essentials",
     "@storybook/addon-knobs",
     "@storybook/addon-a11y",
+    "@storybook/addon-docs",
+    "@storybook/addon-controls",
   ],
   stories: ["../components/**/**/*.stories.tsx"],
   webpackFinal: async config => ({

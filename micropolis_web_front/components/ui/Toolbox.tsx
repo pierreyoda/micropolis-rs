@@ -1,4 +1,5 @@
 import React, { useMemo, FunctionComponent } from "react";
+import "twin.macro";
 
 import { iterate_by_pairs } from "@/utils";
 
@@ -15,12 +16,12 @@ export interface ToolboxProps {
 const ToolboxAction: FunctionComponent<ToolboxActionProps> = ({
   iconImg: iconSrc, tooltip, onClick,
 }) => (
-  <div className="w-12 h-12" onClick={onClick}>
+  <div tw="w-12 h-12" onClick={onClick}>
     <img
       alt={tooltip}
       title={tooltip}
       src={useMemo(() => `/game/toolbox/${iconSrc}`, [iconSrc])}
-      className="border-2 rounded-sm border-transparent hover:border-blue-400"
+      tw="border-2 rounded-sm border-transparent hover:border-blue-400"
     />
   </div>
 );
@@ -52,11 +53,11 @@ const Toolbox: FunctionComponent<ToolboxProps> = ({
   ], [actions]);
 
   return (
-    <div className="flex flex-col w-16 pt-4 bg-gray-100">
+    <div tw="flex flex-col w-16 pt-4 bg-gray-100">
       {actionsPairs.map(([firstAction, secondAction]) => (
         <div
           key={`${firstAction.iconImg}${secondAction ? `+${secondAction.iconImg}` : ""}`}
-          className="flex flex-row">
+          tw="flex flex-row">
           <ToolboxAction {...firstAction} />
           {secondAction && <ToolboxAction {...secondAction} />}
         </div>

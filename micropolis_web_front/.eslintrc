@@ -14,7 +14,9 @@
     ],
     "globals": {
       "Atomics": "readonly",
-      "SharedArrayBuffer": "readonly"
+      "SharedArrayBuffer": "readonly",
+      "JSX": "readonly",
+      "React": "readonly"
     },
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
