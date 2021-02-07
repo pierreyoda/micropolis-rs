@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { NextPage } from "next";
+import "twin.macro";
 
 import { MicropolisCoreLibConnector } from "@/game";
 import NewGameScreen from "@/components/game/NewGameScreen";
@@ -29,11 +30,11 @@ const Home: NextPage = () => {
   // });
   return (
     // <GameCoreLibContext.Provider value={gameLib}>
-      <div className="w-full h-full flex flex-col items-center justify-center">
+      <div tw="w-full h-full flex flex-col items-center justify-center">
         {loading
-          ? <div className="w-full h-full flex flex-col items-center justify-center">
+          ? <div tw="w-full h-full flex flex-col items-center justify-center">
               <LoaderSpinner width={250} height={250} type="MutatingDots" />
-              <span className="mt-12">Loading game library...</span>
+              <span tw="mt-12">Loading game library...</span>
             </div>
           : <NewGameScreen generateMap={null as any} />
         }

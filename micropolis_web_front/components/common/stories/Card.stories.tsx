@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Meta } from "@storybook/react";
+import "twin.macro";
 
 import Card from "../Card";
 import Button from "../Button";
@@ -14,10 +15,10 @@ export const Closable = () => {
         title="Title"
         onClose={() => setOpened(false)}
       >
-        <p className="py-6 text-white">
+        <p tw="py-6 text-white">
           This is the Card's body.
         </p>
-        <div className="pb-6">
+        <div tw="pb-6">
           <Button onToggle={() => {}}>
             Click me!
           </Button>
@@ -31,6 +32,6 @@ export const Closable = () => {
 };
 
 export default {
-  title: "Card",
+  title: "Common/Card",
   component: Card,
 } as Meta;

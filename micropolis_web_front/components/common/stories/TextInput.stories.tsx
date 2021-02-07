@@ -1,22 +1,22 @@
 import React, { useState } from "react";
-import { storiesOf } from "@storybook/react";
-import { withKnobs, text } from "@storybook/addon-knobs";
+import { Meta } from "@storybook/react";
+import { text } from "@storybook/addon-knobs";
 
 import TextInput from "../TextInput";
-import StoryWrapper from "./StoryWrapper";
 
-storiesOf("Common/Input", module)
-  .addDecorator(withKnobs)
-  .add("TextInput", () => {
-    const [value, setValue] = useState("");
+export default {
+  title: "Common/TextInput",
+  component: TextInput,
+} as Meta;
 
-    return (
-      <StoryWrapper>
-        <TextInput
-          value={value}
-          onChange={setValue}
-          placeholder={text("Placeholder", "Placeholder")}
-        />
-      </StoryWrapper>
-    );
-  });
+export const Regular = () => {
+  const [value, setValue] = useState("");
+
+  return (
+    <TextInput
+      value={value}
+      onChange={setValue}
+      placeholder={text("Placeholder", "Placeholder")}
+    />
+  );
+};

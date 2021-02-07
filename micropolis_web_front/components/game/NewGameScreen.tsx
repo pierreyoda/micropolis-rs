@@ -1,4 +1,5 @@
 import React, { FunctionComponent, useState } from "react";
+import "twin.macro";
 
 import MapRenderer, { MapPayload, TileMeta } from "./MapRenderer";
 import TextInput from "../common/TextInput";
@@ -27,11 +28,8 @@ const NewGameScreen: FunctionComponent<NewGameScreenProps> = () => {
   const [generatedMaps, setGeneratedMaps] = useState<MapPayload[]>([]);
 
   return (
-    <div className="flex items-start justify-center">
-      <Card
-        title={"New Game"}
-        backgroundColor="#edad0a"
-        >
+    <div tw="flex items-start justify-center">
+      <Card title={"New Game"}>
         <TextInput
           value={cityName}
           onChange={setCityName}
