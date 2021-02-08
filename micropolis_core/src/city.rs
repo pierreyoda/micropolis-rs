@@ -14,6 +14,7 @@ use budget::MoneyValue;
 use population::CityPopulation;
 use power::CityPower;
 use simulation::Simulation;
+use sprite::ActiveSpritesList;
 
 use crate::{
     map::{animations::TileMapAnimator, Map, MapRectangle, TileMap, TileType},
@@ -29,6 +30,7 @@ pub enum CityInitializationState {
 /// A Micropolis city.
 pub struct City {
     rng: MicropolisRandom,
+    sprites: ActiveSpritesList,
     /// Status of the city's initialization (`initSimLoad` in the C++ code).
     init_status: CityInitializationState,
     /// TileMap describing the city and its surroundings.
@@ -71,6 +73,7 @@ impl City {
         let sim = Simulation::new(&map);
         Ok(City {
             rng: MicropolisRandom::from_random_system_seed(),
+            sprites: ActiveSpritesList::new(),
             init_status: CityInitializationState::JustCreated,
             map,
             map_animator: TileMapAnimator::load()?,
@@ -105,6 +108,10 @@ impl City {
     }
 
     pub fn total_funds(&self) -> MoneyValue {
+        todo!()
+    }
+
+    pub fn evaluate(&self) -> Result<(), String> {
         todo!()
     }
 }

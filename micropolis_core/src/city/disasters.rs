@@ -330,15 +330,15 @@ impl CityDisasters {
         rng: &mut MicropolisRandom,
         sprites: &mut ActiveSpritesList,
         at: &MapPosition,
-        max_pollution_at: &MapPosition,
-    ) {
+    ) -> Result<(), String> {
         sprites.add_sprite(Sprite::new(
             rng,
             "".into(),
             &SpriteType::Explosion,
             *at - (40, 16).into(),
-            &max_pollution_at,
-        ))
+            None,
+        )?);
+        Ok(())
     }
 
     fn random_fire(rng: &mut MicropolisRandom) -> u16 {

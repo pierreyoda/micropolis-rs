@@ -31,8 +31,8 @@ impl SpriteType {
         &self,
         rng: &mut MicropolisRandom,
         mut sprite: Sprite,
-        max_pollution_at: &MapPosition,
-    ) -> Sprite {
+        max_pollution_at: Option<&MapPosition>,
+    ) -> Result<Sprite, String> {
         use SpriteType::*;
         match self {
             &Train => {
@@ -73,7 +73,9 @@ impl SpriteType {
                     _ => 4,
                 };
                 sprite.count = 1000;
-                sprite.destination = *max_pollution_at << 4;
+                sprite.destination = *max_pollution_at.ok_or(format!(
+                    "SpriteType::init_sprite: missing max_pollution_at for Monster"
+                ))? << 4;
                 sprite.origin = sprite.position;
             }
             &Helicopter => {
@@ -123,7 +125,7 @@ impl SpriteType {
                 sprite.frame = 1;
             }
         }
-        sprite
+        Ok(sprite)
     }
 
     pub fn update_sprite(
@@ -331,9 +333,9 @@ impl Sprite {
         name: String,
         kind: &SpriteType,
         position: MapPosition,
-        max_pollution_at: &MapPosition,
-    ) -> Self {
-        kind.init_sprite(
+        max_pollution_at: Option<&MapPosition>,
+    ) -> Result<Self, String> {
+        Ok(kind.init_sprite(
             rng,
             Self {
                 kind: kind.clone(),
@@ -357,7 +359,7 @@ impl Sprite {
                 acceleration: 0,
             },
             max_pollution_at,
-        )
+        )?)
     }
 
     pub fn is_in_bounds(&self, map: &TileMap) -> bool {

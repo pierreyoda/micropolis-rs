@@ -2,6 +2,7 @@ use std::todo;
 
 use parameters::SimulationParameters;
 use statistics::SimulationStatistics;
+use taxes::SimulationTaxes;
 
 use super::{
     disasters::CityDisasters,
@@ -28,8 +29,9 @@ use crate::{
     utils::clamp,
 };
 
-pub mod parameters;
-pub mod statistics;
+mod parameters;
+mod statistics;
+mod taxes;
 
 const ZONE_MELTDOWN_TABLE: [i16; 3] = [30000, 20000, 10000];
 const SMOKE_TILES: [u16; 4] = [
@@ -40,13 +42,18 @@ const SMOKE_TILES: [u16; 4] = [
 ];
 const SMOKE_DX: [i32; 4] = [1, 2, 1, 2];
 const SMOKE_DY: [i32; 4] = [-1, -1, 0, 0];
+const FIRE_DX: [i32; 4] = [-1, 0, 1, 0];
+const FIRE_DY: [i32; 4] = [0, -1, 0, 1];
 
 pub struct Simulation {
     parameters: SimulationParameters,
     statistics: SimulationStatistics,
+    taxes: SimulationTaxes,
     speed: GameSpeed,
     speed_cycle: u16,
     phase_cycle: u8,
+    simulation_cycle: u16,
+    do_initial_evaluation: bool,
     /// Number of passes through the similator loop.
     passes: u32,
     /// Current simulator loop pass counter.
@@ -90,9 +97,12 @@ impl Simulation {
         Self {
             parameters: Default::default(),
             statistics: Default::default(),
+            taxes: Default::default(),
             speed: GameSpeed::from(GameSpeedPreset::Normal),
             speed_cycle: 0,
             phase_cycle: 0,
+            simulation_cycle: 0,
+            do_initial_evaluation: true,
             passes: 0,
             pass_index: 0,
             map_serial: 1,
@@ -153,7 +163,26 @@ impl Simulation {
         self.phase_cycle &= 15;
         // TODO: replace phase_cycle integer by enum?
         match self.phase_cycle {
-            0 => {}
+            0 => {
+                self.simulation_cycle += 1;
+                if self.simulation_cycle > 1023 {
+                    self.simulation_cycle = 0;
+                }
+
+                if self.do_initial_evaluation {
+                    self.do_initial_evaluation = false;
+                    city.evaluate()?;
+                }
+
+                self.city_time += 1;
+                self.taxes.city_tax_average += self.taxes.city_tax;
+
+                if self.simulation_cycle & 0x01 == 0x00 {
+                    self.compute_valves();
+                }
+
+                self.clear_census();
+            }
             // Scan 1/8th of the map for each of these 8 phases
             1..=8 => {
                 let phase_cycle = self.phase_cycle as usize;
@@ -177,15 +206,29 @@ impl Simulation {
         Ok(())
     }
 
-    fn scan_map_section(&self, city: &mut City, x1: usize, x2: usize) -> Result<(), String> {
-        let map_height = city.map.bounds().get_height();
+    /// Compute the RCI valves, standing for Residential, Commercial and Industrial zone demands.
+    fn compute_valves(&mut self) {
+        todo!()
+    }
+
+    fn clear_census(&mut self) {
+        todo!()
+    }
+
+    fn scan_map_section(&mut self, city: &mut City, x1: usize, x2: usize) -> Result<(), String> {
+        let rng = &mut city.rng;
+        let sprites = &mut city.sprites;
+
+        let map = &mut city.map;
+        let map_height = map.bounds().get_height();
+
         let flood_type_raw = TileType::Flood
             .to_u16()
             .ok_or("Flood tile type raw conversion error")?;
+
         for x in x1..x2 {
             for y in 0..map_height {
-                let tile = city
-                    .map
+                let tile = map
                     .tiles()
                     .get(x)
                     .ok_or(format!(
@@ -197,72 +240,33 @@ impl Simulation {
                         "Simulation.scan_map_section map Y overflow at {}",
                         y
                     ))?;
-                if tile.get_type() == &Some(TileType::Dirt) {
+
+                let tile_type = tile.get_type().as_ref().ok_or(format!(
+                    "Simulation.scan_map_section invalid tile {:?}",
+                    tile
+                ))?;
+                if *tile_type == TileType::Dirt {
                     continue;
                 }
 
-                let tile_type_raw = tile.get_type_raw();
-                if tile_type_raw < flood_type_raw {
+                if *tile_type < TileType::Flood {
                     continue;
                 }
 
-                let position = MapPosition::new(x as i32, y as i32);
-                if tile_type_raw < TileType::HorizontalBridge as u16
-                    && tile_type_raw >= TileType::Fire as u16
-                {
-                    city.fires_count += 1;
-                }
-            }
-        }
-
-        Ok(())
-    }
-
-    /// Handle a zone on fire.
-    ///
-    /// Decreases rate of growth of the zone, and makes remaining tiles bulldozable.
-    fn fire_zone(
-        &mut self,
-        position: &MapPosition,
-        tile: &Tile,
-        map: &mut TileMap,
-    ) -> Result<Tile, String> {
-        let mut value = *self.rate_of_growth.get_tile_at(&position).ok_or(format!(
-            "Simulation.fire_zone: cannot get rate of growth value at {}",
-            position
-        ))? as i16;
-        value = clamp(value - 20, -200, 200);
-        self.rate_of_growth.set_tile_at(&position, value);
-
-        let tile_raw = (tile.get_raw() & TILE_LOW_MASK) as i16;
-        let xy_max = if tile_raw < TileType::PortBase.to_i16().unwrap() {
-            2
-        } else if tile_raw == TileType::Airport.to_i16().unwrap() {
-            5
-        } else {
-            4
-        };
-
-        // make remaining tiles of the zone bulldozable
-        for x in -1..xy_max {
-            for y in -1..xy_max {
-                let current_position = *position + (x, y).into();
-                if let Some(current_tile) = map.get_tile_at(&current_position) {
-                    let current_tile_raw = current_tile.get_raw();
-                    if current_tile_raw & TILE_LOW_MASK
-                        >= TileType::HorizontalBridge.to_u16().unwrap()
-                    {
-                        // post release
-                        map.set_tile_at(
-                            &current_position,
-                            Tile::from_raw(current_tile_raw | TILE_BULL_BIT)?,
-                        );
+                let position: MapPosition = (x, y).into();
+                if *tile_type < TileType::HorizontalBridge {
+                    if *tile_type >= TileType::Fire {
+                        self.statistics.fire_station_count += 1;
+                        if rng.get_random_16() & 0x03 == 0x00 {
+                            // 1 in 4 times
+                            self.do_fire(rng, map, sprites, &position)?;
+                        }
                     }
                 }
             }
         }
 
-        Ok(Tile::from_raw(tile_raw as u16)?)
+        Ok(())
     }
 
     /// Repair the zone at the given position.
@@ -542,8 +546,155 @@ impl Simulation {
         Ok(())
     }
 
+    /// Handle a tile on fire at the given map position.
+    ///
+    /// TODO: needs a notion of iterative neighbour tiles computing
+    /// TODO: use a getFromMap()-like function here
+    /// TODO: extract constants of fire station effectiveness from here
+    fn do_fire(
+        &mut self,
+        rng: &mut MicropolisRandom,
+        map: &mut TileMap,
+        sprites: &mut ActiveSpritesList,
+        position: &MapPosition,
+    ) -> Result<(), String> {
+        // try to set neighbouring tiles on fire as well
+        for z in 0..4 {
+            if rng.get_random_16() & 0x07 == 0x00 {
+                let position_temp = *position + (FIRE_DX[z], FIRE_DY[z]).into();
+
+                let tile_option = map.get_tile_at(&position_temp);
+                if tile_option.is_none() {
+                    continue;
+                }
+
+                let tile = tile_option.unwrap();
+                let tile_raw = tile.get_raw();
+                if tile_raw & TILE_BURN_BIT == 0x00 {
+                    continue; // not burnable
+                }
+
+                if tile_raw & TILE_ZONE_BIT != 0x00 {
+                    // neighbour tile is a burnable zone
+                    self.fire_zone(map, position, tile)?;
+
+                    // explode?
+                    if tile_raw & TILE_LOW_MASK > TileType::IndustrialZoneBase.to_u16().unwrap() {
+                        let explosion_position: MapPosition = position_temp * 16 + (8, 8).into();
+                        CityDisasters::make_explosion_at(rng, sprites, &explosion_position)?;
+                    }
+                }
+
+                // if let Some(tile) = map.get_tile_at(&position_temp) {
+                //     let tile_raw = tile.get_raw();
+                //     if tile_raw & TILE_BURN_BIT == 0x00 {
+                //         continue; // not burnable
+                //     }
+
+                //     if tile_raw & TILE_ZONE_BIT != 0x00 {
+                //         // neighbour tile is a burnable zone
+                //         self.fire_zone(map, position, tile)?;
+
+                //         // explode?
+                //         if tile_raw & TILE_LOW_MASK > TileType::IndustrialZoneBase.to_u16().unwrap()
+                //         {
+                //             let explosion_position: MapPosition =
+                //                 position_temp * 16 + (8, 8).into();
+                //             CityDisasters::make_explosion_at(rng, sprites, &explosion_position)?;
+                //         }
+                //     }
+
+                // tile.set_raw(Self::random_fire_tile_value(rng));
+                // }
+            }
+        }
+
+        // compute likelihood of fire running out of fuel
+        let z = self.fire_station_map.get_tile_at(position).ok_or(format!(
+            "Simulation.do_fire: cannot get fire control efficience at {}",
+            position
+        ))?;
+        let rate = match z {
+            0..=19 => 3,
+            20..=99 => 2,
+            _ if *z > 100 => 1,
+            _ => 10,
+        };
+
+        // should we put out the fire?
+        if rng.get_random(rate) == 0x00 {
+            map.get_tile_mut_at(position)
+                .ok_or(format!(
+                    "Simulation.do_fire: cannot get tile at {}",
+                    position
+                ))?
+                .set_raw(Self::random_rubble_tile_value(rng));
+        }
+
+        Ok(())
+    }
+
+    /// Handle a zone on fire.
+    ///
+    /// Decreases rate of growth of the zone, and makes remaining tiles bulldozable.
+    fn fire_zone(
+        &mut self,
+        map: &mut TileMap,
+        position: &MapPosition,
+        zone_tile: &Tile,
+    ) -> Result<Tile, String> {
+        let value = self
+            .rate_of_growth
+            .get_tile_mut_at(&position)
+            .ok_or(format!(
+                "Simulation.fire_zone: cannot get rate of growth value at {}",
+                position
+            ))?;
+        *value = clamp(*value - 20, -200, 200);
+
+        let tile_raw = (zone_tile.get_raw() & TILE_LOW_MASK) as i16;
+        let xy_max = if tile_raw < TileType::PortBase.to_i16().unwrap() {
+            2
+        } else if tile_raw == TileType::Airport.to_i16().unwrap() {
+            5
+        } else {
+            4
+        };
+
+        // make remaining tiles of the zone bulldozable
+        for x in -1..xy_max {
+            for y in -1..xy_max {
+                let current_position = *position + (x, y).into();
+                if let Some(current_tile) = map.get_tile_at(&current_position) {
+                    let current_tile_raw = current_tile.get_raw();
+                    if current_tile_raw & TILE_LOW_MASK
+                        >= TileType::HorizontalBridge.to_u16().unwrap()
+                    {
+                        // post release
+                        map.set_tile_at(
+                            &current_position,
+                            Tile::from_raw(current_tile_raw | TILE_BULL_BIT)?,
+                        );
+                    }
+                }
+            }
+        }
+
+        Ok(Tile::from_raw(tile_raw as u16)?)
+    }
+
     /// Generate a airplane or helicopter every now and then.
     fn do_airport(position: &MapPosition) -> Result<(), String> {
         todo!()
+    }
+
+    /// Generate a random animated `TileType::Fire` tile.
+    fn random_fire_tile_value(rng: &mut MicropolisRandom) -> u16 {
+        (TileType::Fire.to_u16().unwrap() + (rng.get_random_16() as u16 & 0x07)) | TILE_ANIM_BIT
+    }
+
+    /// Generate a random `TileType::Rubble` tile.
+    fn random_rubble_tile_value(rng: &mut MicropolisRandom) -> u16 {
+        (TileType::Rubble.to_u16().unwrap() + (rng.get_random_16() as u16 & 0x03)) | TILE_BULL_BIT
     }
 }

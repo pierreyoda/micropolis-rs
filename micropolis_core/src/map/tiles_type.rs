@@ -12,7 +12,7 @@ pub const WOODS_HIGH: u16 = TileType::UnusedTrash2 as u16;
 /// TODO: how to handle duplicates / ranges? => REFACTOR enum River(...), Road(...)
 /// TODO: explicit names for all types
 /// TODO: documentation
-#[derive(Clone, Debug, PartialEq, Eq, Hash, FromPrimitive, ToPrimitive, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, FromPrimitive, ToPrimitive, Serialize, PartialOrd)]
 pub enum TileType {
     Invalid = -1,
     /// Clear tile.
@@ -382,5 +382,17 @@ impl TileType {
             TileType::Invalid => None,
             _ => ToPrimitiveTrait::to_usize(self),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::TileType;
+
+    #[test]
+    fn test_tile_types_comparison() {
+        assert_eq!(TileType::Dirt == TileType::Dirt, true);
+        assert_eq!(TileType::Dirt < TileType::Flood, true);
+        assert_eq!(TileType::Port > TileType::PoliceStation, false);
     }
 }
