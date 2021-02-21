@@ -1,7 +1,8 @@
 import React from "react";
 import { Meta } from "@storybook/react";
 
-import NewGameScreen, { generateMapStub } from "../NewGameScreen";
+import NewGameScreen from "../NewGameScreen";
+import { generateMapStub } from "@/game/utils";
 
 export default {
   title: "Game/Screens",
