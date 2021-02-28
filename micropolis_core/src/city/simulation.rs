@@ -563,49 +563,52 @@ impl Simulation {
             if rng.get_random_16() & 0x07 == 0x00 {
                 let position_temp = *position + (FIRE_DX[z], FIRE_DY[z]).into();
 
-                let tile_option = map.get_tile_at(&position_temp);
-                if tile_option.is_none() {
-                    continue;
-                }
-
-                let tile = tile_option.unwrap();
-                let tile_raw = tile.get_raw();
-                if tile_raw & TILE_BURN_BIT == 0x00 {
-                    continue; // not burnable
-                }
-
-                if tile_raw & TILE_ZONE_BIT != 0x00 {
-                    // neighbour tile is a burnable zone
-                    self.fire_zone(map, position, tile)?;
-
-                    // explode?
-                    if tile_raw & TILE_LOW_MASK > TileType::IndustrialZoneBase.to_u16().unwrap() {
-                        let explosion_position: MapPosition = position_temp * 16 + (8, 8).into();
-                        CityDisasters::make_explosion_at(rng, sprites, &explosion_position)?;
-                    }
-                }
-
-                // if let Some(tile) = map.get_tile_at(&position_temp) {
-                //     let tile_raw = tile.get_raw();
-                //     if tile_raw & TILE_BURN_BIT == 0x00 {
-                //         continue; // not burnable
-                //     }
-
-                //     if tile_raw & TILE_ZONE_BIT != 0x00 {
-                //         // neighbour tile is a burnable zone
-                //         self.fire_zone(map, position, tile)?;
-
-                //         // explode?
-                //         if tile_raw & TILE_LOW_MASK > TileType::IndustrialZoneBase.to_u16().unwrap()
-                //         {
-                //             let explosion_position: MapPosition =
-                //                 position_temp * 16 + (8, 8).into();
-                //             CityDisasters::make_explosion_at(rng, sprites, &explosion_position)?;
-                //         }
-                //     }
-
-                // tile.set_raw(Self::random_fire_tile_value(rng));
+                // let tile_option = map.get_tile_at(&position_temp);
+                // if tile_option.is_none() {
+                //     continue;
                 // }
+
+                // let tile = tile_option.unwrap().clone();
+                // let tile_raw = tile.get_raw();
+                // if tile_raw & TILE_BURN_BIT == 0x00 {
+                //     continue; // not burnable
+                // }
+
+                // if tile_raw & TILE_ZONE_BIT != 0x00 {
+                //     // neighbour tile is a burnable zone
+                //     self.fire_zone(map, position, &tile)?; // FIXME: fix borrow-check error
+
+                //     // explode?
+                //     if tile_raw & TILE_LOW_MASK > TileType::IndustrialZoneBase.to_u16().unwrap() {
+                //         let explosion_position: MapPosition = position_temp * 16 + (8, 8).into();
+                //         CityDisasters::make_explosion_at(rng, sprites, &explosion_position)?;
+                //     }
+                // }
+
+                if let Some(tile) = map.get_tile_at(&position_temp).cloned() {
+                    let tile_raw = tile.get_raw();
+                    if tile_raw & TILE_BURN_BIT == 0x00 {
+                        continue; // not burnable
+                    }
+
+                    if tile_raw & TILE_ZONE_BIT != 0x00 {
+                        // neighbour tile is a burnable zone
+                        self.fire_zone(map, position, &tile)?;
+
+                        // explode?
+                        if tile_raw & TILE_LOW_MASK > TileType::IndustrialZoneBase.to_u16().unwrap()
+                        {
+                            let explosion_position: MapPosition =
+                                position_temp * 16 + (8, 8).into();
+                            CityDisasters::make_explosion_at(rng, sprites, &explosion_position)?;
+                        }
+                    }
+
+                    map.set_tile_at(
+                        &position_temp,
+                        Tile::from_raw(Self::random_fire_tile_value(rng))?,
+                    );
+                }
             }
         }
 
