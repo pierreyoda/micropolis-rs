@@ -38,6 +38,14 @@ pub struct CityDisasters {
 }
 
 impl CityDisasters {
+    pub fn new(scenario: &GameScenario) -> Self {
+        Self {
+            flood_count: 0,
+            disaster_event: scenario.clone(),
+            disaster_timer: 0,
+        }
+    }
+
     /// Let disasters happen.
     pub fn do_disasters(&mut self, difficulty: &GameLevelDifficulty, scenario: &GameScenario) {
         if self.flood_count > 0 {
@@ -239,40 +247,8 @@ impl CityDisasters {
         Ok(())
     }
 
-    /// Flood many tiles.
-    /// TODO: use direction and some form of XYPosition class here
-    fn make_flood(&mut self, rng: &mut MicropolisRandom, map: &mut TileMap) -> Result<(), String> {
-        for z in 0..300 {
-            let at = MapPosition::new_random(rng, &map.bounds());
-            let mut c = map
-                .get_tile_at(&at)
-                .ok_or(format!(
-                    "CityDisasters::make_flood cannot get tile at {}",
-                    at
-                ))
-                .map(|t| t.get_raw() & TILE_LOW_MASK)?;
-            if c <= TileType::Channel.to_u16().unwrap()
-                || c > TileType::LastRiverEdge.to_u16().unwrap()
-            {
-                continue;
-            }
-            for t in 0..4 {
-                let current_position = at + (FLOOD_DX[t], FLOOD_DY[t]).into();
-                if let Some(tile) = map.get_tile_at(&current_position) {
-                    if tile.is_floodable() {
-                        map.set_tile_at(&current_position, Tile::from_type(TileType::Flood)?);
-                        self.flood_count = 30;
-                        // TODO: sendMessage(MESSAGE_FLOODING_REPORTED, current_position, true)
-                        return Ok(());
-                    }
-                }
-            }
-        }
-        Ok(())
-    }
-
     /// Flood around the given position.
-    fn do_flood(
+    pub fn do_flood(
         &mut self,
         rng: &mut MicropolisRandom,
         map: &mut TileMap,
@@ -303,13 +279,43 @@ impl CityDisasters {
                     }
                 }
             }
-        } else {
-            // if random_16(rng) & 0x0F == 0x00 {
-            //     // 1/16 chance
-            //     map.set_tile_at(position, Tile::from_type(TileType::Dirt)?);
-            // }
+        } else if rng.get_random_16() & 0x0F == 0x00 {
+            // 1/16 chance
+            map.set_tile_at(at, Tile::from_type(TileType::Dirt)?);
         }
 
+        Ok(())
+    }
+
+    /// Flood many tiles.
+    /// TODO: use direction and some form of XYPosition class here
+    fn make_flood(&mut self, rng: &mut MicropolisRandom, map: &mut TileMap) -> Result<(), String> {
+        for z in 0..300 {
+            let at = MapPosition::new_random(rng, &map.bounds());
+            let mut c = map
+                .get_tile_at(&at)
+                .ok_or(format!(
+                    "CityDisasters::make_flood cannot get tile at {}",
+                    at
+                ))
+                .map(|t| t.get_raw() & TILE_LOW_MASK)?;
+            if c <= TileType::Channel.to_u16().unwrap()
+                || c > TileType::LastRiverEdge.to_u16().unwrap()
+            {
+                continue;
+            }
+            for t in 0..4 {
+                let current_position = at + (FLOOD_DX[t], FLOOD_DY[t]).into();
+                if let Some(tile) = map.get_tile_at(&current_position) {
+                    if tile.is_floodable() {
+                        map.set_tile_at(&current_position, Tile::from_type(TileType::Flood)?);
+                        self.flood_count = 30;
+                        // TODO: sendMessage(MESSAGE_FLOODING_REPORTED, current_position, true)
+                        return Ok(());
+                    }
+                }
+            }
+        }
         Ok(())
     }
 

@@ -4,6 +4,8 @@ use parameters::SimulationParameters;
 use statistics::SimulationStatistics;
 use taxes::SimulationTaxes;
 
+use self::parameters::MAX_ROAD_EFFECT;
+
 use super::{
     disasters::CityDisasters,
     power::CityPower,
@@ -30,6 +32,7 @@ use crate::{
 };
 
 mod parameters;
+mod sprites;
 mod statistics;
 mod taxes;
 
@@ -261,6 +264,13 @@ impl Simulation {
                             // 1 in 4 times
                             self.do_fire(rng, map, sprites, &position)?;
                         }
+                        continue;
+                    }
+
+                    if *tile_type < TileType::Radioactive {
+                        city.disasters.do_flood(rng, map, &position)?;
+                    } else {
+                        self.do_radioactive_tile(rng, map, &position)?;
                     }
                 }
             }
@@ -546,6 +556,62 @@ impl Simulation {
         Ok(())
     }
 
+    /// Handle a rail tracks.
+    ///
+    /// Generate a train, and handle road deteriorating effects.
+    fn do_rail(
+        &mut self,
+        rng: &mut MicropolisRandom,
+        map: &mut TileMap,
+        sprites: &mut ActiveSpritesList,
+        position: &MapPosition,
+    ) -> Result<(), String> {
+        self.statistics.rail_total += 1;
+
+        // TODO: generateTrain
+
+        if self.parameters.get_road_effect() >= (15 * MAX_ROAD_EFFECT / 16) {
+            return Ok(());
+        }
+
+        // rail deteriorates if not enough budget
+        if rng.get_random_16() & 0x01FF != 0x00 {
+            let tile = map.get_tile_mut_at(position).ok_or(format!(
+                "Simulation.do_rail: cannot get tile at {}",
+                position
+            ))?;
+
+            if tile.get_raw() & TILE_CONDUCT_BIT != 0x00 {
+                debug_assert!(MAX_ROAD_EFFECT == 32); // otherwise the random16() & 31 makes no sense
+                if self.parameters.get_road_effect() < (rng.get_random_16() as u64) & 31 {
+                    let tile_value = tile.get_raw() & TILE_LOW_MASK;
+                    tile.set_raw(
+                        if tile_value < TileType::UnderwaterHorizontalRail.to_u16().unwrap() {
+                            TileType::River.to_u16().unwrap()
+                        } else {
+                            Self::random_rubble_tile_value(rng)
+                        },
+                    )
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Handle decay of a radioactive tile.
+    fn do_radioactive_tile(
+        &mut self,
+        rng: &mut MicropolisRandom,
+        map: &mut TileMap,
+        position: &MapPosition,
+    ) -> Result<(), String> {
+        if rng.get_random_16() & 0x0FFF == 0x00 {
+            map.set_tile_at(position, Tile::from_type(TileType::Dirt)?);
+        }
+        Ok(())
+    }
+
     /// Handle a tile on fire at the given map position.
     ///
     /// TODO: needs a notion of iterative neighbour tiles computing
@@ -562,28 +628,6 @@ impl Simulation {
         for z in 0..4 {
             if rng.get_random_16() & 0x07 == 0x00 {
                 let position_temp = *position + (FIRE_DX[z], FIRE_DY[z]).into();
-
-                // let tile_option = map.get_tile_at(&position_temp);
-                // if tile_option.is_none() {
-                //     continue;
-                // }
-
-                // let tile = tile_option.unwrap().clone();
-                // let tile_raw = tile.get_raw();
-                // if tile_raw & TILE_BURN_BIT == 0x00 {
-                //     continue; // not burnable
-                // }
-
-                // if tile_raw & TILE_ZONE_BIT != 0x00 {
-                //     // neighbour tile is a burnable zone
-                //     self.fire_zone(map, position, &tile)?; // FIXME: fix borrow-check error
-
-                //     // explode?
-                //     if tile_raw & TILE_LOW_MASK > TileType::IndustrialZoneBase.to_u16().unwrap() {
-                //         let explosion_position: MapPosition = position_temp * 16 + (8, 8).into();
-                //         CityDisasters::make_explosion_at(rng, sprites, &explosion_position)?;
-                //     }
-                // }
 
                 if let Some(tile) = map.get_tile_at(&position_temp).cloned() {
                     let tile_raw = tile.get_raw();

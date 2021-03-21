@@ -51,6 +51,27 @@ pub enum GameScenario {
     Rio,
 }
 
+impl GameScenario {
+    /// Get the disaster delay.
+    ///
+    /// See `disasterWaitTable` in the C++ code.
+    pub fn get_disaster_timer(&self) -> u16 {
+        use GameScenario::*;
+
+        match self {
+            None => 0,
+            Dullsville => 2,
+            SanFrancisco => 10,
+            Hamburg => 4 * 10,
+            Bern => 20,
+            Tokyo => 3,
+            Detroit => 5,
+            Boston => 5,
+            Rio => 2 * 48,
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct GameSpeed {
     /// Determines how often the animation timer fires, in milliseconds.

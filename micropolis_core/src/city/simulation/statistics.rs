@@ -1,5 +1,13 @@
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct SimulationStatistics {
+    /// Number of road tiles in the game.
+    ///
+    /// Bridges count as 4 tiles, and high-density traffic counts as 2 tiles.
+    pub road_total: u16,
+    /// Total number of rails.
+    ///
+    /// No penalty for bridges or high-traffic density.
+    pub rail_total: u16,
     /// Police station population.
     pub police_station_count: u16,
     /// Fire station population.

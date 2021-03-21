@@ -17,9 +17,12 @@ use simulation::Simulation;
 use sprite::ActiveSpritesList;
 
 use crate::{
+    game::GameScenario,
     map::{animations::TileMapAnimator, Map, MapRectangle, TileMap, TileType},
     utils::random::MicropolisRandom,
 };
+
+use self::disasters::CityDisasters;
 
 pub enum CityInitializationState {
     Initialized = 0,
@@ -29,7 +32,9 @@ pub enum CityInitializationState {
 
 /// A Micropolis city.
 pub struct City {
+    /// Stateful PseudoRandom Number Generator.
     rng: MicropolisRandom,
+    /// Active sprites register.
     sprites: ActiveSpritesList,
     /// Status of the city's initialization (`initSimLoad` in the C++ code).
     init_status: CityInitializationState,
@@ -57,6 +62,8 @@ pub struct City {
     rail_total: u32,
     /// Number of burning fires.
     fires_count: u32,
+    /// Disasters simulation,
+    disasters: CityDisasters,
     /// Population counts.
     population: CityPopulation,
     /// Electricity simulation.
@@ -66,7 +73,7 @@ pub struct City {
 }
 
 impl City {
-    pub fn new(name: String) -> Result<Self, String> {
+    pub fn new(name: String, scenario: GameScenario) -> Result<Self, String> {
         let map = Map::tilemap_with_dimensions(&MapRectangle::new(120, 100), TileType::Dirt)?; // TODO: loading
         let population = CityPopulation::from_map(&map);
         let power = CityPower::from_map(&map);
@@ -83,6 +90,7 @@ impl City {
             roads_total: 0,
             rail_total: 0,
             fires_count: 0,
+            disasters: CityDisasters::new(&scenario),
             population,
             power,
             sim,
