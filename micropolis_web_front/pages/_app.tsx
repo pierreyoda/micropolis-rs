@@ -1,7 +1,7 @@
 import React from "react";
 import NextApp from "next/app";
-import { GlobalStyles } from "twin.macro";
 
+import "@/styles/globals.scss";
 import MainLayout from "@/layouts/main";
 
 export default class App extends NextApp {
@@ -9,7 +9,6 @@ export default class App extends NextApp {
     const { Component, pageProps } = this.props;
     return (
       <MainLayout>
-        <GlobalStyles />
         <Component {...pageProps} />
       </MainLayout>
     );

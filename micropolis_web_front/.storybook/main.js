@@ -11,6 +11,21 @@ module.exports = {
   stories: ["../components/**/**/*.stories.tsx"],
   webpackFinal: async config => ({
     ...config,
+    module: {
+      ...config.module,
+      rules: [
+        ...(config.module.rules || []),
+        {
+          test: /\.s[ca]ss$/,
+          use: [
+            "style-loader",
+            "css-loader",
+            "postcss-loader",
+            "sass-loader",
+          ],
+        },
+      ],
+    },
     resolve: {
       ...config.resolve,
       alias: {

@@ -1,5 +1,4 @@
 import React, { FunctionComponent } from "react";
-import "twin.macro";
 
 import Tile from "./Tile";
 import AtlasImage from "@/assets/game/tiles.png";
@@ -23,20 +22,22 @@ const MapRenderer: FunctionComponent<MapRendererProps> = ({
   map: { tiles },
 }) => {
   return (
-    <div tw="flex">
+    <div className="flex">
       {tiles.map((col, colIndex) => (
-        <div tw="flex-col" key={colIndex}>
-          {col.map(({ type }, rowIndex) => <Tile
-            key={rowIndex}
-            row={rowIndex}
-            column={colIndex}
-            tileIndex={type}
-            atlasImage={AtlasImage}
-          />)}
+        <div className="flex-col" key={colIndex}>
+          {col.map(({ type }, rowIndex) => (
+            <Tile
+              key={rowIndex}
+              row={rowIndex}
+              column={colIndex}
+              tileIndex={type}
+              atlasImage={AtlasImage}
+            />
+          ))}
         </div>
       ))}
     </div>
   );
-}
+};
 
 export default MapRenderer;

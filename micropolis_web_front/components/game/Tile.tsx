@@ -1,5 +1,4 @@
 import React, { useMemo, FunctionComponent } from "react";
-import { css } from "twin.macro";
 
 export const TILE_SIZE = 16; // in pixels
 const ATLAS_ROWS = 16;
@@ -13,18 +12,23 @@ export interface TileProps {
   atlasImage: string;
 }
 
-const Tile: FunctionComponent<TileProps> = ({ row, column, tileIndex, atlasImage }) => {
+const Tile: FunctionComponent<TileProps> = ({
+  row,
+  column,
+  tileIndex,
+  atlasImage,
+}) => {
   const [atlasX, atlasY] = useMemo(
-      () => [
-        tileIndex % ATLAS_ROWS * TILE_SIZE,
-        tileIndex / ATLAS_ROWS * TILE_SIZE,
-      ],
-      [tileIndex],
+    () => [
+      (tileIndex % ATLAS_ROWS) * TILE_SIZE,
+      (tileIndex / ATLAS_ROWS) * TILE_SIZE,
+    ],
+    [tileIndex]
   );
 
   const [positionX, positionY] = useMemo(
     () => [row * TILE_SIZE, column * TILE_SIZE],
-    [row, column],
+    [row, column]
   );
 
   return (
@@ -36,13 +40,7 @@ const Tile: FunctionComponent<TileProps> = ({ row, column, tileIndex, atlasImage
         objectFit: "none",
         objectPosition: `-${atlasX}px -${atlasY}px`,
       }}
-      css={css`
-        user-select: none;
-        -moz-user-select: none;
-        -webkit-user-drag: none;
-        -webkit-user-select: none;
-        -ms-user-select: none;
-      `}
+      className="not-selectable"
     />
   );
 };
