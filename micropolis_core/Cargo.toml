@@ -8,8 +8,8 @@ edition = "2018"
 path = "src/lib.rs"
 
 [dependencies]
-serde = { version = "1.0.123", features = ["derive"] }
+serde = { version = "1.0.125", features = ["derive"] }
 num-traits = "0.2.14"
 num-derive = "0.3.3"
-quick-xml = "0.20.0"
+quick-xml = "0.22.0"
 chrono = { version = "0.4.19", features = [ "wasmbind" ] }

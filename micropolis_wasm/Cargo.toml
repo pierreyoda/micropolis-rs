@@ -11,10 +11,10 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 micropolis_rs_core = { path = "../micropolis_core" }
-serde = "1.0.123"
-serde_derive = "1.0.123"
+serde = "1.0.125"
+serde_derive = "1.0.125"
 console_error_panic_hook = "0.1.6"
 
 [dependencies.wasm-bindgen]
-version = "0.2.70"
+version = "0.2.72"
 features = ["serde-serialize"]
