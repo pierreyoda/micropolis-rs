@@ -8,6 +8,7 @@ use std::{
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::abs;
 use num_traits::{FromPrimitive as FromPrimitiveTrait, ToPrimitive as ToPrimitiveTrait};
+use serde::{Deserialize, Serialize};
 
 use crate::utils::random::MicropolisRandom;
 
@@ -16,7 +17,7 @@ const DIRECTION_GD_TAB: [usize; 13] = [0, 3, 2, 1, 3, 4, 5, 7, 6, 5, 7, 8, 1];
 /// Represents a position on a 2D map.
 ///
 /// Uses signed integers to allow for offsetting.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
 pub struct MapPosition {
     /// Horizontal position on the map.
     pub(super) x: i32,
@@ -271,7 +272,7 @@ impl fmt::Display for MapPosition {
 }
 
 /// Describes the width and height of a rectangle section of a Metropolis city.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct MapRectangle {
     pub(super) width: usize,
     pub(super) height: usize,
@@ -321,7 +322,7 @@ impl fmt::Display for MapRectangle {
 }
 
 /// Describes a tile position relative to an adjacent tile.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, FromPrimitive, ToPrimitive)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, FromPrimitive, ToPrimitive, Serialize, Deserialize)]
 pub enum MapPositionOffset {
     None,
     NorthWest,

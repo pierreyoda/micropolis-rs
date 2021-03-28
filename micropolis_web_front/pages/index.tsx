@@ -18,24 +18,19 @@ const Home: NextPage = () => {
       const coreModule = await import(/* webpackMode: "lazy" */ "../pkg/");
       const coreConnector = new MicropolisCoreLibConnector(coreModule);
       setGameLib(coreConnector);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
       setLoading(false);
       const generator = coreConnector.createNewMapGenerator();
       const map = coreConnector.generateNewRandomMap(generator, 10, 10);
+      console.log(map);
     };
     loadCoreLibrary();
   }, []);
-  // import("@/pkg/index").then(async module => {
-  // const connector = new MicropolisCoreLibConnector(module);
-  // setGameLib(connector);
-  // await new Promise(resolve => setTimeout(resolve, 1000)); // TODO: test
-  // setLoading(false);
-  // });
+
   return (
     // <GameCoreLibContext.Provider value={gameLib}>
-    <div className="w-full h-full flex flex-col items-center justify-center">
+    <div className="flex flex-col items-center justify-center w-full h-full">
       {loading ? (
-        <div className="w-full h-full flex flex-col items-center justify-center">
+        <div className="flex flex-col items-center justify-center w-full h-full">
           <LoaderSpinner width={250} height={250} type="MutatingDots" />
           <span className="mt-12">Loading game library...</span>
         </div>

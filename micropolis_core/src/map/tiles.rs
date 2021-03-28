@@ -1,5 +1,6 @@
-use serde::Serialize;
 use std::{fmt, rc::Rc};
+
+use serde::{Deserialize, Serialize};
 
 use super::{
     buildings::BuildingInfo,
@@ -73,7 +74,7 @@ pub const TILE_ALL_BITS: u16 = TILE_ZONE_BIT
 /// Mask for the `MapTileCharacters` part of the tile.
 pub const TILE_LOW_MASK: u16 = 0x03ff;
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Tile {
     /// Raw integer describing the type and status of the tile.
     raw: u16,

@@ -1,4 +1,4 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 pub mod animations;
 pub mod buildings;
@@ -20,7 +20,7 @@ pub const WORLD_HEIGHT: usize = 100;
 
 pub type MapData<T> = Vec<Vec<T>>;
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum MapClusteringStrategy {
     BlockSize1,
     BlockSize2,
@@ -53,7 +53,7 @@ impl MapClusteringStrategy {
 /// A map is assumed to cover a 2D grid of #WORLD_W times #WORLD_H positions.
 /// A block of positions may be clustered, and represented by a single data
 /// value.
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Map<T> {
     /// Blocks clustering strategy.
     clustering_strategy: MapClusteringStrategy,

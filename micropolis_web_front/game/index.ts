@@ -7,6 +7,14 @@ export type MicropolisCoreLib = PromisedType<
   ReturnType<typeof importMicropolisCoreWasmLib>
 >;
 
+export interface RawGameMap {
+  /** Column-first. */
+  map: {
+    raw: number;
+    tile_type?: string;
+  }[][];
+}
+
 export class MicropolisCoreLibConnector {
   constructor(private readonly coreLib: MicropolisCoreLib) {
     coreLib.main();
@@ -21,8 +29,9 @@ export class MicropolisCoreLibConnector {
     return this.coreLib.create_terrain_generator();
   }
 
-  generateNewRandomMap(generator: WebMapGenerator, width: number, height: number) {
-    return this.coreLib.generate_new_map(generator, width, height);
+  generateNewRandomMap(generator: WebMapGenerator, width: number, height: number): RawGameMap {
+    const generatedMap = this.coreLib.generate_new_map(generator, width, height);
+    return { map: generatedMap };
   }
 }
 
