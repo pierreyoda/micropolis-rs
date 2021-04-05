@@ -1,19 +1,12 @@
 import { PromisedType } from "@/utils";
 import { WebMapGenerator } from "@/pkg/";
+import { RawGameMap } from "./map";
 
 export const importMicropolisCoreWasmLib = async () => import("@/pkg");
 
 export type MicropolisCoreLib = PromisedType<
   ReturnType<typeof importMicropolisCoreWasmLib>
 >;
-
-export interface RawGameMap {
-  /** Column-first. */
-  map: {
-    raw: number;
-    tile_type?: string;
-  }[][];
-}
 
 export class MicropolisCoreLibConnector {
   constructor(private readonly coreLib: MicropolisCoreLib) {

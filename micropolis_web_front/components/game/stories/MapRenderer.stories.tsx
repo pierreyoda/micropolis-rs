@@ -15,7 +15,7 @@ export const CustomTile = () => (
   <Tile
     row={1}
     column={1}
-    atlasImage={AtlasImage}
+    atlasImageUrl={AtlasImage}
     tileIndex={number("Tile type", 0, { min: 0, max: 1018, step: 1 })}
   />
 );

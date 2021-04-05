@@ -9,14 +9,14 @@ export interface TileProps {
   row: number;
   column: number;
   tileIndex: number;
-  atlasImage: string;
+  atlasImageUrl: string;
+  scale: number;
 }
 
 const Tile: FunctionComponent<TileProps> = ({
-  row,
-  column,
   tileIndex,
-  atlasImage,
+  atlasImageUrl,
+  scale,
 }) => {
   const [atlasX, atlasY] = useMemo(
     () => [
@@ -26,17 +26,12 @@ const Tile: FunctionComponent<TileProps> = ({
     [tileIndex]
   );
 
-  const [positionX, positionY] = useMemo(
-    () => [row * TILE_SIZE, column * TILE_SIZE],
-    [row, column]
-  );
-
   return (
     <img
-      src={atlasImage}
+      src={atlasImageUrl}
       style={{
-        width: TILE_SIZE,
-        height: TILE_SIZE,
+        width: TILE_SIZE * scale,
+        height: TILE_SIZE * scale,
         objectFit: "none",
         objectPosition: `-${atlasX}px -${atlasY}px`,
       }}

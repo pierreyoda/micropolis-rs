@@ -4,9 +4,7 @@ import { NextPage } from "next";
 import { MicropolisCoreLibConnector } from "@/game";
 import NewGameScreen from "@/components/game/NewGameScreen";
 import LoaderSpinner from "@/components/common/LoaderSpinner";
-import GameCoreLibProvider, {
-  GameCoreLibContext,
-} from "@/components/game/GameCoreLibProvider";
+// import { GameCoreLibContext } from "@/components/game/GameCoreLibProvider";
 
 const Home: NextPage = () => {
   const [loading, setLoading] = useState(true);
@@ -20,7 +18,7 @@ const Home: NextPage = () => {
       setGameLib(coreConnector);
       setLoading(false);
       const generator = coreConnector.createNewMapGenerator();
-      const map = coreConnector.generateNewRandomMap(generator, 10, 10);
+      const map = coreConnector.generateNewRandomMap(generator, 120, 100);
       console.log(map);
     };
     loadCoreLibrary();
@@ -35,7 +33,7 @@ const Home: NextPage = () => {
           <span className="mt-12">Loading game library...</span>
         </div>
       ) : (
-        <NewGameScreen generateMap={null as any} />
+        <NewGameScreen gameLib={gameLib!} />
       )}
     </div>
     // </GameCoreLibContext.Provider>

@@ -1,15 +1,17 @@
+import clsx from "clsx";
 import React, { FunctionComponent, useMemo } from "react";
 
 interface ButtonProps {
   onToggle: () => void;
   disabled?: boolean;
+  className?: string;
 }
 
 const Button: FunctionComponent<ButtonProps> = ({
   onToggle,
-  children,
   disabled,
-  ...props
+  className,
+  children,
 }) => {
   const onClick = useMemo(() => (disabled ? () => {} : onToggle), [
     disabled,
@@ -18,10 +20,9 @@ const Button: FunctionComponent<ButtonProps> = ({
 
   return (
     <button
-      className="custom-button"
+      className={clsx("custom-button", className)}
       onClick={onClick}
       disabled={disabled}
-      {...props}
     >
       {children}
     </button>
