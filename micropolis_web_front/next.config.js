@@ -8,6 +8,9 @@ module.exports = () => ({
     "/": { page: "/" },
     "/about": { page: "/about" },
   }),
+  future: {
+    webpack5: true,
+  },
   webpack: config => ({
     ...config,
     resolve: {
@@ -16,6 +19,15 @@ module.exports = () => ({
         ...config.resolve.alias,
         "@": path.resolve(__dirname, "./"),
       },
+      fallback: {
+        ...config.resolve.fallback,
+        fs: false, // fixes npm packages that depend on `fs` module
+      },
+    },
+    experiments: {
+      ...config.experiments,
+      syncWebAssembly: true,
+      // asyncWebAssembly: true,
     },
     plugins: [
       ...config.plugins,
@@ -37,8 +49,5 @@ module.exports = () => ({
         forceMode: "development",
       }),
     ],
-    node: {
-      fs: "empty", // fixes npm packages that depend on `fs` module
-    },
   }),
 });
