@@ -49,11 +49,11 @@ const NewGameScreen: FunctionComponent<NewGameScreenProps> = ({ gameLib }) => {
       <Card title="New Game" className="justify-between">
         <TextInput value={cityName} onChange={setCityName} placeholder="City name (mandatory)" />
         <div className="flex flex-col w-full">
-          <Button disabled={!cityName.length} onToggle={generateNewMap} className="w-full mt-10">
+          <Button onToggle={generateNewMap} className="w-full mt-10">
             Generate
           </Button>
           {generatedMaps.length > 0 && (
-            <Button onToggle={() => {}} className="w-full mt-4 bg-green-500">
+            <Button disabled={!cityName.length} onToggle={() => {}} className="w-full mt-4 bg-green-500">
               Play this map
             </Button>
           )}
