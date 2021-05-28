@@ -26,14 +26,17 @@ const NewGameScreen: FunctionComponent<NewGameScreenProps> = ({ gameLib }) => {
   useEffect(() => generateNewMap(), []);
 
   return (
-    <div className="flex items-start justify-center mr-12">
+    <div className="flex items-start justify-center">
       {generatedMaps.length > 0 && (
-        <div className="flex flex-col">
+        <div className="flex flex-col mr-12">
           <MapRenderer scale={0.2} map={generatedMaps[currentlyViewedMapIndex]} />
-          <div className="flex items-center">
+          <div className="flex items-center justify-between w-full mt-4">
             <Button disabled={currentlyViewedMapIndex === 0} onToggle={() => setCurrentlyViewedMapIndex(i => i - 1)}>
               Previous
             </Button>
+            <p className="text-center text-gray-700">
+              {currentlyViewedMapIndex + 1} / {generatedMaps.length}
+            </p>
             <Button
               disabled={currentlyViewedMapIndex >= generatedMaps.length - 1}
               onToggle={() => setCurrentlyViewedMapIndex(i => i + 1)}
@@ -43,11 +46,18 @@ const NewGameScreen: FunctionComponent<NewGameScreenProps> = ({ gameLib }) => {
           </div>
         </div>
       )}
-      <Card title={"New Game"}>
+      <Card title="New Game" className="justify-between">
         <TextInput value={cityName} onChange={setCityName} placeholder="City name (mandatory)" />
-        <Button disabled={!cityName.length} onToggle={generateNewMap}>
-          Generate
-        </Button>
+        <div className="flex flex-col w-full">
+          <Button disabled={!cityName.length} onToggle={generateNewMap} className="w-full mt-10">
+            Generate
+          </Button>
+          {generatedMaps.length > 0 && (
+            <Button onToggle={() => {}} className="w-full mt-4 bg-green-500">
+              Play this map
+            </Button>
+          )}
+        </div>
       </Card>
     </div>
   );
