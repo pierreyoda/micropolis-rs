@@ -1,5 +1,6 @@
 import { PromisedType } from "@/utils";
 import { WebMapGenerator } from "@/pkg/";
+import { RawGameMap } from "./map";
 
 export const importMicropolisCoreWasmLib = async () => import("@/pkg");
 
@@ -21,8 +22,9 @@ export class MicropolisCoreLibConnector {
     return this.coreLib.create_terrain_generator();
   }
 
-  generateNewRandomMap(generator: WebMapGenerator, width: number, height: number) {
-    return this.coreLib.generate_new_map(generator, width, height);
+  generateNewRandomMap(generator: WebMapGenerator, width: number, height: number): RawGameMap {
+    const generatedMap = this.coreLib.generate_new_map(generator, width, height);
+    return { map: generatedMap };
   }
 }
 

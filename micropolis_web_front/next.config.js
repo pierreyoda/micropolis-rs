@@ -1,14 +1,16 @@
 const path = require("path");
-const withCSS = require("@zeit/next-css");
 const CopyPlugin = require("copy-webpack-plugin");
-// const WasmPackPlugin = require("@wasm-tool/wasm-pack-plugin");
+const WasmPackPlugin = require("@wasm-tool/wasm-pack-plugin");
 
-module.exports = () => withCSS({
+module.exports = () => ({
   trailingSlash: true,
   exportPathMap: () => ({
     "/": { page: "/" },
     "/about": { page: "/about" },
   }),
+  future: {
+    webpack5: true,
+  },
   webpack: config => ({
     ...config,
     resolve: {
@@ -17,6 +19,15 @@ module.exports = () => withCSS({
         ...config.resolve.alias,
         "@": path.resolve(__dirname, "./"),
       },
+      fallback: {
+        ...config.resolve.fallback,
+        fs: false, // fixes npm packages that depend on `fs` module
+      },
+    },
+    experiments: {
+      ...config.experiments,
+      syncWebAssembly: true,
+      // asyncWebAssembly: true,
     },
     plugins: [
       ...config.plugins,
@@ -32,14 +43,11 @@ module.exports = () => withCSS({
           },
         ],
       }),
-      // new WasmPackPlugin({
-      //   crateDirectory: path.resolve(__dirname, "../micropolis_wasm/"),
-      //   outDir: path.resolve(__dirname, "./pkg"),
-      //   forceMode: "development",
-      // }),
+      new WasmPackPlugin({
+        crateDirectory: path.resolve(__dirname, "../micropolis_wasm/"),
+        outDir: path.resolve(__dirname, "./pkg"),
+        forceMode: "development",
+      }),
     ],
-    node: {
-      fs: "empty", // fixes npm packages that depend on `fs` module
-    },
   }),
 });

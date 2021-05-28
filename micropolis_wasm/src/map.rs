@@ -1,6 +1,6 @@
 use wasm_bindgen::prelude::*;
 
-use micropolis_rs_core::map::{Map, MapRectangle, Tile};
+use micropolis_rs_core::map::{Map, MapRectangle, Tile, TileMap};
 use micropolis_rs_core::utils::Percentage;
 use micropolis_rs_core::{
     map::generator::{GeneratorCreateIsland, MapGenerator},
@@ -30,7 +30,8 @@ pub fn generate_new_map(
     wrapper: WebMapGenerator,
     width: usize,
     height: usize,
-) -> Result<Box<[u16]>, JsValue> {
+) -> Result<JsValue, JsValue> {
+    // ) -> Result<Box<[u16]>, JsValue> {
     let mut rng = MicropolisRandom::from_random_system_seed();
     let dimensions = MapRectangle::new(width, height);
     let result = wrapper
@@ -38,12 +39,21 @@ pub fn generate_new_map(
         .random_map_terrain(&mut rng, 12345, &dimensions);
     if let Ok(generated) = result {
         let tilemap = generated.generated_terrain.tiles();
-        let tiles: Vec<u16> = tilemap
-            .iter()
-            .flat_map(|column| column.iter())
-            .map(|tile| tile.get_type_raw())
-            .collect();
-        Ok(tiles.into_boxed_slice())
+        // let tiles = tilemap
+        //     .iter()
+        //     .flat_map(|column| column.iter())
+        //     // .map(|column| column.clone().into_boxed_slice())
+        //     .collect::<Vec<Box<[Tile]>>>()
+        //     .into_boxed_slice();
+        // Ok(WebTileMap { tiles })
+        Ok(JsValue::from_serde(&tilemap).unwrap())
+        // let tilemap = generated.generated_terrain.tiles();
+        // let tiles: Vec<u16> = tilemap
+        //     .iter()
+        //     .flat_map(|column| column.iter())
+        //     .map(|tile| tile.get_type_raw())
+        //     .collect();
+        // Ok(tiles.into_boxed_slice())
     } else {
         Err(JsValue::from_str(&result.err().unwrap()[..]))
     }
