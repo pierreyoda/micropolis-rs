@@ -1,4 +1,6 @@
 export interface RawGameMap {
+  /** Generation seed. */
+  seed: number;
   /** Column-first. */
   map: {
     raw: number;
