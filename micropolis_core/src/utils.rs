@@ -20,9 +20,9 @@ impl Percentage {
     }
 }
 
-impl Into<Percentage> for f64 {
-    fn into(self) -> Percentage {
-        Percentage(self)
+impl From<f64> for Percentage {
+    fn from(val: f64) -> Self {
+        Percentage(val)
     }
 }
 

@@ -49,7 +49,6 @@ impl MicropolisRandom {
 
         // build the corresponding seed
         let final_seed = seed as i32;
-        // Self::from_seed(final_seed)
         Self::from_seed(final_seed)
     }
 

@@ -18,6 +18,21 @@ pub fn random_direction(rng: &mut MicropolisRandom) -> MapPositionOffset {
     }
 }
 
+pub fn random_river_direction(rng: &mut MicropolisRandom) -> MapPositionOffset {
+    use MapPositionOffset::*;
+    match 1 + 2 * rng.get_random(3) {
+        1 => North,
+        2 => NorthEast,
+        3 => East,
+        4 => SouthEast,
+        5 => South,
+        6 => SouthWest,
+        7 => West,
+        8 => NorthWest,
+        _ => unreachable!(),
+    }
+}
+
 pub fn random_straight_direction(rng: &mut MicropolisRandom) -> MapPositionOffset {
     use MapPositionOffset::*;
     match rng.get_random(3) {

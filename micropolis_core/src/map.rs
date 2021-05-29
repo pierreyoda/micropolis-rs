@@ -185,6 +185,6 @@ impl Map<Tile> {
 
     pub fn get_tile_char_at(&self, position: &MapPosition) -> Option<u16> {
         self.get_tile_at(position)
-            .and_then(|t| Some(t.get_raw() & TILE_LOW_MASK))
+            .map(|t| t.get_raw() & TILE_LOW_MASK)
     }
 }

@@ -86,7 +86,7 @@ impl MapGenerator {
                 Self::make_naked_island(rng, self.level_lakes, dimensions)
             }
             GeneratorCreateIsland::Sometimes(chance) => {
-                if (rng.get_random(100) as f64) / 100f64 < chance.value() {
+                if (rng.get_random(100) as f64) < 100f64 * chance.value() {
                     let generated_terrain = self.generate_terrain_as_island(rng, dimensions)?;
                     return Ok(GeneratedTileMap {
                         generation_seed: seed,

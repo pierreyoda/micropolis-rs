@@ -324,15 +324,15 @@ impl fmt::Display for MapRectangle {
 /// Describes a tile position relative to an adjacent tile.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, FromPrimitive, ToPrimitive, Serialize, Deserialize)]
 pub enum MapPositionOffset {
-    None,
-    NorthWest,
-    North,
-    NorthEast,
-    East,
-    SouthEast,
-    South,
-    SouthWest,
-    West,
+    None = 0,
+    NorthWest = 8,
+    North = 1,
+    NorthEast = 2,
+    East = 3,
+    SouthEast = 4,
+    South = 5,
+    SouthWest = 6,
+    West = 7,
 }
 
 pub const MAP_POSITION_DIRECTIONS: [MapPositionOffset; 8] = [
@@ -393,17 +393,24 @@ impl MapPositionOffset {
 
     /// Get the direction rotated by 45 degrees clock-wise.
     pub fn rotated_45(&self) -> MapPositionOffset {
+        self.rotated_45_times(1)
+    }
+
+    /// Get the direction rotated by 45 degrees `x` times.
+    pub fn rotated_45_times(&self, count: u8) -> MapPositionOffset {
         use MapPositionOffset::*;
-        match self {
-            None => None,
-            NorthWest => North,
-            North => NorthEast,
-            NorthEast => East,
-            East => SouthEast,
-            SouthEast => South,
-            South => SouthWest,
-            SouthWest => West,
-            West => NorthWest,
+        let direction_number = *self as u8;
+        match 1 + ((direction_number - 1 + count) & 7) {
+            0 => None,
+            1 => North,
+            2 => NorthEast,
+            3 => East,
+            4 => SouthEast,
+            5 => South,
+            6 => SouthWest,
+            7 => West,
+            8 => NorthWest,
+            _ => unreachable!(),
         }
     }
 

@@ -23,14 +23,14 @@ fn splash_trees(
     level_trees: i16,
     terrain: &mut TileMap,
     at: &MapPosition,
-) -> Result<(), String> {
+) {
     let mut trees_count = match level_trees {
         level if level < 0 => 50 + rng.get_random(150),
         level => 50 + rng.get_random(100 + level * 2),
     };
+
     let mut tree_position = *at;
     let woods_type_raw = TileType::Woods.to_u16().unwrap();
-
     while trees_count > 0 {
         let direction = random_direction(rng);
         tree_position = direction.apply(&tree_position);
@@ -40,15 +40,13 @@ fn splash_trees(
                 tile.set_raw(woods_type_raw | TILE_BLBNBIT_MASK);
             }
         } else {
-            return Ok(());
+            return;
         }
         if !terrain.in_bounds(&tree_position) {
-            return Ok(());
+            return;
         }
         trees_count -= 1;
     }
-
-    Ok(())
 }
 
 fn smooth_trees(terrain: &mut TileMap) -> Result<(), String> {

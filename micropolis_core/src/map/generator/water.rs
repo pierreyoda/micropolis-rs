@@ -11,7 +11,7 @@ use super::{
         BLOB_RIVER_BIG, BLOB_RIVER_SMALL, SMOOTH_RIVER_EDGES_TABLE, SMOOTH_TILES_DX,
         SMOOTH_TILES_DY,
     },
-    utils::{put_tile_on_terrain, random_straight_direction},
+    utils::{put_tile_on_terrain, random_river_direction},
 };
 
 /// Generate a random number of lakes, depending on `level_lakes`.
@@ -85,7 +85,7 @@ pub fn make_rivers(
     terrain: &mut TileMap,
     start: &MapPosition,
 ) {
-    let mut global_direction = random_straight_direction(rng);
+    let mut global_direction = random_river_direction(rng);
     make_big_river(
         rng,
         level_river_curves,
@@ -105,7 +105,7 @@ pub fn make_rivers(
         &global_direction,
     );
 
-    global_direction = random_straight_direction(rng);
+    global_direction = random_river_direction(rng);
     make_small_river(
         rng,
         level_river_curves,
@@ -117,6 +117,10 @@ pub fn make_rivers(
 }
 
 /// Make a big river.
+///
+/// Parameters:
+/// - `global_direction` is the global direction of the river
+/// - `local_direction` is the local direction of the terrain
 ///
 /// Returns the last local river direction.
 fn make_big_river(
@@ -146,8 +150,7 @@ fn make_big_river(
                 last_local_direction = last_local_direction.rotated_45();
             }
             if rng.get_random(rate2) > 90 {
-                // FIXME: C++ code has a 7 'count' parameter?
-                last_local_direction = last_local_direction.rotated_45();
+                last_local_direction = last_local_direction.rotated_45_times(7);
             }
         }
         position = last_local_direction.apply(&position);
