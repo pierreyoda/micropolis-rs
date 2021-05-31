@@ -46,7 +46,12 @@ module.exports = () => ({
       new WasmPackPlugin({
         crateDirectory: path.resolve(__dirname, "../micropolis_wasm/"),
         outDir: path.resolve(__dirname, "./pkg"),
-        forceMode: "development",
+        // forceMode: "development",
+        watchDirectories: [
+          path.resolve(__dirname, "../micropolis_core"),
+          path.resolve(__dirname, "../micropolis_wasm"),
+        ],
+        forceWatch: true,
       }),
     ],
   }),
