@@ -166,7 +166,7 @@ impl MapGenerator {
             })
             .collect();
         let mut terrain = TileMap {
-            clustering_strategy: MapClusteringStrategy::BlockSize8,
+            clustering_strategy: MapClusteringStrategy::BlockSize1,
             data: tilemap,
         };
 

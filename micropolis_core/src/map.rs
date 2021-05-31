@@ -179,7 +179,7 @@ impl Map<Tile> {
             vec![vec![Tile::from_type(uniform_type)?; dimensions.height]; dimensions.width];
         Ok(Map {
             data: tilemap,
-            clustering_strategy: MapClusteringStrategy::BlockSize8,
+            clustering_strategy: MapClusteringStrategy::BlockSize1,
         })
     }
 
