@@ -25,7 +25,7 @@ pub fn make_lakes(rng: &mut MicropolisRandom, level_lakes: i16, map: &mut TileMa
     let map_size = map.bounds();
     while remaining_lakes > 0 {
         let x = 10 + rng.get_random(map_size.width as i16 - 21);
-        let y = 10 + rng.get_random(map_size.width as i16 - 20);
+        let y = 10 + rng.get_random(map_size.height as i16 - 20);
         make_single_lake(rng, map, (x as i32, y as i32).into());
         remaining_lakes -= 1;
     }
@@ -35,14 +35,14 @@ pub fn make_lakes(rng: &mut MicropolisRandom, level_lakes: i16, map: &mut TileMa
 fn make_single_lake(rng: &mut MicropolisRandom, terrain: &mut TileMap, at: MapPosition) {
     let mut num_plops = 2 + rng.get_random(12);
     while num_plops > 0 {
-        let offset_x = rng.get_random(12) - 6;
-        let offset_y = rng.get_random(12) - 6;
-        let plop_position = MapPosition {
-            x: at.x + offset_x as i32,
-            y: at.y + offset_y as i32,
-        };
+        let plop_position = at
+            + (
+                (rng.get_random(12) - 6) as i32,
+                (rng.get_random(12) - 6) as i32,
+            )
+                .into();
 
-        if rng.get_random(4) > 0 {
+        if rng.get_random(4) != 0 {
             plop_small_river(terrain, &plop_position)
         } else {
             plop_big_river(terrain, &plop_position)

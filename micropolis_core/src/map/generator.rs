@@ -249,7 +249,8 @@ mod tests {
                     Some(TileType::RiverEdge) => '&',
                     Some(TileType::Channel) => '#',
                     Some(TileType::Dirt) => '.',
-                    _ => 'T',
+                    Some(TileType::Woods) => 'T',
+                    _ => 'X',
                 });
             }
             repr.push_str("/\n");

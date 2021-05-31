@@ -12,6 +12,28 @@ use super::{
     utils::random_direction,
 };
 
+pub fn make_forests(
+    rng: &mut MicropolisRandom,
+    level_trees: i16,
+    terrain: &mut TileMap,
+) -> Result<(), String> {
+    let amount = match level_trees {
+        level if level < 0 => 50 + rng.get_random(100),
+        level => 3 + level,
+    };
+    let map_size = terrain.bounds();
+    for _ in 0..amount {
+        let x = rng.get_random(map_size.width as i16 - 1);
+        let y = rng.get_random(map_size.height as i16 - 1);
+        splash_trees(rng, level_trees, terrain, &(x, y).into());
+    }
+
+    smooth_trees(terrain)?;
+    smooth_trees(terrain)?; // TODO: why the repetition ?
+
+    Ok(())
+}
+
 /// Splash a bunch of trees near the given position.
 ///
 /// The amount of trees generated depends on `level_trees`.
@@ -35,15 +57,13 @@ fn splash_trees(
         let direction = random_direction(rng);
         tree_position = direction.apply(&tree_position);
 
+        if !terrain.in_bounds(&tree_position) {
+            return;
+        }
         if let Some(tile) = terrain.get_tile_mut_at(&tree_position) {
             if tile.get_type() == &Some(TileType::Dirt) {
                 tile.set_raw(woods_type_raw | TILE_BLBNBIT_MASK);
             }
-        } else {
-            return;
-        }
-        if !terrain.in_bounds(&tree_position) {
-            return;
         }
         trees_count -= 1;
     }
@@ -168,26 +188,4 @@ pub fn smooth_trees_at(
             effects.add_modification(position, Tile::from_raw(temp)?)
         }),
     }
-}
-
-pub fn make_forests(
-    rng: &mut MicropolisRandom,
-    level_trees: i16,
-    terrain: &mut TileMap,
-) -> Result<(), String> {
-    let amount = match level_trees {
-        level if level < 0 => 50 + rng.get_random(100),
-        level => 3 + level,
-    };
-    let map_size = terrain.bounds();
-    for _ in 0..amount {
-        let x = rng.get_random(map_size.width as i16 - 1);
-        let y = rng.get_random(map_size.height as i16 - 1);
-        splash_trees(rng, level_trees, terrain, &(x, y).into());
-    }
-
-    smooth_trees(terrain)?;
-    smooth_trees(terrain)?; // TODO: why the repetition ?
-
-    Ok(())
 }
