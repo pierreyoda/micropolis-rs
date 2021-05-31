@@ -1,5 +1,6 @@
 use crate::{
     map::{
+        tiles::TILE_LOW_MASK,
         tiles_type::{WOODS_HIGH, WOODS_LOW},
         MapPosition, MapPositionOffset, TileMap, TileType,
     },
@@ -172,22 +173,21 @@ fn make_small_river(
         level => (10 + level, 100 + level),
     };
 
-    let mut position = start.clone();
-    let mut last_local_direction = local_direction.clone();
+    let mut position = *start;
+    let mut last_local_direction = *local_direction;
     while terrain.in_bounds(&MapPosition {
         x: position.x + 3,
         y: position.y + 3,
     }) {
         plop_small_river(terrain, &position);
         if rng.get_random(rate1) < 10 {
-            last_local_direction = global_direction.clone();
+            last_local_direction = *global_direction;
         } else {
             if rng.get_random(rate2) > 90 {
                 last_local_direction = last_local_direction.rotated_45();
             }
             if rng.get_random(rate2) > 90 {
-                // FIXME: C++ code has a 7 'count' parameter?
-                last_local_direction = last_local_direction.rotated_45();
+                last_local_direction = last_local_direction.rotated_45_times(7);
             }
         }
         position = local_direction.apply(&position);
@@ -224,42 +224,34 @@ pub fn smooth_rivers(rng: &mut MicropolisRandom, terrain: &mut TileMap) -> Resul
                     continue;
                 }
             }
+
+            let position: MapPosition = (x as i32, y as i32).into();
             let mut bit_index = 0;
+
             for i in 0..4 {
                 bit_index <<= 1;
-                let temp_position = MapPosition {
-                    x: x as i32 + SMOOTH_TILES_DX[i],
-                    y: y as i32 + SMOOTH_TILES_DY[i],
-                };
-                if !map_size.is_inside(&temp_position) {
+                let temp_position = position + (SMOOTH_TILES_DX[i], SMOOTH_TILES_DY[i]).into();
+                if !terrain.in_bounds(&temp_position) {
                     continue;
                 }
-                let temp_tile_type_raw = terrain
-                    .data
-                    .get(temp_position.x as usize)
-                    .ok_or(format!(
-                        "MapGenerator.smooth_rivers map X overflow at temp X={}",
-                        temp_position.x
-                    ))?
-                    .get(temp_position.y as usize)
-                    .ok_or(format!(
-                        "MapGenerator.smooth_rivers map Y overflow at temp Y={}",
-                        temp_position.y
-                    ))?
-                    .get_type_raw();
-                if temp_tile_type_raw == dirt_type_raw {
-                    continue;
-                }
-                if !(WOODS_LOW..=WOODS_HIGH).contains(&temp_tile_type_raw) {
-                    bit_index += 1;
+                if let Some(temp_tile) = terrain.get_tile_at(&temp_position) {
+                    let temp_tile_type_raw = temp_tile.get_type_raw() & TILE_LOW_MASK;
+                    if temp_tile_type_raw == dirt_type_raw {
+                        continue;
+                    }
+                    if !(WOODS_LOW..=WOODS_HIGH).contains(&temp_tile_type_raw) {
+                        bit_index += 1;
+                    }
                 }
             }
-            let tile = terrain.data.get_mut(x).unwrap().get_mut(y).unwrap();
-            let mut tile_raw = SMOOTH_RIVER_EDGES_TABLE[bit_index & 0x000F];
-            if tile_raw != river_type_raw && rng.get_random(1) > 0 {
-                tile_raw += 1;
+
+            if let Some(tile) = terrain.get_tile_mut_at(&position) {
+                let mut tile_raw = SMOOTH_RIVER_EDGES_TABLE[bit_index & 0x000F];
+                if tile_raw != river_type_raw && rng.get_random(1) != 0 {
+                    tile_raw += 1;
+                }
+                tile.set_raw(tile_raw);
             }
-            tile.set_raw(tile_raw);
         }
     }
     Ok(())

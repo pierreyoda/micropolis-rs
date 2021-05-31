@@ -136,7 +136,7 @@ fn smooth_trees(terrain: &mut TileMap) -> Result<(), String> {
 pub fn smooth_trees_at(
     terrain: &TileMap,
     position: &MapPosition,
-    mut effects: ToolEffects,
+    effects: ToolEffects,
     preserve: bool,
 ) -> Result<ToolEffects, String> {
     if !effects
