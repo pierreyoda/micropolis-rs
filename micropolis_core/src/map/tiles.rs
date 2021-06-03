@@ -90,11 +90,9 @@ impl fmt::Display for Tile {
 
 impl Tile {
     pub fn from_raw(raw: u16) -> Result<Self, String> {
-        let tile_type = TileType::from_u16(raw & TILE_TYPE_MASK)
-            .ok_or(format!("Tile::from_raw cannot cast tile type from {}", raw))?;
         Ok(Self {
             raw,
-            tile_type: Some(tile_type),
+            tile_type: TileType::from_u16(raw & TILE_TYPE_MASK),
         })
     }
 

@@ -171,7 +171,7 @@ impl ToolEffects {
     }
 
     pub fn add_cost(mut self, cost: u32) -> Self {
-        if self.free {
+        if !self.free {
             self.cost += cost;
         }
         self
@@ -193,7 +193,7 @@ impl ToolEffects {
         match result {
             ToolResult::Succeeded(other) => {
                 self.free = self.free || other.free;
-                self.cost += other.cost;
+                self.cost += if other.free { 0 } else { other.cost };
                 self.modifications = {
                     let mut hm = self.modifications.clone();
                     for (position, tile) in other.modifications.iter() {
@@ -219,7 +219,7 @@ impl ToolEffects {
             .map(|(position, tile)| map.set_tile_at(position, tile.clone()))
             .filter(|modified| !*modified)
             .count()
-            > 0
+            == self.modifications.len()
         {
             return None;
         }
@@ -232,12 +232,16 @@ impl ToolEffects {
     }
 
     /// Apply the modifications if there are enough funds.
-    pub fn modify_world_if_enough_money(&mut self, map: &mut TileMap, total_funds: u32) -> bool {
+    pub fn modify_world_if_enough_money(
+        &mut self,
+        map: &mut TileMap,
+        total_funds: u32,
+    ) -> (bool, Option<u32>) {
         if self.cost < total_funds {
-            false
+            (false, None)
         } else {
-            self.modify_world(map);
-            true
+            let cost = self.modify_world(map);
+            (true, cost)
         }
     }
 
@@ -254,12 +258,13 @@ impl ToolEffects {
         self.modifications
             .get(position)
             .cloned()
-            .or(map.get_tile_at(position).cloned())
+            .or_else(|| map.get_tile_at(position).cloned())
     }
 
     /// Set a new map value at the given position.
     fn set_map_value_at(&mut self, position: &MapPosition, tile: Tile) {
-        self.modifications.insert(position.clone(), tile);
+        println!("{:?}=>{}", tile, tile.is_tree());
+        self.modifications.insert(*position, tile);
     }
 }
 
@@ -403,7 +408,10 @@ pub fn apply_tool(
 
     match result.clone() {
         ToolResult::Succeeded(mut chained_effects) => {
-            if chained_effects.modify_world_if_enough_money(map, total_funds) {
+            if chained_effects
+                .modify_world_if_enough_money(map, total_funds)
+                .0
+            {
                 Ok(result)
             } else {
                 Ok(ToolResult::NoMoney)

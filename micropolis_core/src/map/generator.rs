@@ -244,14 +244,18 @@ mod tests {
         for row in tiles.iter() {
             repr.push('/');
             for tile in row.iter() {
-                repr.push(match tile.get_type() {
-                    Some(TileType::River) => '~',
-                    Some(TileType::RiverEdge) => '&',
-                    Some(TileType::Channel) => '#',
-                    Some(TileType::Dirt) => '.',
-                    Some(TileType::Woods) => 'T',
-                    _ => 'X',
-                });
+                if tile.is_tree() {
+                    repr.push('T');
+                } else {
+                    repr.push(match tile.get_type() {
+                        Some(TileType::River) => '~',
+                        Some(TileType::RiverEdge) => '&',
+                        Some(TileType::Channel) => '#',
+                        Some(TileType::Dirt) => '.',
+                        Some(TileType::Woods) => 'T',
+                        _ => 'X',
+                    });
+                }
             }
             repr.push_str("/\n");
         }

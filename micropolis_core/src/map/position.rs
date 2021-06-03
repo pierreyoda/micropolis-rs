@@ -459,10 +459,7 @@ impl MapPositionOffset {
 
     pub fn is_cardinal(&self) -> bool {
         use MapPositionOffset::*;
-        match self {
-            North | East | South | West => true,
-            _ => false,
-        }
+        matches!(self, North | East | South | West)
     }
 }
 
