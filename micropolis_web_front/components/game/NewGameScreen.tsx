@@ -43,7 +43,9 @@ const NewGameScreen: FunctionComponent<NewGameScreenProps> = ({ gameLib }) => {
       {curentGeneratedMap && (
         <div className="flex flex-col mr-12">
           <p className="mb-4 text-center text-gray-700">Seed: {curentGeneratedMap.seed}</p>
-          <MapRenderer scale={0.2} map={curentGeneratedMap.gameMap} />
+          <div className="border-4 border-gray-500">
+            <MapRenderer scale={0.2} map={curentGeneratedMap.gameMap} />
+          </div>
           <div className="flex items-center justify-between w-full mt-4">
             <Button disabled={currentlyViewedMapIndex === 0} onToggle={() => setCurrentlyViewedMapIndex(i => i - 1)}>
               Previous

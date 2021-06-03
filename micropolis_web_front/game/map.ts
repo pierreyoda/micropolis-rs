@@ -26,6 +26,6 @@ const TILE_TYPE_MASK = 0b0000_0011_1111_1111;
 export const gameMapFromRawData = ({ map }: RawGameMap): GameMap => ({
   tiles: map.map(column => column.map((tile): GameMapTile => {
     const tileType = tile.raw & TILE_TYPE_MASK;
-    return { raw: tile.raw, tileType: tile.tile_type ? tileType : -1 }
+    return { raw: tile.raw, tileType };
   }))
 });
