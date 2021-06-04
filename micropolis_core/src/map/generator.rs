@@ -82,9 +82,7 @@ impl MapGenerator {
             GeneratorCreateIsland::Never => {
                 Map::tilemap_with_dimensions(dimensions, TileType::Dirt)?
             }
-            GeneratorCreateIsland::Always => {
-                Self::make_naked_island(rng, self.level_lakes, dimensions)
-            }
+            GeneratorCreateIsland::Always => Self::make_naked_island(rng, dimensions),
             GeneratorCreateIsland::Sometimes(chance) => {
                 if (rng.get_random(100) as f64) < 100f64 * chance.value() {
                     let generated_terrain = self.generate_terrain_as_island(rng, dimensions)?;
@@ -135,18 +133,14 @@ impl MapGenerator {
         rng: &mut MicropolisRandom,
         dimensions: &MapRectangle,
     ) -> Result<TileMap, String> {
-        let mut terrain = Self::make_naked_island(rng, self.level_lakes, dimensions);
+        let mut terrain = Self::make_naked_island(rng, dimensions);
         smooth_rivers(rng, &mut terrain)?;
         make_forests(rng, self.level_trees, &mut terrain)?;
         Ok(terrain)
     }
 
     /// Generate a plain island surrounded by 5 tiles of river.
-    fn make_naked_island(
-        rng: &mut MicropolisRandom,
-        level_lakes: i16,
-        dimensions: &MapRectangle,
-    ) -> TileMap {
+    fn make_naked_island(rng: &mut MicropolisRandom, dimensions: &MapRectangle) -> TileMap {
         // rectangular island
         let (x_max, y_max) = (dimensions.width as i32 - 5, dimensions.height as i32 - 5);
         let tilemap: Vec<Vec<Tile>> = (0..dimensions.width)
@@ -199,29 +193,6 @@ impl MapGenerator {
         }
 
         terrain
-    }
-
-    fn set_tile(
-        terrain: &mut TileMap,
-        new_tile_type: TileType,
-        at: &MapPosition,
-    ) -> Result<(), String> {
-        if new_tile_type == TileType::Dirt {
-            return Ok(());
-        }
-        let row = terrain
-            .data
-            .get_mut(at.x as usize)
-            .ok_or("MapGenerator.set_tile map X overflow")?;
-        let tile = row
-            .get_mut(at.y as usize)
-            .ok_or("MapGenerator.set_tile map Y overflow")?;
-        match tile.get_type() {
-            Some(TileType::Dirt) => tile.set_type(new_tile_type),
-            Some(TileType::River) if new_tile_type != TileType::Channel => Ok(()),
-            Some(TileType::Channel) => Ok(()),
-            _ => tile.set_type(new_tile_type),
-        }
     }
 }
 

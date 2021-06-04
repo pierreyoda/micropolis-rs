@@ -57,9 +57,6 @@ pub fn plop_big_river(terrain: &mut TileMap, base: &MapPosition) {
     for x in 0..9 {
         for y in 0..9 {
             let position = *base + (x, y).into();
-            if !terrain.in_bounds(&position) {
-                continue;
-            }
             put_tile_on_terrain(terrain, BLOB_RIVER_BIG[y][x].clone(), &position)
                 .expect("MapGenerator.plop_big_river set tile error");
         }
@@ -71,9 +68,6 @@ pub fn plop_small_river(terrain: &mut TileMap, base: &MapPosition) {
     for x in 0..6 {
         for y in 0..6 {
             let position = *base + (x, y).into();
-            if !terrain.in_bounds(&position) {
-                continue;
-            }
             put_tile_on_terrain(terrain, BLOB_RIVER_SMALL[y][x].clone(), &position)
                 .expect("MapGenerator.plop_small_river set tile error");
         }
@@ -132,18 +126,60 @@ fn make_big_river(
     global_direction: &MapPositionOffset,
     local_direction: &MapPositionOffset,
 ) -> MapPositionOffset {
+    make_river(
+        rng,
+        level_river_curves,
+        terrain,
+        start,
+        global_direction,
+        local_direction,
+        false,
+    )
+}
+
+fn make_small_river(
+    rng: &mut MicropolisRandom,
+    level_river_curves: i16,
+    terrain: &mut TileMap,
+    start: &MapPosition,
+    global_direction: &MapPositionOffset,
+    local_direction: &MapPositionOffset,
+) -> MapPositionOffset {
+    make_river(
+        rng,
+        level_river_curves,
+        terrain,
+        start,
+        global_direction,
+        local_direction,
+        true,
+    )
+}
+
+fn make_river(
+    rng: &mut MicropolisRandom,
+    level_river_curves: i16,
+    terrain: &mut TileMap,
+    start: &MapPosition,
+    global_direction: &MapPositionOffset,
+    local_direction: &MapPositionOffset,
+    is_small: bool,
+) -> MapPositionOffset {
     let (rate1, rate2) = match level_river_curves {
         level if level < 0 => (100, 200),
         level => (10 + level, 100 + level),
     };
+    let terrain_offset: MapPosition = (if is_small { (3, 3) } else { (4, 4) }).into();
 
     let mut position = *start;
     let mut last_local_direction = *local_direction;
-    while terrain.in_bounds(&MapPosition {
-        x: position.x + 4,
-        y: position.y + 4,
-    }) {
-        plop_big_river(terrain, &position);
+    while terrain.in_bounds(&(position + terrain_offset)) {
+        if is_small {
+            plop_small_river(terrain, &position);
+        } else {
+            plop_big_river(terrain, &position);
+        }
+
         if rng.get_random(rate1) < 10 {
             last_local_direction = *global_direction;
         } else {
@@ -159,42 +195,6 @@ fn make_big_river(
     last_local_direction
 }
 
-// TODO: factorize code with make_big_river (macro/closures)
-fn make_small_river(
-    rng: &mut MicropolisRandom,
-    level_river_curves: i16,
-    terrain: &mut TileMap,
-    start: &MapPosition,
-    global_direction: &MapPositionOffset,
-    local_direction: &MapPositionOffset,
-) -> MapPositionOffset {
-    let (rate1, rate2) = match level_river_curves {
-        level if level < 0 => (100, 200),
-        level => (10 + level, 100 + level),
-    };
-
-    let mut position = *start;
-    let mut last_local_direction = *local_direction;
-    while terrain.in_bounds(&MapPosition {
-        x: position.x + 3,
-        y: position.y + 3,
-    }) {
-        plop_small_river(terrain, &position);
-        if rng.get_random(rate1) < 10 {
-            last_local_direction = *global_direction;
-        } else {
-            if rng.get_random(rate2) > 90 {
-                last_local_direction = last_local_direction.rotated_45();
-            }
-            if rng.get_random(rate2) > 90 {
-                last_local_direction = last_local_direction.rotated_45_times(7);
-            }
-        }
-        position = local_direction.apply(&position);
-    }
-    last_local_direction
-}
-
 pub fn smooth_rivers(rng: &mut MicropolisRandom, terrain: &mut TileMap) -> Result<(), String> {
     let map_size = terrain.bounds();
     let dirt_type_raw = TileType::Dirt
@@ -205,29 +205,15 @@ pub fn smooth_rivers(rng: &mut MicropolisRandom, terrain: &mut TileMap) -> Resul
         .ok_or("River tile type raw conversion error")?;
     for x in 0..map_size.width {
         for y in 0..map_size.height {
-            {
-                // avoid immutable / mutable borrow conflict
-                // TODO: find better way
-                let tile = terrain
-                    .data
-                    .get(x)
-                    .ok_or(format!(
-                        "MapGenerator.smooth_rivers map X overflow at {}",
-                        x
-                    ))?
-                    .get(y)
-                    .ok_or(format!(
-                        "MapGenerator.smooth_rivers map Y overflow at {}",
-                        y
-                    ))?;
+            let position: MapPosition = (x, y).into();
+
+            if let Some(tile) = terrain.get_tile_at(&position) {
                 if tile.get_type() != &Some(TileType::RiverEdge) {
                     continue;
                 }
             }
 
-            let position: MapPosition = (x as i32, y as i32).into();
             let mut bit_index = 0;
-
             for i in 0..4 {
                 bit_index <<= 1;
                 let temp_position = position + (SMOOTH_TILES_DX[i], SMOOTH_TILES_DY[i]).into();

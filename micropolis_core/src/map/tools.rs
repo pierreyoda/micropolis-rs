@@ -263,7 +263,6 @@ impl ToolEffects {
 
     /// Set a new map value at the given position.
     fn set_map_value_at(&mut self, position: &MapPosition, tile: Tile) {
-        println!("{:?}=>{}", tile, tile.is_tree());
         self.modifications.insert(*position, tile);
     }
 }
