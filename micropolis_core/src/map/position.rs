@@ -158,29 +158,26 @@ impl MapPosition {
     }
 }
 
-impl Into<MapPosition> for (i16, i16) {
-    fn into(self) -> MapPosition {
+impl From<(i16, i16)> for MapPosition {
+    fn from(val: (i16, i16)) -> Self {
         MapPosition {
-            x: self.0 as i32,
-            y: self.1 as i32,
+            x: val.0 as i32,
+            y: val.1 as i32,
         }
     }
 }
 
-impl Into<MapPosition> for (i32, i32) {
-    fn into(self) -> MapPosition {
-        MapPosition {
-            x: self.0,
-            y: self.1,
-        }
+impl From<(i32, i32)> for MapPosition {
+    fn from(val: (i32, i32)) -> Self {
+        MapPosition { x: val.0, y: val.1 }
     }
 }
 
-impl Into<MapPosition> for (usize, usize) {
-    fn into(self) -> MapPosition {
+impl From<(usize, usize)> for MapPosition {
+    fn from(val: (usize, usize)) -> Self {
         MapPosition {
-            x: self.0 as i32,
-            y: self.0 as i32,
+            x: val.0 as i32,
+            y: val.1 as i32,
         }
     }
 }
@@ -324,15 +321,15 @@ impl fmt::Display for MapRectangle {
 /// Describes a tile position relative to an adjacent tile.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, FromPrimitive, ToPrimitive, Serialize, Deserialize)]
 pub enum MapPositionOffset {
-    None,
-    NorthWest,
-    North,
-    NorthEast,
-    East,
-    SouthEast,
-    South,
-    SouthWest,
-    West,
+    None = 0,
+    NorthWest = 8,
+    North = 1,
+    NorthEast = 2,
+    East = 3,
+    SouthEast = 4,
+    South = 5,
+    SouthWest = 6,
+    West = 7,
 }
 
 pub const MAP_POSITION_DIRECTIONS: [MapPositionOffset; 8] = [
@@ -393,17 +390,24 @@ impl MapPositionOffset {
 
     /// Get the direction rotated by 45 degrees clock-wise.
     pub fn rotated_45(&self) -> MapPositionOffset {
+        self.rotated_45_times(1)
+    }
+
+    /// Get the direction rotated by 45 degrees `x` times.
+    pub fn rotated_45_times(&self, count: u8) -> MapPositionOffset {
         use MapPositionOffset::*;
-        match self {
-            None => None,
-            NorthWest => North,
-            North => NorthEast,
-            NorthEast => East,
-            East => SouthEast,
-            SouthEast => South,
-            South => SouthWest,
-            SouthWest => West,
-            West => NorthWest,
+        let direction_number = *self as u8;
+        match 1 + ((direction_number - 1 + count) & 7) {
+            0 => None,
+            1 => North,
+            2 => NorthEast,
+            3 => East,
+            4 => SouthEast,
+            5 => South,
+            6 => SouthWest,
+            7 => West,
+            8 => NorthWest,
+            _ => unreachable!(),
         }
     }
 
@@ -452,10 +456,7 @@ impl MapPositionOffset {
 
     pub fn is_cardinal(&self) -> bool {
         use MapPositionOffset::*;
-        match self {
-            North | East | South | West => true,
-            _ => false,
-        }
+        matches!(self, North | East | South | West)
     }
 }
 

@@ -22,9 +22,9 @@ export class MicropolisCoreLibConnector {
     return this.coreLib.create_terrain_generator();
   }
 
-  generateNewRandomMap(generator: WebMapGenerator, width: number, height: number): RawGameMap {
-    const generatedMap = this.coreLib.generate_new_map(generator, width, height);
-    return { map: generatedMap };
+  generateNewRandomMap(generator: WebMapGenerator, seed: number, width: number, height: number): RawGameMap {
+    const generatedMap = this.coreLib.generate_new_map(generator, seed, width, height);
+    return { map: generatedMap, seed };
   }
 }
 

@@ -13,18 +13,10 @@ export interface TileProps {
   scale: number;
 }
 
-const Tile: FunctionComponent<TileProps> = ({
-  tileIndex,
-  atlasImageUrl,
-  scale,
-}) => {
-  const [atlasX, atlasY] = useMemo(
-    () => [
-      (tileIndex % ATLAS_ROWS) * TILE_SIZE,
-      (tileIndex / ATLAS_ROWS) * TILE_SIZE,
-    ],
-    [tileIndex]
-  );
+const Tile: FunctionComponent<TileProps> = ({ tileIndex, atlasImageUrl, scale }) => {
+  const [atlasX, atlasY] = useMemo(() => [(tileIndex % ATLAS_ROWS) * TILE_SIZE, (tileIndex / ATLAS_ROWS) * TILE_SIZE], [
+    tileIndex,
+  ]);
 
   return (
     <img

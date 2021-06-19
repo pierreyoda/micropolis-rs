@@ -16,3 +16,11 @@ export function* iterate_by_pairs<T>(
       : [collection[i], collection[i + 1]];
   }
 };
+
+/**
+ * Generate a random integer in the given **inclusive** range.
+ */
+export const getRandomInt = (min: number, max: number): number => {
+  const [intMin, intMax] = [Math.ceil(min), Math.floor(max)];
+  return Math.floor(Math.random() * (intMax - intMin + 1)) + intMin;
+}

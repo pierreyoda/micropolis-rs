@@ -12,10 +12,7 @@ export interface MapRendererProps {
 /**
  * TileMap renderer.
  */
-const MapRenderer: FunctionComponent<MapRendererProps> = ({
-  map: { tiles },
-  scale,
-}) => {
+const MapRenderer: FunctionComponent<MapRendererProps> = ({ map: { tiles }, scale }) => {
   return (
     <div className="flex">
       {tiles.map((col, colIndex) => (

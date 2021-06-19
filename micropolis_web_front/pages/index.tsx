@@ -8,18 +8,13 @@ import LoaderSpinner from "@/components/common/LoaderSpinner";
 
 const Home: NextPage = () => {
   const [loading, setLoading] = useState(true);
-  const [gameLib, setGameLib] = useState<MicropolisCoreLibConnector | null>(
-    null
-  );
+  const [gameLib, setGameLib] = useState<MicropolisCoreLibConnector | null>(null);
   useEffect(() => {
     const loadCoreLibrary = async () => {
       const coreModule = await import(/* webpackMode: "lazy" */ "../pkg/");
       const coreConnector = new MicropolisCoreLibConnector(coreModule);
       setGameLib(coreConnector);
       setLoading(false);
-      const generator = coreConnector.createNewMapGenerator();
-      const map = coreConnector.generateNewRandomMap(generator, 120, 100);
-      console.log(map);
     };
     loadCoreLibrary();
   }, []);

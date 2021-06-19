@@ -179,12 +179,12 @@ impl Map<Tile> {
             vec![vec![Tile::from_type(uniform_type)?; dimensions.height]; dimensions.width];
         Ok(Map {
             data: tilemap,
-            clustering_strategy: MapClusteringStrategy::BlockSize8,
+            clustering_strategy: MapClusteringStrategy::BlockSize1,
         })
     }
 
     pub fn get_tile_char_at(&self, position: &MapPosition) -> Option<u16> {
         self.get_tile_at(position)
-            .and_then(|t| Some(t.get_raw() & TILE_LOW_MASK))
+            .map(|t| t.get_raw() & TILE_LOW_MASK)
     }
 }

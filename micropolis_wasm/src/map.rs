@@ -28,32 +28,18 @@ pub fn create_terrain_generator() -> WebMapGenerator {
 #[wasm_bindgen]
 pub fn generate_new_map(
     wrapper: WebMapGenerator,
+    seed: i32,
     width: usize,
     height: usize,
 ) -> Result<JsValue, JsValue> {
-    // ) -> Result<Box<[u16]>, JsValue> {
     let mut rng = MicropolisRandom::from_random_system_seed();
     let dimensions = MapRectangle::new(width, height);
     let result = wrapper
         .generator
-        .random_map_terrain(&mut rng, 12345, &dimensions);
+        .random_map_terrain(&mut rng, seed, &dimensions);
     if let Ok(generated) = result {
         let tilemap = generated.generated_terrain.tiles();
-        // let tiles = tilemap
-        //     .iter()
-        //     .flat_map(|column| column.iter())
-        //     // .map(|column| column.clone().into_boxed_slice())
-        //     .collect::<Vec<Box<[Tile]>>>()
-        //     .into_boxed_slice();
-        // Ok(WebTileMap { tiles })
         Ok(JsValue::from_serde(&tilemap).unwrap())
-        // let tilemap = generated.generated_terrain.tiles();
-        // let tiles: Vec<u16> = tilemap
-        //     .iter()
-        //     .flat_map(|column| column.iter())
-        //     .map(|tile| tile.get_type_raw())
-        //     .collect();
-        // Ok(tiles.into_boxed_slice())
     } else {
         Err(JsValue::from_str(&result.err().unwrap()[..]))
     }
