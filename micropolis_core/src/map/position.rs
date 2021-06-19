@@ -158,29 +158,26 @@ impl MapPosition {
     }
 }
 
-impl Into<MapPosition> for (i16, i16) {
-    fn into(self) -> MapPosition {
+impl From<(i16, i16)> for MapPosition {
+    fn from(val: (i16, i16)) -> Self {
         MapPosition {
-            x: self.0 as i32,
-            y: self.1 as i32,
+            x: val.0 as i32,
+            y: val.1 as i32,
         }
     }
 }
 
-impl Into<MapPosition> for (i32, i32) {
-    fn into(self) -> MapPosition {
-        MapPosition {
-            x: self.0,
-            y: self.1,
-        }
+impl From<(i32, i32)> for MapPosition {
+    fn from(val: (i32, i32)) -> Self {
+        MapPosition { x: val.0, y: val.1 }
     }
 }
 
-impl Into<MapPosition> for (usize, usize) {
-    fn into(self) -> MapPosition {
+impl From<(usize, usize)> for MapPosition {
+    fn from(val: (usize, usize)) -> Self {
         MapPosition {
-            x: self.0 as i32,
-            y: self.0 as i32,
+            x: val.0 as i32,
+            y: val.1 as i32,
         }
     }
 }
