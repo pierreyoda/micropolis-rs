@@ -1,16 +1,11 @@
 import React from "react";
-import {
-  select,
-  boolean,
-  number,
-  color,
-} from "@storybook/addon-knobs";
+import { select, boolean, number, color } from "@storybook/addon-knobs";
 import { Meta } from "@storybook/react";
-import "twin.macro";
 
 import LoaderSpinner, { loaderSpinnerTypes } from "../LoaderSpinner";
 
-const printPascalCase = (pascal: string): string => pascal.replace(/([A-Z])/g, " $1");
+const printPascalCase = (pascal: string): string =>
+  pascal.replace(/([A-Z])/g, " $1");
 
 export default {
   title: "Common/LoaderSpinner",
@@ -18,9 +13,9 @@ export default {
 } as Meta;
 
 export const Showcase = () => (
-  <div tw="flex flex-col items-center w-full h-full overflow-y-auto bg-pink-300">
-    {loaderSpinnerTypes.map(type => (
-      <div key={type} title={printPascalCase(type)} tw="mb-8">
+  <div className="flex flex-col items-center w-full h-full overflow-y-auto bg-pink-300">
+    {loaderSpinnerTypes.map((type) => (
+      <div key={type} title={printPascalCase(type)} className="mb-8">
         <LoaderSpinner type={type} color={color("Color", "#eaeaea")} />
       </div>
     ))}
@@ -36,7 +31,7 @@ export const CustomSpinner = () => (
           ...acc,
           [printPascalCase(type)]: type,
         }),
-        {},
+        {}
       ),
       loaderSpinnerTypes[0]
     )}

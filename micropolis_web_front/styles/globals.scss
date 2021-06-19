@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .custom-input {
+    @apply block w-full leading-normal appearance-none;
+    @apply px-4 py-2 bg-white border border-gray-300 rounded-lg;
+    &:hover, &:focus {
+      @apply outline-none;
+    }
+  }
+
+  .custom-button {
+    @apply px-8 py-2 rounded focus:outline-none text-lg text-white;
+    @apply transform transition duration-200;
+    @apply bg-blue-500 ring;
+    &:hover, &:focus {
+      @apply ring-4 scale-105 text-gray-200;
+    }
+    &:disabled {
+      @apply ring-0 bg-gray-200;
+    }
+  }
+}
+
+.not-selectable {
+  user-select: none;
+  -moz-user-select: none;
+  -webkit-user-drag: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+}

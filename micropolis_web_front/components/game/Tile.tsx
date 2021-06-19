@@ -1,5 +1,4 @@
 import React, { useMemo, FunctionComponent } from "react";
-import { css } from "twin.macro";
 
 export const TILE_SIZE = 16; // in pixels
 const ATLAS_ROWS = 16;
@@ -10,39 +9,25 @@ export interface TileProps {
   row: number;
   column: number;
   tileIndex: number;
-  atlasImage: string;
+  atlasImageUrl: string;
+  scale: number;
 }
 
-const Tile: FunctionComponent<TileProps> = ({ row, column, tileIndex, atlasImage }) => {
-  const [atlasX, atlasY] = useMemo(
-      () => [
-        tileIndex % ATLAS_ROWS * TILE_SIZE,
-        tileIndex / ATLAS_ROWS * TILE_SIZE,
-      ],
-      [tileIndex],
-  );
-
-  const [positionX, positionY] = useMemo(
-    () => [row * TILE_SIZE, column * TILE_SIZE],
-    [row, column],
-  );
+const Tile: FunctionComponent<TileProps> = ({ tileIndex, atlasImageUrl, scale }) => {
+  const [atlasX, atlasY] = useMemo(() => [(tileIndex % ATLAS_ROWS) * TILE_SIZE, (tileIndex / ATLAS_ROWS) * TILE_SIZE], [
+    tileIndex,
+  ]);
 
   return (
     <img
-      src={atlasImage}
+      src={atlasImageUrl}
       style={{
-        width: TILE_SIZE,
-        height: TILE_SIZE,
+        width: TILE_SIZE * scale,
+        height: TILE_SIZE * scale,
         objectFit: "none",
         objectPosition: `-${atlasX}px -${atlasY}px`,
       }}
-      css={css`
-        user-select: none;
-        -moz-user-select: none;
-        -webkit-user-drag: none;
-        -webkit-user-select: none;
-        -ms-user-select: none;
-      `}
+      className="not-selectable"
     />
   );
 };

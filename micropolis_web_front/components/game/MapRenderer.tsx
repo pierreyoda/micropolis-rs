@@ -1,42 +1,36 @@
 import React, { FunctionComponent } from "react";
-import "twin.macro";
 
 import Tile from "./Tile";
-import AtlasImage from "@/assets/game/tiles.png";
-
-export interface TileMeta {
-  type: number;
-}
-
-export interface MapPayload {
-  tiles: TileMeta[][];
-}
+import { GameMap } from "@/game/map";
 
 export interface MapRendererProps {
-  map: MapPayload;
+  map: GameMap;
+  /** Between 0 and 1. */
+  scale?: number;
 }
 
 /**
  * TileMap renderer.
  */
-const MapRenderer: FunctionComponent<MapRendererProps> = ({
-  map: { tiles },
-}) => {
+const MapRenderer: FunctionComponent<MapRendererProps> = ({ map: { tiles }, scale }) => {
   return (
-    <div tw="flex">
+    <div className="flex">
       {tiles.map((col, colIndex) => (
-        <div tw="flex-col" key={colIndex}>
-          {col.map(({ type }, rowIndex) => <Tile
-            key={rowIndex}
-            row={rowIndex}
-            column={colIndex}
-            tileIndex={type}
-            atlasImage={AtlasImage}
-          />)}
+        <div className="flex-col" key={colIndex}>
+          {col.map(({ tileType }, rowIndex) => (
+            <Tile
+              key={rowIndex}
+              row={rowIndex}
+              column={colIndex}
+              tileIndex={tileType > 0 ? tileType : 0} // dirt for invalid
+              atlasImageUrl={"/game/tiles.png"}
+              scale={scale ?? 1}
+            />
+          ))}
         </div>
       ))}
     </div>
   );
-}
+};
 
 export default MapRenderer;

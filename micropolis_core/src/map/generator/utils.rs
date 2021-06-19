@@ -5,8 +5,7 @@ use crate::{
 
 pub fn random_direction(rng: &mut MicropolisRandom) -> MapPositionOffset {
     use MapPositionOffset::*;
-    match rng.get_random(7) {
-        0 => NorthWest,
+    match 1 + rng.get_random(7) {
         1 => North,
         2 => NorthEast,
         3 => East,
@@ -14,17 +13,22 @@ pub fn random_direction(rng: &mut MicropolisRandom) -> MapPositionOffset {
         5 => South,
         6 => SouthWest,
         7 => West,
+        8 => NorthWest,
         _ => unreachable!(),
     }
 }
 
-pub fn random_straight_direction(rng: &mut MicropolisRandom) -> MapPositionOffset {
+pub fn random_river_direction(rng: &mut MicropolisRandom) -> MapPositionOffset {
     use MapPositionOffset::*;
-    match rng.get_random(3) {
-        0 => North,
-        1 => East,
-        2 => South,
-        3 => West,
+    match 1 + 2 * rng.get_random(3) {
+        1 => North,
+        2 => NorthEast,
+        3 => East,
+        4 => SouthEast,
+        5 => South,
+        6 => SouthWest,
+        7 => West,
+        8 => NorthWest,
         _ => unreachable!(),
     }
 }
@@ -38,21 +42,15 @@ pub fn put_tile_on_terrain(
     if new_tile_type == TileType::Dirt {
         return Ok(());
     }
-    let row = terrain.data.get_mut(at.x as usize);
-    if row.is_none() {
-        return Ok(());
+
+    if let Some(tile) = terrain.get_tile_mut_at(at) {
+        return match tile.get_type() {
+            Some(TileType::Dirt) => tile.set_type(new_tile_type),
+            Some(TileType::River) if new_tile_type != TileType::Channel => Ok(()),
+            Some(TileType::Channel) => Ok(()),
+            _ => tile.set_type(new_tile_type),
+        };
     }
 
-    let tile_option = row.unwrap().get_mut(at.y as usize);
-    if tile_option.is_none() {
-        return Ok(());
-    }
-
-    let tile = tile_option.unwrap();
-    match tile.get_type() {
-        Some(TileType::Dirt) => tile.set_type(new_tile_type),
-        Some(TileType::River) if new_tile_type != TileType::Channel => Ok(()),
-        Some(TileType::Channel) => Ok(()),
-        _ => tile.set_type(new_tile_type),
-    }
+    Ok(())
 }
