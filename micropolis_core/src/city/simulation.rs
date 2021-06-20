@@ -6,7 +6,7 @@ use taxes::SimulationTaxes;
 
 use self::{
     parameters::MAX_ROAD_EFFECT,
-    sprites::{generate_copter, generate_plane, generate_train},
+    sprites::{generate_copter, generate_plane, generate_ship, generate_train},
 };
 
 use super::{
@@ -234,18 +234,13 @@ impl Simulation {
 
         for x in x1..x2 {
             for y in 0..map_height {
-                let tile = map
-                    .tiles()
-                    .get(x)
-                    .ok_or(format!(
-                        "Simulation.scan_map_section map X overflow at {}",
-                        x
-                    ))?
-                    .get(y)
-                    .ok_or(format!(
-                        "Simulation.scan_map_section map Y overflow at {}",
-                        y
-                    ))?;
+                let position: MapPosition = (x, y).into();
+                let tile = map.get_tile_at(&position).expect(
+                    &format!(
+                        "Simulation.scan_map_section cannot get tile at {}",
+                        position
+                    )[..],
+                );
 
                 let tile_type = tile.get_type().as_ref().ok_or(format!(
                     "Simulation.scan_map_section invalid tile {:?}",
@@ -259,7 +254,6 @@ impl Simulation {
                     continue;
                 }
 
-                let position: MapPosition = (x, y).into();
                 if *tile_type < TileType::HorizontalBridge {
                     if *tile_type >= TileType::Fire {
                         self.statistics.fire_station_count += 1;
@@ -502,7 +496,7 @@ impl Simulation {
 
                 // if no ship and powered, generate a new one
                 if is_zone_powered && sprites.get_sprite(&SpriteType::Ship).is_none() {
-                    todo!()
+                    generate_ship(rng, sprites, map)?;
                 }
             }
             _ => (),
