@@ -4,7 +4,10 @@ use parameters::SimulationParameters;
 use statistics::SimulationStatistics;
 use taxes::SimulationTaxes;
 
-use self::parameters::MAX_ROAD_EFFECT;
+use self::{
+    parameters::MAX_ROAD_EFFECT,
+    sprites::{generate_copter, generate_plane},
+};
 
 use super::{
     disasters::CityDisasters,
@@ -486,7 +489,7 @@ impl Simulation {
 
                     // handle the airport activity if powered
                     if is_zone_powered {
-                        Self::do_airport(at)?;
+                        Self::do_airport(rng, sprites, at)?;
                     }
                 }
             }
@@ -731,8 +734,19 @@ impl Simulation {
     }
 
     /// Generate a airplane or helicopter every now and then.
-    fn do_airport(position: &MapPosition) -> Result<(), String> {
-        todo!()
+    fn do_airport(
+        rng: &mut MicropolisRandom,
+        sprites: &mut ActiveSpritesList,
+        position: &MapPosition,
+    ) -> Result<(), String> {
+        if rng.get_random(5) == 0 {
+            return generate_plane(rng, sprites, position);
+        }
+        if rng.get_random(12) == 0 {
+            return generate_copter(rng, sprites, position);
+        }
+
+        Ok(())
     }
 
     /// Generate a random animated `TileType::Fire` tile.

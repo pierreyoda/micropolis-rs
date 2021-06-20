@@ -35,14 +35,14 @@ impl SpriteType {
     ) -> Result<Sprite, String> {
         use SpriteType::*;
         match self {
-            &Train => {
+            Train => {
                 sprite.size = (32, 32).into();
                 sprite.offset = (32, -16).into();
                 sprite.hot_offset = (40, -8).into();
                 sprite.frame = 1;
                 sprite.direction = 4;
             }
-            &Ship => {
+            Ship => {
                 sprite.size = (48, 48).into();
                 sprite.offset = (32, -16).into();
                 sprite.hot_offset = (48, 0).into();
@@ -57,7 +57,7 @@ impl SpriteType {
                 sprite.new_direction = sprite.frame as usize;
                 sprite.count = 1;
             }
-            &Monster => {
+            Monster => {
                 sprite.size = (48, 48).into();
                 sprite.offset = (24, 0).into();
                 sprite.hot_offset = (40, 16).into();
@@ -73,51 +73,52 @@ impl SpriteType {
                     _ => 4,
                 };
                 sprite.count = 1000;
-                sprite.destination = *max_pollution_at.ok_or(format!(
-                    "SpriteType::init_sprite: missing max_pollution_at for Monster"
-                ))? << 4;
+                sprite.destination = *max_pollution_at.ok_or_else(|| {
+                    "SpriteType::init_sprite: missing max_pollution_at for Monster".to_string()
+                })? << 4;
                 sprite.origin = sprite.position;
             }
-            &Helicopter => {
+            Helicopter => {
                 sprite.size = (32, 32).into();
                 sprite.offset = (32, -16).into();
                 sprite.hot_offset = (40, -8).into();
                 sprite.frame = 5;
                 sprite.count = 1500;
-                sprite.destination = MapPosition::new(
+                sprite.destination = (
                     rng.get_random(((WORLD_WIDTH as i16) << 4) - 1) as i32,
                     rng.get_random(((WORLD_HEIGHT as i16) << 4) - 1) as i32,
-                );
+                )
+                    .into();
                 sprite.origin = sprite.position - (30, 0).into();
             }
-            &Airplane => {
+            Airplane => {
                 sprite.size = (48, 48).into();
                 sprite.offset = (24, 0).into();
                 sprite.hot_offset = (48, 16).into();
                 if sprite.position.get_x() > ((WORLD_WIDTH as i32) - 20) << 4 {
-                    sprite.position = sprite.position - (100 + 48, 0).into();
-                    sprite.destination = sprite.position - (200, 0).into();
+                    sprite.position -= (100 + 48, 0).into();
+                    sprite.destination.set_x(sprite.position.get_x() - 200);
                     sprite.frame = 7;
                 } else {
-                    sprite.destination = sprite.position + (200, 0).into();
+                    sprite.destination.set_x(sprite.position.get_x() + 200);
                     sprite.frame = 11;
                 }
                 sprite.destination.set_y(sprite.position.get_y());
             }
-            &Tornado => {
+            Tornado => {
                 sprite.size = (48, 48).into();
                 sprite.offset = (24, 0).into();
                 sprite.hot_offset = (40, 36).into();
                 sprite.count = 200;
                 sprite.frame = 1;
             }
-            &Explosion => {
+            Explosion => {
                 sprite.size = (48, 48).into();
                 sprite.offset = (24, 0).into();
                 sprite.hot_offset = (40, 16).into();
                 sprite.frame = 1;
             }
-            &Bus => {
+            Bus => {
                 sprite.size = (32, 32).into();
                 sprite.offset = (30, -18).into();
                 sprite.hot_offset = (40, -8).into();
@@ -335,7 +336,7 @@ impl Sprite {
         position: MapPosition,
         max_pollution_at: Option<&MapPosition>,
     ) -> Result<Self, String> {
-        Ok(kind.init_sprite(
+        kind.init_sprite(
             rng,
             Self {
                 kind: kind.clone(),
@@ -359,7 +360,7 @@ impl Sprite {
                 acceleration: 0,
             },
             max_pollution_at,
-        )?)
+        )
     }
 
     pub fn is_in_bounds(&self, map: &TileMap) -> bool {
