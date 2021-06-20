@@ -6,7 +6,7 @@ use taxes::SimulationTaxes;
 
 use self::{
     parameters::MAX_ROAD_EFFECT,
-    sprites::{generate_copter, generate_plane},
+    sprites::{generate_copter, generate_plane, generate_train},
 };
 
 use super::{
@@ -568,10 +568,11 @@ impl Simulation {
         map: &mut TileMap,
         sprites: &mut ActiveSpritesList,
         position: &MapPosition,
+        total_population: u32,
     ) -> Result<(), String> {
         self.statistics.rail_total += 1;
 
-        // TODO: generateTrain
+        generate_train(rng, sprites, position, total_population)?;
 
         if self.parameters.get_road_effect() >= (15 * MAX_ROAD_EFFECT / 16) {
             return Ok(());
