@@ -22,7 +22,7 @@ use crate::{
     utils::random::MicropolisRandom,
 };
 
-use self::disasters::CityDisasters;
+use self::{disasters::CityDisasters, traffic::CityTraffic};
 
 pub enum CityInitializationState {
     Initialized = 0,
@@ -38,6 +38,8 @@ pub struct City {
     sprites: ActiveSpritesList,
     /// Status of the city's initialization (`initSimLoad` in the C++ code).
     init_status: CityInitializationState,
+    /// Current simulation speed. From 0 to 3.
+    simulation_speed: u8,
     /// TileMap describing the city and its surroundings.
     map: TileMap,
     /// TileMap animator.
@@ -68,6 +70,8 @@ pub struct City {
     population: CityPopulation,
     /// Electricity simulation.
     power: CityPower,
+    /// Traffic simulation.
+    traffic: CityTraffic,
     /// Global simulation.
     sim: Simulation,
 }
@@ -77,11 +81,13 @@ impl City {
         let map = Map::tilemap_with_dimensions(&MapRectangle::new(120, 100), TileType::Dirt)?; // TODO: loading
         let population = CityPopulation::from_map(&map);
         let power = CityPower::from_map(&map);
+        let traffic = CityTraffic::from_map(&map);
         let sim = Simulation::new(&map);
         Ok(City {
             rng: MicropolisRandom::from_random_system_seed(),
             sprites: ActiveSpritesList::new(),
             init_status: CityInitializationState::JustCreated,
+            simulation_speed: 0,
             map,
             map_animator: TileMapAnimator::load()?,
             name,
@@ -93,6 +99,7 @@ impl City {
             disasters: CityDisasters::new(&scenario),
             population,
             power,
+            traffic,
             sim,
         })
     }
@@ -113,6 +120,16 @@ impl City {
 
     pub fn invalidate_map(&mut self) {
         self.sim.on_map_updated();
+    }
+
+    pub fn get_simulation_speed(&self) -> u8 {
+        self.simulation_speed
+    }
+
+    /// See Micropolis::setSpeed in `utilities.cpp`.
+    pub fn set_simulation_speed(&mut self, speed: u8) {
+        self.simulation_speed = if speed > 3 { 3 } else { speed }
+        // TODO: pause handling
     }
 
     pub fn total_funds(&self) -> MoneyValue {

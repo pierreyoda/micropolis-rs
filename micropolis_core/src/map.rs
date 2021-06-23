@@ -78,6 +78,10 @@ impl<T: Clone> Map<T> {
         }
     }
 
+    pub fn get_clustering_strategy(&self) -> &MapClusteringStrategy {
+        &self.clustering_strategy
+    }
+
     pub fn in_bounds(&self, position: &MapPosition) -> bool {
         let transformed = self.clustering_strategy.transform(position);
         if transformed.x < 0 || transformed.y < 0 || transformed.x >= self.data.len() as i32 {
@@ -164,6 +168,14 @@ impl<T: Clone> Map<T> {
             }
         } else {
             default_if_out_of_bounds
+        }
+    }
+
+    pub fn clear(&mut self, with_value: T) {
+        for column in self.data.iter_mut() {
+            for cell in column.iter_mut() {
+                *cell = with_value.clone();
+            }
         }
     }
 }

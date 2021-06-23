@@ -35,9 +35,11 @@ use crate::{
 };
 
 mod parameters;
+mod scan;
 mod sprites;
 mod statistics;
 mod taxes;
+mod zones;
 
 const ZONE_MELTDOWN_TABLE: [i16; 3] = [30000, 20000, 10000];
 const SMOKE_TILES: [u16; 4] = [
@@ -51,6 +53,12 @@ const SMOKE_DY: [i32; 4] = [-1, -1, 0, 0];
 const FIRE_DX: [i32; 4] = [-1, 0, 1, 0];
 const FIRE_DY: [i32; 4] = [0, -1, 0, 1];
 
+const SPEED_POWER_SCAN: [u16; 3] = [2, 4, 5];
+const SPEED_POLLUTION_TERRAIN_LAND_VALUE_SCAN: [u16; 3] = [2, 7, 17];
+const SPEED_CRIME_SCAN: [u16; 3] = [1, 8, 18];
+const SPEED_POPULATION_DENSITY_SCAN: [u16; 3] = [1, 9, 19];
+const SPEED_FIRE_ANALYSIS: [u16; 3] = [1, 10, 20];
+
 pub struct Simulation {
     parameters: SimulationParameters,
     statistics: SimulationStatistics,
@@ -60,6 +68,7 @@ pub struct Simulation {
     phase_cycle: u8,
     simulation_cycle: u16,
     do_initial_evaluation: bool,
+    new_power: bool,
     /// Number of passes through the similator loop.
     passes: u32,
     /// Current simulator loop pass counter.
@@ -72,6 +81,8 @@ pub struct Simulation {
     ///
     /// Four units per month, so one unit is about a week (7.6 days).
     city_time: u64,
+    /// Pollution density map.
+    pollution_density: Map<u8>,
     /// Rate of growth map.
     ///
     /// Affected by DecROGMem, incROG called by zones. Decreased by fire
@@ -109,24 +120,29 @@ impl Simulation {
             phase_cycle: 0,
             simulation_cycle: 0,
             do_initial_evaluation: true,
+            new_power: false,
             passes: 0,
             pass_index: 0,
             map_serial: 1,
             city_time: 0,
+            pollution_density: Map::with_data(
+                vec![vec![0x00; dimensions.get_height() / 2]; dimensions.get_width() / 2],
+                MapClusteringStrategy::BlockSize2,
+            ),
             rate_of_growth: Map::with_data(
-                vec![vec![0x00; dimensions.get_height()]; dimensions.get_width()],
+                vec![vec![0x00; dimensions.get_height() / 8]; dimensions.get_width() / 8],
                 MapClusteringStrategy::BlockSize8,
             ),
             fire_station_map: Map::with_data(
-                vec![vec![0x00; dimensions.get_height()]; dimensions.get_width()],
+                vec![vec![0x00; dimensions.get_height() / 8]; dimensions.get_width() / 8],
                 MapClusteringStrategy::BlockSize8,
             ),
             police_station_map: Map::with_data(
-                vec![vec![0x00; dimensions.get_height()]; dimensions.get_width()],
+                vec![vec![0x00; dimensions.get_height() / 8]; dimensions.get_width() / 8],
                 MapClusteringStrategy::BlockSize8,
             ),
             commercial_rate_map: Map::with_data(
-                vec![vec![0x00; dimensions.get_height()]; dimensions.get_width()],
+                vec![vec![0x00; dimensions.get_height() / 8]; dimensions.get_width() / 8],
                 MapClusteringStrategy::BlockSize8,
             ),
         }
@@ -164,6 +180,7 @@ impl Simulation {
         // end of this switch.
 
         let map_size = city.map.bounds();
+        let speed_index = clamp(city.simulation_speed - 1, 0, 2) as usize;
 
         // TODO: initSimLoad behavior
         self.phase_cycle &= 15;
@@ -198,10 +215,28 @@ impl Simulation {
                     phase_cycle * map_size.get_height() / 8,
                 )?
             }
-            9 => {}
-            10 => {}
-            11 => {}
-            12 => {}
+            9 => {
+                todo!()
+            }
+            10 => {
+                if self.simulation_cycle % 5 != 0 {
+                    self.decrease_rate_of_growth_map();
+                }
+                self.decrease_traffic_map(&city.map, &mut city.traffic);
+
+                // TODO: sendMessages()
+            }
+            11 => {
+                if (self.simulation_cycle % SPEED_POWER_SCAN[speed_index]) == 0 {
+                    city.power.do_power_scan(&city.map);
+                    self.new_power = true;
+                }
+            }
+            12 => {
+                if (self.simulation_cycle % SPEED_POLLUTION_TERRAIN_LAND_VALUE_SCAN[speed_index])
+                    == 0
+                {}
+            }
             13 => {}
             14 => {}
             15 => {}
@@ -219,6 +254,57 @@ impl Simulation {
 
     fn clear_census(&mut self) {
         todo!()
+    }
+
+    /// Decrease rate of growth.
+    ///
+    /// TODO: Limiting rate should not be done here, but when we add a new value to it.
+    fn decrease_rate_of_growth_map(&mut self) {
+        let bounds = self.rate_of_growth.bounds();
+        for x in 0..bounds.get_width() {
+            for y in 0..bounds.get_height() {
+                let position: MapPosition = (x, y).into();
+                let z = self.rate_of_growth.get_tile_mut_at(&position).expect(
+                    "Simulation.decrease_rate_of_growth_map get tile should not be out of bounds",
+                );
+
+                if *z > 0 {
+                    *z -= 1;
+                    *z = clamp(*z, -200, 200);
+                } else if *z < 0 {
+                    *z += 1;
+                    *z = clamp(*z, -200, 200);
+                }
+            }
+        }
+    }
+
+    // Decrease traffic memory.
+    fn decrease_traffic_map(&mut self, map: &TileMap, traffic: &mut CityTraffic) {
+        let map_bounds = map.bounds();
+        let traffic_density_map = traffic.get_density_map_mut();
+        let bounds = traffic_density_map.bounds();
+        let traffic_density_blocksize = traffic_density_map.get_clustering_strategy().block_size();
+
+        for x in (0..map_bounds.get_width()).step_by(traffic_density_blocksize) {
+            for y in (0..map_bounds.get_height()).step_by(traffic_density_blocksize) {
+                let position: MapPosition = (x, y).into();
+                let z = traffic_density_map
+                    .get_tile_mut_at(&position)
+                    .expect("Simulation.decrease_traffic_map get tile should not be out of bounds");
+                if *z == 0 {
+                    continue;
+                }
+
+                *z -= if *z <= 24 {
+                    0
+                } else if *z > 200 {
+                    34
+                } else {
+                    24
+                }
+            }
+        }
     }
 
     fn scan_map_section(&mut self, city: &mut City, x1: usize, x2: usize) -> Result<(), String> {
@@ -269,7 +355,10 @@ impl Simulation {
                     } else {
                         self.do_radioactive_tile(rng, map, &position)?;
                     }
+                    continue;
                 }
+
+                // TODO:
             }
         }
 
