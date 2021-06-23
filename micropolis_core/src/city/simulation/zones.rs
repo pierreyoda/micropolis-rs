@@ -29,29 +29,29 @@ pub fn count_free_population(map: &TileMap, at: &MapPosition) -> u16 {
 ///
 /// Parameter: `tile` center tile of a residential zone.
 /// Returns: Population of the residential zone (16, 24, 32, 40, 16, ..., 40).
-pub fn get_residential_zone_population(tile_raw: u16) -> u16 {
+pub fn get_residential_zone_population(tile_value: u16) -> u16 {
     let zone_base_raw = TileType::ResidentialZoneBase.to_u16().unwrap();
 
-    let cz_den = ((tile_raw - zone_base_raw) / 9) % 4;
+    let cz_den = ((tile_value - zone_base_raw) / 9) % 4;
     cz_den * 8 + 16
 }
 
 /// Returns the population of a commercial zone center tile.
-pub fn get_commercial_zone_population(tile_raw: u16) -> u16 {
-    if tile_raw == TileType::CommercialClr.to_u16().unwrap() {
+pub fn get_commercial_zone_population(tile_value: u16) -> u16 {
+    if tile_value == TileType::CommercialClr.to_u16().unwrap() {
         0
     } else {
-        let cz_den = ((tile_raw - TileType::CommercialZoneBase.to_u16().unwrap()) / 9) % 5 + 1;
+        let cz_den = ((tile_value - TileType::CommercialZoneBase.to_u16().unwrap()) / 9) % 5 + 1;
         cz_den
     }
 }
 
 /// Returns the population of an industrial zone center tile.
-pub fn get_industrial_zone_population(tile_raw: u16) -> u16 {
-    if tile_raw == TileType::IndustrialClr.to_u16().unwrap() {
+pub fn get_industrial_zone_population(tile_value: u16) -> u16 {
+    if tile_value == TileType::IndustrialClr.to_u16().unwrap() {
         0
     } else {
-        let cz_den = (((tile_raw - TileType::IndustrialZoneBase.to_u16().unwrap()) / 9) % 4) + 1;
+        let cz_den = (((tile_value - TileType::IndustrialZoneBase.to_u16().unwrap()) / 9) % 4) + 1;
         cz_den
     }
 }

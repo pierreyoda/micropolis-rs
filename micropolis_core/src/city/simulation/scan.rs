@@ -7,7 +7,7 @@ use crate::{
         tiles::{TILE_LOW_MASK, TILE_ZONE_BIT},
         Map, MapClusteringStrategy, MapPosition, TileMap, TileType,
     },
-    utils::random::MicropolisRandom,
+    utils::{clamp, random::MicropolisRandom},
 };
 
 use super::zones::{
@@ -118,33 +118,176 @@ impl CitySimulationScanner {
     }
 
     /// Get the population density of a zone center.
-    fn get_population_density_at(map: &TileMap, position: &MapPosition, tile_raw: u16) -> u16 {
-        if tile_raw == TileType::FreeZoneCenter.to_u16().unwrap() {
+    fn get_population_density_at(map: &TileMap, position: &MapPosition, tile_value: u16) -> u16 {
+        if tile_value == TileType::FreeZoneCenter.to_u16().unwrap() {
             count_free_population(map, position)
-        } else if tile_raw < TileType::CommercialBase.to_u16().unwrap() {
-            get_residential_zone_population(tile_raw)
-        } else if tile_raw < TileType::IndustrialBase.to_u16().unwrap() {
-            get_commercial_zone_population(tile_raw) * 8
-        } else if tile_raw < TileType::PortBase.to_u16().unwrap() {
-            get_industrial_zone_population(tile_raw) * 8
+        } else if tile_value < TileType::CommercialBase.to_u16().unwrap() {
+            get_residential_zone_population(tile_value)
+        } else if tile_value < TileType::IndustrialBase.to_u16().unwrap() {
+            get_commercial_zone_population(tile_value) * 8
+        } else if tile_value < TileType::PortBase.to_u16().unwrap() {
+            get_industrial_zone_population(tile_value) * 8
         } else {
             0
         }
     }
 
+    /// Performs the pollution, terrain and land value scan.
+    ///
+    /// Returns the new average pollution, and the maximum pollution position.
     pub fn pollution_terrain_land_value_scan(
+        &mut self,
         rng: &mut MicropolisRandom,
-        pollution_density: &Map<u8>,
+        map: &TileMap,
+        current_city_center: &MapPosition,
+        current_max_pollution_at: &MapPosition,
         terrain_density: &Map<u8>,
-        land_value_map: &Map<u8>,
-    ) {
-        let bounds = land_value_map.bounds();
-        for x in 0..bounds.get_width() {
-            for y in 0..bounds.get_height() {
+        crime_rate_map: &Map<u8>,
+        land_value_map: &mut Map<u8>,
+        pollution_density: &mut Map<u8>,
+    ) -> (u16, MapPosition) {
+        // temp_map_3 is a map of development density, smoothed into terrain_map
+        self.temp_map_3.clear(0x00);
+
+        let (mut land_value_total, mut land_value_num) = (0, 0);
+
+        let land_value_bounds = land_value_map.bounds();
+        for x in 0..land_value_bounds.get_width() {
+            for y in 0..land_value_bounds.get_height() {
+                let (mut pollution_level, mut land_value_flag) = (0, false);
+
                 let position: MapPosition = (x, y).into();
                 let world_position: MapPosition = (x * 2, y * 2).into();
+                for m_x in world_position.get_x()..world_position.get_x() + 1 {
+                    for m_y in world_position.get_y()..world_position.get_y() + 1 {
+                        let tile_value = map
+                            .get_tile_at(&(m_x, m_y).into())
+                            .expect("CitySimulationScanner.pollution_terrain_land_value_scan should get tile at (m_x, m_y)")
+                            .get_raw() & TILE_LOW_MASK;
+                        if tile_value == 0 {
+                            continue;
+                        }
+                        if tile_value < TileType::Rubble.to_u16().unwrap() {
+                            // increment terrain memory
+                            let value = *self.temp_map_3.get_tile_at(&(x >> 1, y >> 1).into())
+                                .expect("CitySimulationScanner.pollution_terrain_land_value_scan should get value from temp_map_3 at (x >> 1, y >> 1)");
+                            self.temp_map_3
+                                .set_tile_at(&(x >> 1, y >> 1).into(), value + 15);
+                            continue;
+                        }
+                        pollution_level += Self::get_pollution_value(tile_value);
+                        if tile_value >= TileType::HorizontalBridge.to_u16().unwrap() {
+                            land_value_flag = true;
+                        }
+                    }
+                }
+
+                pollution_level = min(pollution_level, 255);
+                self.temp_map_1.set_tile_at(&(x, y).into(), pollution_level);
+
+                if land_value_flag {
+                    // land value equation
+                    let mut distance = 34
+                        - Self::get_distance_from_city_center(current_city_center, &world_position);
+                    distance <<= 2;
+                    distance += *terrain_density.get_tile_at(&(x >> 1, y >> 1).into())
+                        .expect("CitySimulationScanner.pollution_terrain_land_value_scan should get value from terrain_density at (x >> 1, y >> 1)") as i32;
+                    distance -= *pollution_density.get_tile_at(&position)
+                        .expect("CitySimulationScanner.pollution_terrain_land_value_scan should get value from pollution_density at (x, y)") as i32;
+                    if *crime_rate_map.get_tile_at(&position)
+                        .expect("CitySimulationScanner.pollution_terrain_land_value_scan should get value from crime_rate_map at (x, y)") > 190 {
+                        distance -= 20;
+                    }
+                    distance = clamp(distance, 1, 250);
+                    land_value_map.set_tile_at(&position, distance as u8);
+                    land_value_total += distance;
+                    land_value_num += 1;
+                } else {
+                    land_value_map.set_tile_at(&position, 0);
+                }
             }
         }
+
+        let land_value_average = if land_value_num > 0 {
+            (land_value_total / land_value_num) as i16
+        } else {
+            0
+        };
+
+        self.do_smooth_1(); // temp_map_1 -> temp_map_2
+        self.do_smooth_2(); // temp_map_2 -> temp_map_1
+
+        let (mut pollution_max, mut pollution_num, mut pollution_total) = (0, 0, 0);
+        let mut pollution_max_at = *current_max_pollution_at;
+
+        let world_bounds = map.bounds();
+        let pollution_block_size = pollution_density.get_clustering_strategy().block_size();
+        for x in (0..world_bounds.get_width()).step_by(pollution_block_size) {
+            for y in (0..world_bounds.get_height()).step_by(pollution_block_size) {
+                let position: MapPosition = (x, y).into();
+                let z = *self.temp_map_1.get_tile_at(&position)
+                    .expect("CitySimulationScanner.pollution_terrain_land_value_scan should get value from temp_map_1 at (x, y)");
+                pollution_density.set_tile_at(&position, z);
+                if z == 0 {
+                    continue;
+                }
+                // get pollution average
+                pollution_num += 1;
+                pollution_total += z;
+                // find the maximum pollution position for the monster
+                if z > pollution_max || (z == pollution_max && (rng.get_random_16() & 0x03) == 0x00)
+                {
+                    pollution_max = z;
+                    pollution_max_at = (x, y).into();
+                }
+            }
+        }
+
+        let pollution_average = if pollution_num != 0 {
+            (pollution_total / pollution_num) as u16
+        } else {
+            0
+        };
+
+        self.smooth_terrain();
+
+        (pollution_total, pollution_max_at)
+    }
+
+    /// Returns the pollution value of a tile.
+    ///
+    /// Returns the value of the polution (0..255, bigger is worse).
+    fn get_pollution_value(tile_value: u16) -> u8 {
+        if tile_value < TileType::HorizontalPower.to_u16().unwrap() {
+            if tile_value >= TileType::HighTrafficBase.to_u16().unwrap() {
+                return 75; // high traffic
+            }
+            if tile_value >= TileType::LowTrafficBase.to_u16().unwrap() {
+                return 50; // low traffic
+            }
+
+            if tile_value < TileType::HorizontalBridge.to_u16().unwrap() {
+                if tile_value > TileType::Fire.to_u16().unwrap() {
+                    return 90; // fire
+                }
+                if tile_value >= TileType::Radioactive.to_u16().unwrap() {
+                    return 255; // radioactivity
+                }
+            }
+            return 0;
+        }
+
+        if tile_value <= TileType::LastIndustrial.to_u16().unwrap() {
+            return 0;
+        }
+        if tile_value < TileType::PortBase.to_u16().unwrap() {
+            return 50; // industrial
+        }
+        if tile_value <= TileType::LastPowerPlant.to_u16().unwrap() {
+            return 100; // port, airport, coal power plant
+        }
+
+        0
     }
 
     /// Compute the distance to the city center for the entire map.
@@ -173,7 +316,9 @@ impl CitySimulationScanner {
         min(distance_x + distance_y, 64)
     }
 
-    fn smooth_terrain() {}
+    fn smooth_terrain(&mut self) {
+        todo!()
+    }
 
     /// Smooth a station map.
     ///
