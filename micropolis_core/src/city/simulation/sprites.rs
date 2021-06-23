@@ -163,12 +163,12 @@ pub fn make_sprite(
     sprites: &mut ActiveSpritesList,
     kind: &SpriteType,
     position: &MapPosition,
-) -> Result<Sprite, String> {
+) -> Result<(), String> {
     if let Some(sprite) = sprites.get_sprite_mut(kind) {
-        kind.init_sprite(rng, *sprite, None)
+        kind.init_sprite(rng, sprite, None);
     } else {
         let sprite = Sprite::new(rng, "".into(), kind, *position, None)?;
         sprites.add_sprite(sprite);
-        Ok(sprite)
     }
+    Ok(())
 }

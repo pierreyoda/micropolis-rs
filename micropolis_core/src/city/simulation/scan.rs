@@ -168,8 +168,8 @@ impl CitySimulationScanner {
 
     /// Compute the Manhattan distance between the center of the city and the given world position.
     fn get_distance_from_city_center(city_center: &MapPosition, position: &MapPosition) -> i32 {
-        let distance_x = abs(x - city_center.get_x());
-        let distance_y = abs(y - city_center.get_y());
+        let distance_x = abs(position.get_x() - city_center.get_x());
+        let distance_y = abs(position.get_y() - city_center.get_y());
         min(distance_x + distance_y, 64)
     }
 

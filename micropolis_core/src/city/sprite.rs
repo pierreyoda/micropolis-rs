@@ -30,9 +30,9 @@ impl SpriteType {
     pub fn init_sprite(
         &self,
         rng: &mut MicropolisRandom,
-        mut sprite: Sprite,
+        sprite: &mut Sprite,
         max_pollution_at: Option<&MapPosition>,
-    ) -> Result<Sprite, String> {
+    ) -> Result<(), String> {
         use SpriteType::*;
         match self {
             Train => {
@@ -126,7 +126,7 @@ impl SpriteType {
                 sprite.frame = 1;
             }
         }
-        Ok(sprite)
+        Ok(())
     }
 
     pub fn update_sprite(
@@ -336,31 +336,29 @@ impl Sprite {
         position: MapPosition,
         max_pollution_at: Option<&MapPosition>,
     ) -> Result<Self, String> {
-        kind.init_sprite(
-            rng,
-            Self {
-                kind: kind.clone(),
-                name,
-                frame: 0,
-                position,
-                size: (0, 0).into(),
-                offset: (0, 0).into(),
-                hot_offset: (0, 0).into(),
-                origin: (0, 0).into(),
-                destination: (0, 0).into(),
-                count: 0,
-                sound_count: 0,
-                direction: 0,
-                new_direction: 0,
-                step: 0,
-                flag: 0,
-                control: -1,
-                turn: 0,
-                speed: 100,
-                acceleration: 0,
-            },
-            max_pollution_at,
-        )
+        let mut sprite = Self {
+            kind: kind.clone(),
+            name,
+            frame: 0,
+            position,
+            size: (0, 0).into(),
+            offset: (0, 0).into(),
+            hot_offset: (0, 0).into(),
+            origin: (0, 0).into(),
+            destination: (0, 0).into(),
+            count: 0,
+            sound_count: 0,
+            direction: 0,
+            new_direction: 0,
+            step: 0,
+            flag: 0,
+            control: -1,
+            turn: 0,
+            speed: 100,
+            acceleration: 0,
+        };
+        kind.init_sprite(rng, &mut sprite, max_pollution_at)?;
+        Ok(sprite)
     }
 
     pub fn is_in_bounds(&self, map: &TileMap) -> bool {
