@@ -251,7 +251,7 @@ impl CitySimulationScanner {
 
         self.smooth_terrain();
 
-        (pollution_total, pollution_max_at)
+        (pollution_average, pollution_max_at)
     }
 
     /// Returns the pollution value of a tile.
