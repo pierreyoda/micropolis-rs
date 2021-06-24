@@ -6,6 +6,7 @@ use taxes::SimulationTaxes;
 
 use self::{
     parameters::MAX_ROAD_EFFECT,
+    scan::CitySimulationScanner,
     sprites::{generate_copter, generate_plane, generate_ship, generate_train},
 };
 
@@ -60,6 +61,7 @@ const SPEED_POPULATION_DENSITY_SCAN: [u16; 3] = [1, 9, 19];
 const SPEED_FIRE_ANALYSIS: [u16; 3] = [1, 10, 20];
 
 pub struct Simulation {
+    scanner: CitySimulationScanner,
     parameters: SimulationParameters,
     statistics: SimulationStatistics,
     taxes: SimulationTaxes,
@@ -81,8 +83,18 @@ pub struct Simulation {
     ///
     /// Four units per month, so one unit is about a week (7.6 days).
     city_time: u64,
+    /// Coordinates of the city center.
+    city_center: MapPosition,
     /// Pollution density map.
     pollution_density: Map<u8>,
+    /// Land value map.
+    land_value_map: Map<u8>,
+    /// Crime rate map.
+    crime_rate_map: Map<u8>,
+    /// Terrain development density map.
+    ///
+    /// Used to calculate land value.
+    terrain_density: Map<u8>,
     /// Rate of growth map.
     ///
     /// Affected by DecROGMem, incROG called by zones. Decreased by fire
@@ -95,12 +107,16 @@ pub struct Simulation {
     /// Affected by fire stations (powered or not), fire funding ratio and road access.
     /// Affects how long fires burn.
     fire_station_map: Map<i16>,
+    /// Copy of fire station map to display.
+    fire_station_effect_map: Map<i16>,
     /// Police station map.
     ///
     /// Effectivity of police in fighting crime.
     /// Affected by police stations (powered or not), police funding ratio and road access.
     /// Affects crime rate.
     police_station_map: Map<i16>,
+    /// Copy of police station map to display.
+    police_station_effect_map: Map<i16>,
     /// Commercial rate map.
     ///
     /// Depends on distance to city center.
@@ -111,7 +127,9 @@ pub struct Simulation {
 impl Simulation {
     pub fn new(map: &TileMap) -> Self {
         let dimensions = map.bounds();
+        let scanner = CitySimulationScanner::new(map);
         Self {
+            scanner,
             parameters: Default::default(),
             statistics: Default::default(),
             taxes: Default::default(),
@@ -125,15 +143,32 @@ impl Simulation {
             pass_index: 0,
             map_serial: 1,
             city_time: 0,
+            city_center: (0, 0).into(),
             pollution_density: Map::with_data(
                 vec![vec![0x00; dimensions.get_height() / 2]; dimensions.get_width() / 2],
                 MapClusteringStrategy::BlockSize2,
+            ),
+            land_value_map: Map::with_data(
+                vec![vec![0x00; dimensions.get_height() / 2]; dimensions.get_width() / 2],
+                MapClusteringStrategy::BlockSize2,
+            ),
+            crime_rate_map: Map::with_data(
+                vec![vec![0x00; dimensions.get_height() / 2]; dimensions.get_width() / 2],
+                MapClusteringStrategy::BlockSize2,
+            ),
+            terrain_density: Map::with_data(
+                vec![vec![0x00; dimensions.get_height() / 4]; dimensions.get_width() / 4],
+                MapClusteringStrategy::BlockSize4,
             ),
             rate_of_growth: Map::with_data(
                 vec![vec![0x00; dimensions.get_height() / 8]; dimensions.get_width() / 8],
                 MapClusteringStrategy::BlockSize8,
             ),
             fire_station_map: Map::with_data(
+                vec![vec![0x00; dimensions.get_height() / 8]; dimensions.get_width() / 8],
+                MapClusteringStrategy::BlockSize8,
+            ),
+            fire_station_effect_map: Map::with_data(
                 vec![vec![0x00; dimensions.get_height() / 8]; dimensions.get_width() / 8],
                 MapClusteringStrategy::BlockSize8,
             ),
@@ -156,7 +191,7 @@ impl Simulation {
     }
 
     /// Advance the city simulation and its visualization by one frame tick.
-    pub fn step(&mut self, city: &mut City) -> Result<(), String> {
+    pub fn step(&mut self, rng: &mut MicropolisRandom, city: &mut City) -> Result<(), String> {
         let sim_steps_per_update = self.speed.get_sim_steps_per_update();
         if sim_steps_per_update == 0 {
             return Ok(());
@@ -171,10 +206,10 @@ impl Simulation {
             _ => {}
         }
 
-        self.simulate(city)
+        self.simulate(rng, city)
     }
 
-    fn simulate(&mut self, city: &mut City) -> Result<(), String> {
+    fn simulate(&mut self, rng: &mut MicropolisRandom, city: &mut City) -> Result<(), String> {
         // The simulator has 16 different phases, which we cycle through
         // according to `phase_cycle`, which is incremented and wrapped at the
         // end of this switch.
@@ -235,11 +270,58 @@ impl Simulation {
             12 => {
                 if (self.simulation_cycle % SPEED_POLLUTION_TERRAIN_LAND_VALUE_SCAN[speed_index])
                     == 0
-                {}
+                {
+                    let (pollution_average, pollution_max_at, land_value_average) =
+                        self.scanner.pollution_terrain_land_value_scan(
+                            rng,
+                            &city.map,
+                            &self.city_center,
+                            &self.statistics.maximum_pollution_at,
+                            &self.crime_rate_map,
+                            &mut self.terrain_density,
+                            &mut self.land_value_map,
+                            &mut self.pollution_density,
+                        );
+                    self.statistics.average_pollution = pollution_average;
+                    self.statistics.maximum_pollution_at = pollution_max_at;
+                    self.statistics.average_land_value = land_value_average;
+                }
             }
-            13 => {}
-            14 => {}
-            15 => {}
+            13 => {
+                if (self.simulation_cycle % SPEED_CRIME_SCAN[speed_index]) == 0 {
+                    let (crime_average, crime_maximum_at, police_station_effect_map) =
+                        self.scanner.crime_scan(
+                            rng,
+                            &city.map,
+                            &self.land_value_map,
+                            &mut self.police_station_map,
+                            &mut self.crime_rate_map,
+                            city.population.get_density_map(),
+                            &self.statistics.maximum_crime_at,
+                        );
+                    self.statistics.average_crime = crime_average;
+                    self.statistics.maximum_crime_at = crime_maximum_at;
+                    self.police_station_effect_map = police_station_effect_map;
+                }
+            }
+            14 => {
+                if (self.simulation_cycle % SPEED_POPULATION_DENSITY_SCAN[speed_index]) == 0 {
+                    self.city_center = self.scanner.population_density_scan(
+                        &city.map,
+                        city.population.get_density_map_mut(),
+                        &mut self.commercial_rate_map,
+                        &self.city_center,
+                    )?;
+                }
+            }
+            15 => {
+                if (self.simulation_cycle % SPEED_FIRE_ANALYSIS[speed_index]) == 0 {
+                    self.fire_station_effect_map =
+                        self.scanner.fire_analysis(&mut self.fire_station_map);
+                }
+
+                // TODO: doDisasters()
+            }
             _ => unreachable!(),
         };
         self.phase_cycle = (self.phase_cycle + 1) & 15;

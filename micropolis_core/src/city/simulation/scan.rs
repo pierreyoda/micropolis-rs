@@ -54,6 +54,18 @@ impl CitySimulationScanner {
         }
     }
 
+    /// Make firerate map from firestation map.
+    /// TODO: what is a firerate map? Comment seems wrong.
+    ///
+    /// Returns the new fire station effect map.
+    pub fn fire_analysis(&self, fire_station_map: &mut Map<i16>) -> Map<i16> {
+        Self::smooth_station_map(fire_station_map);
+        Self::smooth_station_map(fire_station_map);
+        Self::smooth_station_map(fire_station_map);
+
+        fire_station_map.clone()
+    }
+
     /// Performs the population density scan, and returns the new Center of Mass for the City.
     pub fn population_density_scan(
         &mut self,
@@ -134,18 +146,18 @@ impl CitySimulationScanner {
 
     /// Performs the pollution, terrain and land value scan.
     ///
-    /// Returns the new average pollution, and the maximum pollution position.
+    /// Returns the new average pollution, the maximum pollution position and the land value average.
     pub fn pollution_terrain_land_value_scan(
         &mut self,
         rng: &mut MicropolisRandom,
         map: &TileMap,
         current_city_center: &MapPosition,
         current_max_pollution_at: &MapPosition,
-        terrain_density: &Map<u8>,
         crime_rate_map: &Map<u8>,
+        terrain_density: &mut Map<u8>,
         land_value_map: &mut Map<u8>,
         pollution_density: &mut Map<u8>,
-    ) -> (u16, MapPosition) {
+    ) -> (u16, MapPosition, u16) {
         // temp_map_3 is a map of development density, smoothed into terrain_map
         self.temp_map_3.clear(0x00);
 
@@ -209,7 +221,7 @@ impl CitySimulationScanner {
         }
 
         let land_value_average = if land_value_num > 0 {
-            (land_value_total / land_value_num) as i16
+            (land_value_total / land_value_num) as u16
         } else {
             0
         };
@@ -249,9 +261,9 @@ impl CitySimulationScanner {
             0
         };
 
-        self.smooth_terrain();
+        self.smooth_terrain(terrain_density);
 
-        (pollution_average, pollution_max_at)
+        (pollution_average, pollution_max_at, land_value_average)
     }
 
     /// Returns the pollution value of a tile.
@@ -316,14 +328,142 @@ impl CitySimulationScanner {
         min(distance_x + distance_y, 64)
     }
 
-    fn smooth_terrain(&mut self) {
-        todo!()
+    /// Smooth the police station map and compute the crime rate.
+    ///
+    /// Returns the crime average, the maximum crime coordinates and the police station effect map.
+    pub fn crime_scan(
+        &self,
+        rng: &mut MicropolisRandom,
+        map: &TileMap,
+        land_value_map: &Map<u8>,
+        police_station_map: &mut Map<i16>,
+        crime_rate_map: &mut Map<u8>,
+        population_density_map: &Map<u8>,
+        current_crime_maximum_at: &MapPosition,
+    ) -> (u16, MapPosition, Map<i16>) {
+        Self::smooth_station_map(police_station_map);
+        Self::smooth_station_map(police_station_map);
+        Self::smooth_station_map(police_station_map);
+
+        let mut crime_maximum_at = *current_crime_maximum_at;
+        let (mut total_z, mut num_z, mut c_max) = (0i64, 0i32, 0u16);
+
+        let bounds = map.bounds();
+        let crime_rate_blocksize = crime_rate_map.get_clustering_strategy().block_size();
+        for x in (0..bounds.get_width()).step_by(crime_rate_blocksize) {
+            for y in (0..bounds.get_height()).step_by(crime_rate_blocksize) {
+                let position: MapPosition = (x, y).into();
+                let mut z = *land_value_map.get_tile_at(&position).unwrap() as u16;
+                if z > 0 {
+                    num_z += 1;
+                    z = 128 - z;
+                    z += *population_density_map.get_tile_at(&position).unwrap() as u16;
+                    z = min(z, 300);
+                    z -= *police_station_map.get_tile_at(&position).unwrap() as u16;
+                    z = clamp(z, 0, 250);
+                    crime_rate_map.set_tile_at(&position, z as u8);
+                    total_z += z as i64;
+
+                    // update new crime hot-spot
+                    if z > c_max || (z == c_max && (rng.get_random_16() & 0x03) == 0x00) {
+                        c_max = z;
+                        crime_maximum_at = position;
+                    }
+                } else {
+                    crime_rate_map.set_tile_at(&position, 0);
+                }
+            }
+        }
+
+        let crime_average = if num_z > 0 {
+            (total_z / num_z as i64) as u16
+        } else {
+            0
+        };
+
+        (crime_average, crime_maximum_at, police_station_map.clone())
+    }
+
+    fn smooth_terrain(&mut self, terrain_density: &mut Map<u8>) {
+        let terrain_density_bounds = terrain_density.bounds();
+        if self.don_dither & 0x01 != 0x00 {
+            let mut z = 0;
+            let mut direction = 1;
+            for x in 0..terrain_density_bounds.get_width() as i32 {
+                let mut y: i32 = 0;
+                while y != terrain_density_bounds.get_height() as i32 && y != -1 {
+                    z += *terrain_density
+                        .get_tile_at(&(if x == 0 { x } else { x - 1 }, y).into())
+                        .unwrap()
+                        + *terrain_density
+                            .get_tile_at(
+                                &(
+                                    if x == terrain_density_bounds.get_width() as i32 - 1 {
+                                        x
+                                    } else {
+                                        x + 1
+                                    },
+                                    y,
+                                )
+                                    .into(),
+                            )
+                            .unwrap()
+                        + *terrain_density
+                            .get_tile_at(&(x, if y == 0 { 0 } else { y - 1 }).into())
+                            .unwrap()
+                        + *terrain_density
+                            .get_tile_at(
+                                &(
+                                    x,
+                                    if y == terrain_density_bounds.get_height() as i32 - 1 {
+                                        y
+                                    } else {
+                                        y + 1
+                                    },
+                                )
+                                    .into(),
+                            )
+                            .unwrap()
+                        + (*terrain_density.get_tile_at(&(x, y).into()).unwrap() << 2);
+                    let value = (z / 8) as u8;
+                    terrain_density.set_tile_at(&(x, y).into(), value);
+                    z &= 0x07;
+
+                    y += direction;
+                }
+
+                direction = -direction;
+                // y += direction;
+            }
+        } else {
+            for x in 0..terrain_density_bounds.get_width() {
+                for y in 0..terrain_density_bounds.get_height() {
+                    let mut z = 0u32;
+                    if x > 0 {
+                        z += *terrain_density.get_tile_at(&(x - 1, y).into()).unwrap() as u32;
+                    }
+                    if x < terrain_density_bounds.get_width() - 1 {
+                        z += *terrain_density.get_tile_at(&(x + 1, y).into()).unwrap() as u32;
+                    }
+                    if y > 0 {
+                        z += *terrain_density.get_tile_at(&(x, y - 1).into()).unwrap() as u32;
+                    }
+                    if y < terrain_density_bounds.get_height() - 1 {
+                        z += *terrain_density.get_tile_at(&(x, y + 1).into()).unwrap() as u32;
+                    }
+
+                    let value =
+                        (z / 4 + *self.temp_map_3.get_tile_at(&(x, y).into()).unwrap() as u32) / 2;
+                    terrain_density.set_tile_at(&(x, y).into(), value as u8);
+                }
+            }
+        }
     }
 
     /// Smooth a station map.
     ///
     /// Used for smoothing fire station and police station coverage maps.
-    fn smooth_station_map(map: &mut Map<u8>) {
+    fn smooth_station_map(map: &mut Map<i16>) {
         let mut temp_map = map.clone();
         let bounds = temp_map.bounds();
         for x in 0..bounds.get_width() {

@@ -43,6 +43,13 @@ impl CityPopulation {
         }
     }
 
+    pub fn get_density_map(&self) -> &Map<u8> {
+        &self.density_map
+    }
+    pub fn get_density_map_mut(&mut self) -> &mut Map<u8> {
+        &mut self.density_map
+    }
+
     /// Get the population at the position between (0, 0) and
     /// (WORLD_WIDTH / 2, WORLD_HEIGHT / 2).
     pub fn get_density_at(&self, at: &MapPosition) -> u8 {
