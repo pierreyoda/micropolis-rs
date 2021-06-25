@@ -3,9 +3,9 @@ use num_traits::{FromPrimitive as FromPrimitiveTrait, ToPrimitive as ToPrimitive
 
 #[derive(Clone, Debug, PartialEq, Eq, FromPrimitive, ToPrimitive)]
 pub enum GameLevelDifficulty {
-    Easy,
-    Normal,
-    Hard,
+    Easy = 0,
+    Normal = 1,
+    Hard = 2,
 }
 
 impl GameLevelDifficulty {

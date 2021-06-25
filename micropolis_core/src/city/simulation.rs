@@ -37,7 +37,7 @@ use crate::{
 
 mod parameters;
 mod scan;
-mod sprites;
+pub mod sprites;
 mod statistics;
 mod taxes;
 mod zones;
@@ -320,7 +320,15 @@ impl Simulation {
                         self.scanner.fire_analysis(&mut self.fire_station_map);
                 }
 
-                // TODO: doDisasters()
+                city.disasters.do_disasters(
+                    rng,
+                    &mut city.map,
+                    &mut city.sprites,
+                    &city.difficulty,
+                    &city.scenario,
+                    self.statistics.average_pollution,
+                    &self.statistics.maximum_pollution_at,
+                )?;
             }
             _ => unreachable!(),
         };

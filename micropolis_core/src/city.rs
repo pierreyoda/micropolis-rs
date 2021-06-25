@@ -17,7 +17,7 @@ use simulation::Simulation;
 use sprite::ActiveSpritesList;
 
 use crate::{
-    game::GameScenario,
+    game::{GameLevelDifficulty, GameScenario},
     map::{animations::TileMapAnimator, Map, MapRectangle, TileMap, TileType},
     utils::random::MicropolisRandom,
 };
@@ -38,6 +38,10 @@ pub struct City {
     sprites: ActiveSpritesList,
     /// Status of the city's initialization (`initSimLoad` in the C++ code).
     init_status: CityInitializationState,
+    /// Game difficulty.
+    difficulty: GameLevelDifficulty,
+    /// Game scenario.
+    scenario: GameScenario,
     /// Current simulation speed. From 0 to 3.
     simulation_speed: u8,
     /// TileMap describing the city and its surroundings.
@@ -87,6 +91,8 @@ impl City {
             rng: MicropolisRandom::from_random_system_seed(),
             sprites: ActiveSpritesList::new(),
             init_status: CityInitializationState::JustCreated,
+            difficulty: GameLevelDifficulty::Normal,
+            scenario: GameScenario::None,
             simulation_speed: 0,
             map,
             map_animator: TileMapAnimator::load()?,
