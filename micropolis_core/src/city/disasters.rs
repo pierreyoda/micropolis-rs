@@ -66,7 +66,7 @@ impl CityDisasters {
             self.scenario_disaster(rng, map, sprites, maximum_pollution_at)?;
         }
 
-        let mut x = *difficulty as usize;
+        let mut x = difficulty.clone() as usize;
         if x > 2 {
             x = GameLevelDifficulty::Easy as usize;
         }
@@ -118,19 +118,33 @@ impl CityDisasters {
     ) -> Result<(), String> {
         match self.disaster_event {
             GameScenario::Dullsville => (),
-            GameScenario::SanFrancisco if self.disaster_timer == 1 => {
-                Self::make_earthquake(rng, map)?
+            GameScenario::SanFrancisco => {
+                if self.disaster_timer == 1 {
+                    Self::make_earthquake(rng, map)?;
+                }
             }
-            GameScenario::Hamburg if self.disaster_timer % 10 == 0 => {
-                Self::make_fire_bombs(rng, map)?
+            GameScenario::Hamburg => {
+                if self.disaster_timer % 10 == 0 {
+                    Self::make_fire_bombs(rng, map)?;
+                }
             }
             GameScenario::Bern => (),
-            GameScenario::Tokyo if self.disaster_timer == 1 => {
-                make_monster(rng, sprites, map, maximum_pollution_at)?
+            GameScenario::Tokyo => {
+                if self.disaster_timer == 1 {
+                    make_monster(rng, sprites, map, maximum_pollution_at)?;
+                }
             }
             GameScenario::Detroit => (),
-            GameScenario::Boston if self.disaster_timer == 1 => Self::make_meltdown(rng, map)?,
-            GameScenario::Rio if (self.disaster_timer % 24) == 0 => self.make_flood(rng, map)?,
+            GameScenario::Boston => {
+                if self.disaster_timer == 1 {
+                    Self::make_meltdown(rng, map)?;
+                }
+            }
+            GameScenario::Rio => {
+                if (self.disaster_timer % 24) == 0 {
+                    self.make_flood(rng, map)?;
+                }
+            }
             GameScenario::None => unreachable!(),
         }
 

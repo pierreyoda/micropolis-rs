@@ -176,6 +176,10 @@ impl Simulation {
                 vec![vec![0x00; dimensions.get_height() / 8]; dimensions.get_width() / 8],
                 MapClusteringStrategy::BlockSize8,
             ),
+            police_station_effect_map: Map::with_data(
+                vec![vec![0x00; dimensions.get_height() / 8]; dimensions.get_width() / 8],
+                MapClusteringStrategy::BlockSize8,
+            ),
             commercial_rate_map: Map::with_data(
                 vec![vec![0x00; dimensions.get_height() / 8]; dimensions.get_width() / 8],
                 MapClusteringStrategy::BlockSize8,
