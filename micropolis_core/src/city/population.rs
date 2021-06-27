@@ -17,15 +17,15 @@ pub struct CityPopulation {
     /// Number of people in residential zones.
     ///
     /// Depends on the level of zone development.
-    residential: u32,
+    residential: u16,
     /// Number of people in commercial zones.
     ///
     /// Depends on the level of zone development.
-    commercial: u32,
+    commercial: u16,
     /// Number of people in industrial zones.
     ///
     /// Depends on the level of zone development.
-    industrial: u32,
+    industrial: u16,
     /// Total population.
     ///
     /// Formula = (residential population) / 8 + (commercial population) + (industrial population).
@@ -50,16 +50,28 @@ impl CityPopulation {
         &mut self.density_map
     }
 
-    /// Get the population at the position between (0, 0) and
+    /// Get the population density at the position between (0, 0) and
     /// (WORLD_WIDTH / 2, WORLD_HEIGHT / 2).
     pub fn get_density_at(&self, at: &MapPosition) -> u8 {
         *self.density_map.get_tile_at(at).unwrap_or(&0)
     }
 
-    /// Set the population at the position between (0, 0) and
+    /// Set the population density at the position between (0, 0) and
     /// (WORLD_WIDTH / 2, WORLD_HEIGHT / 2).
     pub fn set_density_at(&mut self, at: &MapPosition, density: u8) -> bool {
         self.density_map.set_tile_at(at, density)
+    }
+
+    pub fn get_residential(&self) -> u16 {
+        self.residential
+    }
+
+    pub fn get_commercial(&self) -> u16 {
+        self.commercial
+    }
+
+    pub fn get_industrial(&self) -> u16 {
+        self.industrial
     }
 
     pub fn total_population(&self) -> u32 {

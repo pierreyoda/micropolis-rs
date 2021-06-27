@@ -10,6 +10,14 @@ pub struct SimulationStatistics {
     ///
     /// No penalty for bridges or high-traffic density.
     pub rail_total: u16,
+    /// Number of hospitals.
+    pub hospital_count: u16,
+    /// Number of churches.
+    pub church_count: u16,
+    /// Faith bias.
+    pub faith: u16,
+    /// Number of stadiums.
+    pub stadium_count: u16,
     /// Police station population.
     pub police_station_count: u16,
     /// Fire station population.
@@ -18,12 +26,11 @@ pub struct SimulationStatistics {
     pub seaport_count: u16,
     /// Airport station population.
     pub airport_count: u16,
-    /// Stadium population.
-    pub stadium_count: u16,
     /// Average crime.
     ///
     /// Affected by land value, population density, police station distance.
     pub average_crime: u16,
+    pub crime_ramp: u16,
     /// Coordinates of the most criminal area. Not used.
     pub maximum_crime_at: MapPosition,
     /// Average pollution.
@@ -31,6 +38,7 @@ pub struct SimulationStatistics {
     /// Affected - effectively - by traffic, fire, radioactivity, industrial zones,
     /// seports, airports and power plants.
     pub average_pollution: u16,
+    pub pollution_ramp: u16,
     /// Coordinates of the most polluted area (for the monster).
     pub maximum_pollution_at: MapPosition,
     /// Average land value.

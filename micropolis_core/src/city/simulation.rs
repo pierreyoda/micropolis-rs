@@ -35,6 +35,7 @@ use crate::{
     utils::clamp,
 };
 
+mod census;
 mod parameters;
 mod scan;
 pub mod sprites;
