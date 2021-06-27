@@ -4,8 +4,7 @@ use crate::utils::Percentage;
 
 /// Integer-based money storage type. Must be copy by default.
 ///
-/// Corresponds to the `Quad` typedef in the C++ code,
-/// implemented as a `long`.
+/// Corresponds to the `Quad` typedef in the C++ code, implemented as a `long`.
 pub type MoneyValue = u32;
 
 pub struct BudgetLine {
