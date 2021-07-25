@@ -52,6 +52,8 @@ pub struct City {
     name: String,
     /// Starting year of the city.
     starting_year: i16,
+    /// Cash flow of the city.
+    cash_flow: MoneyValue,
     /// City time counter, incremented once every 16 runs through the simulator
     /// (at fast speed).
     ///
@@ -98,6 +100,7 @@ impl City {
             map_animator: TileMapAnimator::load()?,
             name,
             starting_year: 1900,
+            cash_flow: 0,
             city_time: 0,
             roads_total: 0,
             rail_total: 0,

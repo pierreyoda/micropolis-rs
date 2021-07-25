@@ -5,6 +5,7 @@ use statistics::SimulationStatistics;
 use taxes::SimulationTaxes;
 
 use self::{
+    census::CitySimulationCensus,
     parameters::MAX_ROAD_EFFECT,
     scan::CitySimulationScanner,
     sprites::{generate_copter, generate_plane, generate_ship, generate_train},
@@ -55,6 +56,10 @@ const SMOKE_DY: [i32; 4] = [-1, -1, 0, 0];
 const FIRE_DX: [i32; 4] = [-1, 0, 1, 0];
 const FIRE_DY: [i32; 4] = [0, -1, 0, 1];
 
+const CENSUS_MONTHLY_FREQUENCY: u32 = 4;
+const CENSUS_YEARLY_FREQUENCY: u32 = CENSUS_MONTHLY_FREQUENCY * 12;
+const TAX_FREQUENCY: u32 = 48;
+
 const SPEED_POWER_SCAN: [u16; 3] = [2, 4, 5];
 const SPEED_POLLUTION_TERRAIN_LAND_VALUE_SCAN: [u16; 3] = [2, 7, 17];
 const SPEED_CRIME_SCAN: [u16; 3] = [1, 8, 18];
@@ -65,6 +70,7 @@ pub struct Simulation {
     scanner: CitySimulationScanner,
     parameters: SimulationParameters,
     statistics: SimulationStatistics,
+    census: CitySimulationCensus,
     taxes: SimulationTaxes,
     speed: GameSpeed,
     speed_cycle: u16,
@@ -72,7 +78,7 @@ pub struct Simulation {
     simulation_cycle: u16,
     do_initial_evaluation: bool,
     new_power: bool,
-    /// Number of passes through the similator loop.
+    /// Number of passes through the simulator loop.
     passes: u32,
     /// Current simulator loop pass counter.
     pass_index: usize,
@@ -133,6 +139,7 @@ impl Simulation {
             scanner,
             parameters: Default::default(),
             statistics: Default::default(),
+            census: CitySimulationCensus::new(),
             taxes: Default::default(),
             speed: GameSpeed::from(GameSpeedPreset::Normal),
             speed_cycle: 0,
@@ -256,7 +263,19 @@ impl Simulation {
                 )?
             }
             9 => {
-                todo!()
+                if city.city_time % CENSUS_MONTHLY_FREQUENCY == 0 {
+                    self.census.take_monthly_census(
+                        &city.population,
+                        &mut self.statistics,
+                        city.cash_flow,
+                    );
+                }
+                if city.city_time % CENSUS_YEARLY_FREQUENCY == 0 {
+                    self.census.take_yearly_census(&city.population);
+                }
+                if city.city_time % TAX_FREQUENCY == 0 {
+                    self.taxes.collect_taxes();
+                }
             }
             10 => {
                 if self.simulation_cycle % 5 != 0 {

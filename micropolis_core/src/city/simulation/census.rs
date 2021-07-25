@@ -90,8 +90,10 @@ impl CitySimulationCensus {
         self.commercial_history_10_max = 0;
         self.industrial_history_10_max = 0;
 
-        let mut x = 118;
-        while x >= 0 {
+        let mut i = 118;
+        while i >= 0 {
+            let x = i as usize;
+
             self.residential_history_10_max =
                 max(self.residential_history_10_max, self.residential_history[x]);
             self.commercial_history_10_max =
@@ -106,7 +108,7 @@ impl CitySimulationCensus {
             self.pollution_history[x + 1] = self.pollution_history[x];
             self.money_history[x + 1] = self.money_history[x];
 
-            x -= 1;
+            i -= 1;
         }
 
         self.residential_history[0] =
