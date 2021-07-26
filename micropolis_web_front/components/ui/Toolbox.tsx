@@ -22,7 +22,7 @@ const ToolboxAction: FunctionComponent<ToolboxActionProps> = ({
       alt={tooltip}
       title={tooltip}
       src={useMemo(() => `/game/toolbox/${iconSrc}`, [iconSrc])}
-      className="border-2 rounded-sm border-transparent hover:border-blue-400"
+      className="border-2 border-transparent rounded-sm hover:border-blue-400"
     />
   </div>
 );

@@ -1,6 +1,9 @@
 const path = require("path");
 
 module.exports = {
+  core: {
+    builder: "webpack5",
+  },
   addons: [
     "@storybook/addon-essentials",
     "@storybook/addon-knobs",
@@ -32,9 +35,10 @@ module.exports = {
         ...config.resolve.alias,
         "@": path.resolve(__dirname, "../"),
       },
-    },
-    node: {
-      fs: "empty",
+      fallback: {
+        ...config.resolve.fallback,
+        fs: false, // fixes npm packages that depend on `fs` module
+      },
     },
   }),
 };
