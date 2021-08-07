@@ -22,6 +22,10 @@
       @apply ring-0 bg-gray-200;
     }
   }
+
+  .shadow-toolbar {
+    box-shadow: inset 7px 7px 9px -7px #000000;
+  }
 }
 
 .not-selectable {

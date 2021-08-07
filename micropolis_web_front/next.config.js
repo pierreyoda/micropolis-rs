@@ -8,9 +8,6 @@ module.exports = () => ({
     "/": { page: "/" },
     "/about": { page: "/about" },
   }),
-  future: {
-    webpack5: true,
-  },
   webpack: config => ({
     ...config,
     resolve: {
