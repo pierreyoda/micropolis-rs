@@ -4,14 +4,18 @@ import { Meta } from "@storybook/react";
 import Toolbar, { ToolbarItem, ToolbarItemChild } from "../Toolbar";
 
 const buildChildren = (count: number): ToolbarItemChild[] =>
-  [...Array(count).keys()].map((i): ToolbarItemChild => ({
-    key: `child-${i}`,
-    label: `Sub-item ${i + 1}`,
-    onClick: () => { console.log(`child-${i}`); },
-  }));
+  [...Array(count).keys()].map(
+    (i): ToolbarItemChild => ({
+      key: `child-${i}`,
+      label: `Sub-item ${i + 1}`,
+      onClick: () => {
+        console.log(`child-${i}`);
+      },
+    })
+  );
 
 export default {
-  title: "Game/UI",
+  title: "Game/UI/Toolbar",
   component: Toolbar,
 } as Meta;
 
