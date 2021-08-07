@@ -274,7 +274,8 @@ impl Simulation {
                     self.census.take_yearly_census(&city.population);
                 }
                 if city.city_time % TAX_FREQUENCY == 0 {
-                    self.taxes.collect_taxes();
+                    self.taxes
+                        .collect_taxes(&mut city.cash_flow, &self.statistics);
                 }
             }
             10 => {
