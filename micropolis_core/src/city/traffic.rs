@@ -26,7 +26,7 @@ pub type TrafficDensityMap = Map<u8>;
 impl TrafficDensityMap {
     pub fn density_map_with_dimensions(dimensions: &MapRectangle, default_value: u8) -> Self {
         TrafficDensityMap::with_data(
-            vec![vec![default_value; dimensions.get_height()]; dimensions.get_width()],
+            vec![vec![default_value; dimensions.get_height() / 2]; dimensions.get_width() / 2],
             MapClusteringStrategy::BlockSize2,
         )
     }
@@ -40,12 +40,16 @@ pub struct CityTraffic {
 }
 
 impl CityTraffic {
-    pub fn new(map: &TileMap) -> Self {
+    pub fn from_map(map: &TileMap) -> Self {
         Self {
             density_map: TrafficDensityMap::density_map_with_dimensions(&map.bounds(), 0x00),
             positions_stack: [MapPosition::new(0, 0); MAX_TRAFFIC_LOOKUP_DISTANCE],
             positions_stack_pointer: 0,
         }
+    }
+
+    pub fn get_density_map_mut(&mut self) -> &mut TrafficDensityMap {
+        &mut self.density_map
     }
 
     /// Spawn traffic starting from the road tile a the given position.

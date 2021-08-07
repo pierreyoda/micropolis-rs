@@ -1,5 +1,3 @@
-use std::sync::RwLockReadGuard;
-
 use crate::utils::Percentage;
 
 pub const MAX_ROAD_EFFECT: u64 = 32;
