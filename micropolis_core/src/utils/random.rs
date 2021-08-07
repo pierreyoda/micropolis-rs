@@ -17,7 +17,7 @@ impl MicropolisRandom {
         Self::from_seed(final_seed)
     }
 
-    fn from_seed(seed: i32) -> Self {
+    pub fn from_seed(seed: i32) -> Self {
         Self {
             seed,
             next_random: seed as u64,

@@ -1,6 +1,7 @@
 pub mod budget;
 pub mod disasters;
 pub mod evaluate;
+pub mod generator;
 pub mod meta;
 pub mod population;
 pub mod power;
@@ -83,17 +84,26 @@ pub struct City {
 }
 
 impl City {
-    pub fn new(name: String, scenario: GameScenario) -> Result<Self, String> {
-        let map = Map::tilemap_with_dimensions(&MapRectangle::new(120, 100), TileType::Dirt)?; // TODO: loading
+    pub fn from_map(
+        name: String,
+        scenario: GameScenario,
+        difficulty: GameLevelDifficulty,
+        map: TileMap,
+        simulation_seed: Option<i32>,
+    ) -> Result<Self, String> {
         let population = CityPopulation::from_map(&map);
         let power = CityPower::from_map(&map);
         let traffic = CityTraffic::from_map(&map);
         let sim = Simulation::new(&map);
         Ok(City {
-            rng: MicropolisRandom::from_random_system_seed(),
+            rng: if let Some(seed) = simulation_seed {
+                MicropolisRandom::from_seed(seed)
+            } else {
+                MicropolisRandom::from_random_system_seed()
+            },
             sprites: ActiveSpritesList::new(),
             init_status: CityInitializationState::JustCreated,
-            difficulty: GameLevelDifficulty::Normal,
+            difficulty,
             scenario: GameScenario::None,
             simulation_speed: 0,
             map,
