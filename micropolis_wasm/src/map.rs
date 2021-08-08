@@ -7,6 +7,30 @@ use micropolis_rs_core::{
     utils::random::MicropolisRandom,
 };
 
+/// Web wrapper for a `TileMap`.
+#[wasm_bindgen]
+pub struct WebTileMap {
+    map: TileMap,
+}
+
+impl WebTileMap {
+    pub fn from_value(map: TileMap) -> Self {
+        Self { map }
+    }
+
+    pub fn extract_value(self) -> TileMap {
+        self.map
+    }
+}
+
+#[wasm_bindgen]
+impl WebTileMap {
+    pub fn get_tiles(&self) -> JsValue {
+        let tilemap = self.map.tiles();
+        JsValue::from_serde(&tilemap).unwrap()
+    }
+}
+
 /// Wrapper for the new game screen where
 /// one or more map(s) can be randomly generated.
 ///

@@ -1,4 +1,7 @@
+import { WebTileMap } from "@/pkg";
+
 export interface RawGameMap {
+  handle: WebTileMap;
   /** Generation seed. */
   seed: number;
   /** Column-first. */

@@ -1,15 +1,17 @@
 import { FunctionComponent, useState, useMemo, useEffect } from "react";
 
+import { getRandomInt } from "@/utils";
+import { WebCity, WebTileMap } from "@/pkg";
+import { MicropolisCoreLibConnector } from "@/game";
+import { GameMap, gameMapFromRawData } from "@/game/map";
 import Card from "../common/Card";
 import Button from "../common/Button";
 import MapRenderer from "./MapRenderer";
 import TextInput from "../common/TextInput";
-import { MicropolisCoreLibConnector } from "@/game";
-import { GameMap, gameMapFromRawData } from "@/game/map";
-import { getRandomInt } from "@/utils";
 
 export interface NewGameScreenProps {
   gameLib: MicropolisCoreLibConnector;
+  onCityCreated: (city: WebCity) => void;
 }
 
 const generateSeed = (): number => getRandomInt(123, 123456);
@@ -17,34 +19,63 @@ const generateSeed = (): number => getRandomInt(123, 123456);
 interface GeneratedGameMap {
   seed: number;
   gameMap: GameMap;
+  gameMapHandle: WebTileMap;
 }
 
-const NewGameScreen: FunctionComponent<NewGameScreenProps> = ({ gameLib }) => {
+const NewGameScreen: FunctionComponent<NewGameScreenProps> = ({ gameLib, onCityCreated }) => {
   const [cityName, setCityName] = useState("");
   const [currentlyViewedMapIndex, setCurrentlyViewedMapIndex] = useState(0);
   const [generatedMaps, setGeneratedMaps] = useState<readonly GeneratedGameMap[]>([]);
 
-  const generator = gameLib.createNewMapGenerator();
+  const reset = () => {
+    setCityName("");
+    setCurrentlyViewedMapIndex(0);
+    setGeneratedMaps([]);
+  };
+
+  // city map generation
+  const cityGenerator = useMemo(() => {
+    const builder = gameLib.createNewCityGeneratorBuilder();
+    return builder.with_city_map_generator_options(120, 100, true).build();
+  }, [gameLib]);
   const generateNewMap = () => {
-    const rawMap = gameLib.generateNewRandomMap(generator, generateSeed(), 120, 100);
+    const rawMap = gameLib.generateNewRandomMap(cityGenerator, generateSeed());
     const gameMap = gameMapFromRawData(rawMap);
-    setGeneratedMaps(generatedMaps => [...generatedMaps, { gameMap, seed: rawMap.seed }]);
+    setGeneratedMaps(generatedMaps => [
+      ...generatedMaps,
+      {
+        gameMap,
+        gameMapHandle: rawMap.handle,
+        seed: rawMap.seed,
+      },
+    ]);
     setCurrentlyViewedMapIndex(generatedMaps.length);
   };
   useEffect(() => generateNewMap(), []);
 
-  const curentGeneratedMap = useMemo(() => generatedMaps[currentlyViewedMapIndex], [
+  const currentGeneratedMap: GeneratedGameMap | undefined = useMemo(() => generatedMaps[currentlyViewedMapIndex], [
     generatedMaps,
     currentlyViewedMapIndex,
   ]);
 
+  // game state handling
+  const cityNameIsValid = cityName.trim().length > 0;
+  const startGame = () => {
+    if (!cityNameIsValid || !currentGeneratedMap) {
+      return;
+    }
+    const city = cityGenerator.generate(cityName, currentGeneratedMap.gameMapHandle);
+    onCityCreated(city);
+    reset();
+  };
+
   return (
-    <div className="flex items-start justify-center">
-      {curentGeneratedMap && (
+    <div className="flex items-center justify-center">
+      {currentGeneratedMap && (
         <div className="flex flex-col mr-12">
-          <p className="mb-4 text-center text-gray-700">Seed: {curentGeneratedMap.seed}</p>
+          <p className="mb-4 text-center text-gray-700">Seed: {currentGeneratedMap.seed}</p>
           <div className="border-4 border-gray-500">
-            <MapRenderer scale={0.2} map={curentGeneratedMap.gameMap} />
+            <MapRenderer scale={0.2} map={currentGeneratedMap.gameMap} />
           </div>
           <div className="flex items-center justify-between w-full mt-4">
             <Button disabled={currentlyViewedMapIndex === 0} onToggle={() => setCurrentlyViewedMapIndex(i => i - 1)}>
@@ -62,14 +93,14 @@ const NewGameScreen: FunctionComponent<NewGameScreenProps> = ({ gameLib }) => {
           </div>
         </div>
       )}
-      <Card title="New Game" className="justify-between">
+      <Card title="New Game" className="justify-between bg-blue-50">
         <TextInput value={cityName} onChange={setCityName} placeholder="City name (mandatory)" />
         <div className="flex flex-col w-full">
           <Button onToggle={generateNewMap} className="w-full mt-10">
             Generate
           </Button>
-          {curentGeneratedMap && (
-            <Button disabled={!cityName.length} onToggle={() => {}} className="w-full mt-4 bg-green-500">
+          {currentGeneratedMap && (
+            <Button disabled={!cityNameIsValid} onToggle={startGame} className="w-full mt-4 bg-green-500">
               Play this map
             </Button>
           )}

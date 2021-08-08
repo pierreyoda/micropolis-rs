@@ -19,12 +19,15 @@ use sprite::ActiveSpritesList;
 
 use crate::{
     game::{GameLevelDifficulty, GameScenario},
-    map::{animations::TileMapAnimator, Map, MapRectangle, TileMap, TileType},
+    map::{animations::TileMapAnimator, TileMap},
     utils::random::MicropolisRandom,
 };
 
+use serde::{Deserialize, Serialize};
+
 use self::{disasters::CityDisasters, traffic::CityTraffic};
 
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum CityInitializationState {
     Initialized = 0,
     JustCreated = 1,
