@@ -3,13 +3,13 @@
     "version": "0.1.0",
     "private": true,
     "scripts": {
-        "dev": "next dev",
-        "build": "next build",
-        "start": "next start",
-        "export": "APP_ENV=production next build && next export",
-        "lint": "eslint --ignore-path .gitignore --ext .js --ext .jsx --ext .ts --ext .tsx .",
-        "storybook": "start-storybook -s ./public -p 6006",
-        "test": "npx jest"
+        "dev": "yarn next dev",
+        "build": "yarn next build",
+        "start": "yarn next start",
+        "export": "APP_ENV=production yarn next build && yarn next export",
+        "lint": "yarn eslint --ignore-path .gitignore --ext .js --ext .jsx --ext .ts --ext .tsx .",
+        "storybook": "yarn start-storybook -s ./public -p 6006",
+        "test": "yarn jest"
     },
     "dependencies": {
         "clsx": "^1.1.1",
@@ -33,6 +33,7 @@
         "@storybook/react": "^6.3.7",
         "@storybook/theming": "^6.3.7",
         "@types/color": "^3.0.2",
+        "@types/jest": "^27.0.1",
         "@types/node": "^16.7.1",
         "@types/react": "^17.0.19",
         "@types/react-loader-spinner": "^4.0.0",
