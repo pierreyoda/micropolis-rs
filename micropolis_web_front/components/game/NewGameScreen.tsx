@@ -9,7 +9,7 @@ import Button from "../common/Button";
 import MapRenderer from "./MapRenderer";
 import TextInput from "../common/TextInput";
 
-export interface NewGameScreenProps {
+interface NewGameScreenProps {
   gameLib: MicropolisCoreLibConnector;
   onCityCreated: (city: WebCity) => void;
 }
@@ -41,8 +41,8 @@ const NewGameScreen: FunctionComponent<NewGameScreenProps> = ({ gameLib, onCityC
   const generateNewMap = () => {
     const rawMap = gameLib.generateNewRandomMap(cityGenerator, generateSeed());
     const gameMap = gameMapFromRawData(rawMap);
-    setGeneratedMaps(generatedMaps => [
-      ...generatedMaps,
+    setGeneratedMaps(maps => [
+      ...maps,
       {
         gameMap,
         gameMapHandle: rawMap.handle,
@@ -65,6 +65,7 @@ const NewGameScreen: FunctionComponent<NewGameScreenProps> = ({ gameLib, onCityC
       return;
     }
     const city = cityGenerator.generate(cityName, currentGeneratedMap.gameMapHandle);
+    console.log("city", city);
     onCityCreated(city);
     reset();
   };
@@ -74,7 +75,7 @@ const NewGameScreen: FunctionComponent<NewGameScreenProps> = ({ gameLib, onCityC
       {currentGeneratedMap && (
         <div className="flex flex-col mr-12">
           <p className="mb-4 text-center text-gray-700">Seed: {currentGeneratedMap.seed}</p>
-          <div className="border-4 border-gray-500">
+          <div className="border-4 border-gray-500 rounded">
             <MapRenderer scale={0.2} map={currentGeneratedMap.gameMap} />
           </div>
           <div className="flex items-center justify-between w-full mt-4">

@@ -12,5 +12,6 @@
 /build
 
 # game assets
+/pkg/
 /public/game/*
 /public/utils-output/*

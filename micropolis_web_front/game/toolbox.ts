@@ -15,6 +15,5 @@ export const toolboxActionsIDs = [
   "airport",
   "seaport",
   "stadium",
-] as const
-
-export type ToolboxActionID = typeof toolboxActionsIDs[number]
+] as const;
+export type ToolboxActionID = typeof toolboxActionsIDs[number];

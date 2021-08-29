@@ -1,34 +1,38 @@
 import { WebTileMap } from "@/pkg";
 
 export interface RawGameMap {
-  handle: WebTileMap;
+  readonly handle: WebTileMap;
   /** Generation seed. */
-  seed: number;
+  readonly seed: number;
   /** Column-first. */
-  map: {
-    raw: number;
-    tile_type?: string;
+  readonly map: {
+    readonly raw: number;
+    readonly tile_type?: string;
   }[][];
 }
 
 export interface GameTile {
-  rawValue: number;
+  readonly rawValue: number;
 }
 
 export interface GameMapTile {
-  raw: number;
-  tileType: number;
+  readonly raw: number;
+  readonly tileType: number;
 }
 
 export interface GameMap {
   /** Column-first. */
-  tiles: GameMapTile[][];
+  readonly tiles: readonly GameMapTile[][];
 }
 
 const TILE_TYPE_MASK = 0b0000_0011_1111_1111;
 export const gameMapFromRawData = ({ map }: RawGameMap): GameMap => ({
-  tiles: map.map(column => column.map((tile): GameMapTile => {
-    const tileType = tile.raw & TILE_TYPE_MASK;
-    return { raw: tile.raw, tileType };
-  }))
+  tiles: map.map(column =>
+    column.map(
+      (tile): GameMapTile => {
+        const tileType = tile.raw & TILE_TYPE_MASK;
+        return { raw: tile.raw, tileType };
+      }
+    )
+  ),
 });

@@ -1,9 +1,8 @@
+import clsx from "clsx";
 import React, { useMemo, FunctionComponent } from "react";
 
-import { iterate_by_pairs } from "@/utils";
+import { iterateByPairs } from "@/utils";
 import { ToolboxActionID, toolboxActionsIDs } from "@/game/toolbox";
-import clsx from "clsx";
-import { useCallback } from "@storybook/addons";
 
 interface ToolboxActionProps {
   actionID: ToolboxActionID;
@@ -17,7 +16,7 @@ const ToolboxAction: FunctionComponent<ToolboxActionProps> = ({ iconImg: iconSrc
   <div
     className={clsx(
       "w-12 h-auto mb-2 mr-1 border-4 shadow-toolbar last:mr-0 hover:border-blue-400",
-      selected ? "border-blue-500" : "border-gray-500"
+      selected ? "border-blue-500" : "border-gray-500",
     )}
     onClick={onClick}
   >
@@ -57,7 +56,7 @@ interface ToolboxProps {
 }
 
 const Toolbox: FunctionComponent<ToolboxProps> = ({ selected, onSelection, actions }) => {
-  const actionsPairs = useMemo(() => [...iterate_by_pairs(actions)], [actions]);
+  const actionsPairs = useMemo(() => [...iterateByPairs(actions)], [actions]);
   const onActionClick = (action: Omit<ToolboxActionProps, "onClick" | "selected">) => () => {
     onSelection(action.actionID);
   };

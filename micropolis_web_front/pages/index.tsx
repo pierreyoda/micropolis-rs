@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { NextPage } from "next";
 
+import { WebCity } from "@/pkg";
 import { MicropolisCoreLibConnector } from "@/game";
+import { GameScreen } from "@/components/game/GameScreen";
 import NewGameScreen from "@/components/game/NewGameScreen";
 import LoaderSpinner from "@/components/common/LoaderSpinner";
-// import { GameCoreLibContext } from "@/components/game/GameCoreLibProvider";
 
 const Home: NextPage = () => {
   const [loading, setLoading] = useState(true);
@@ -19,19 +20,22 @@ const Home: NextPage = () => {
     loadCoreLibrary();
   }, []);
 
+  const [playedCity, setPlayedCity] = useState<WebCity | null>(null);
+  console.log("playedCity", playedCity);
+
   return (
-    // <GameCoreLibContext.Provider value={gameLib}>
     <div className="flex flex-col items-center justify-center w-full h-full">
       {loading ? (
         <div className="flex flex-col items-center justify-center w-full h-full">
           <LoaderSpinner width={250} height={250} type="MutatingDots" />
           <span className="mt-12">Loading game library...</span>
         </div>
+      ) : playedCity ? (
+        <GameScreen gameLib={gameLib!} playedCity={playedCity} />
       ) : (
-        <NewGameScreen gameLib={gameLib!} />
+        <NewGameScreen gameLib={gameLib!} onCityCreated={setPlayedCity} />
       )}
     </div>
-    // </GameCoreLibContext.Provider>
   );
 };
 
