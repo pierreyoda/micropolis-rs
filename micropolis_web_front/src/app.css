@@ -12,14 +12,14 @@
   }
 
   .custom-button {
-    @apply px-8 py-2 rounded focus:outline-none text-lg text-white;
-    @apply transform transition duration-200;
+    @apply px-8 py-2 text-lg text-white rounded focus:outline-none;
+    @apply transition duration-200 transform;
     @apply bg-blue-500 ring;
     &:hover, &:focus {
-      @apply ring-4 scale-105 text-gray-200;
+      @apply text-gray-200 scale-105 ring-4;
     }
     &:disabled {
-      @apply ring-0 bg-gray-200;
+      @apply bg-gray-200 ring-0;
     }
   }
 

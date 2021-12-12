@@ -1,40 +1,31 @@
 {
   "compilerOptions": {
-    "target": "es5",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "module": "esnext",
     "moduleResolution": "node",
-    "resolveJsonModule": true,
+    "module": "es2020",
+    "lib": ["es2020", "DOM"],
+    "target": "es2020",
+    /**
+     svelte-preprocess cannot figure out whether you have a value or a type, so tell TypeScript
+     to enforce using \`import type\` instead of \`import\` for Types.
+     */
+    "importsNotUsedAsValues": "error",
     "isolatedModules": true,
-    "jsx": "preserve",
+    "resolveJsonModule": true,
+    /**
+     To have warnings/errors of the Svelte compiler at the correct position,
+     enable source maps by default.
+     */
+    "sourceMap": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
+    "allowJs": true,
+    "checkJs": true,
     "paths": {
-      "@/*": [
-        "./*"
-      ]
-    },
-    "typeRoots": [
-      "node_modules/@types",
-      "types"
-    ],
-    "downlevelIteration": true
+      "$lib": ["src/lib"],
+      "$lib/*": ["src/lib/*"]
+    }
   },
-  "exclude": [
-    "node_modules"
-  ],
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx"
-  ]
+  "include": ["src/**/*.d.ts", "src/**/*.js", "src/**/*.ts", "src/**/*.svelte"]
 }

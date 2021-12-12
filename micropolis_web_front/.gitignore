@@ -4,13 +4,11 @@
 # testing
 /coverage
 
-# next.js
-/.next/
-/out/
-
 # production
 /build
 
 # game assets
 /public/game/*
 /public/utils-output/*
+
+
