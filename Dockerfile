@@ -1,4 +1,4 @@
-FROM rust:1.49-slim
+FROM rust:1.58-slim
 
 WORKDIR /usr/src/micropolis-rs/
 
