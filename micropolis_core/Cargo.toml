@@ -8,7 +8,7 @@ edition = "2018"
 path = "src/lib.rs"
 
 [dependencies]
-serde = { version = "1.0.126", features = ["derive"] }
+serde = { version = "1.0.130", features = ["derive"] }
 num-traits = "0.2.14"
 num-derive = "0.3.3"
 quick-xml = "0.22.0"

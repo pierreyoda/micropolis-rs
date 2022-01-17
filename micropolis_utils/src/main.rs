@@ -1,7 +1,7 @@
 use core::panic;
 use std::{fs::File, io::Write, path::PathBuf};
 
-use clap::Clap;
+use clap::Parser;
 use serde_json;
 
 use micropolis_rs_core::{
@@ -14,7 +14,7 @@ use micropolis_rs_core::{
 };
 
 /// Program options.
-#[derive(Clap)]
+#[derive(Parser, Debug)]
 #[clap(
     version = "0.0.1",
     author = "pierreyoda <pierreyoda@users.noreply.github.com>"
@@ -24,7 +24,7 @@ struct Opts {
     subcmd: SubCommand,
 }
 
-#[derive(Clap)]
+#[derive(Parser, Debug)]
 enum SubCommand {
     #[clap(
         version = "0.1.0",
@@ -36,7 +36,7 @@ enum SubCommand {
 }
 
 /// A subcommand for controlling testing
-#[derive(Clap)]
+#[derive(Parser, Debug)]
 struct GenerateBasicJsonTileMapOptions {
     #[clap(short)]
     width: usize,
