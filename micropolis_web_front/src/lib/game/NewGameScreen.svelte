@@ -3,12 +3,16 @@
   import { MicropolisCoreLibConnector } from "../../game"; // TODO: alias
 
   const gameLib = new MicropolisCoreLibConnector();
-  const generator = gameLib.createNewMapGenerator();
-  const generateSeed = (): number => getRandomInteger(123, 123456);
-  const generateNewMap = () => {
-    const rawMap = gameLib.generateNewRandomMap(generator, generateSeed(), 120, 100);
-    console.log(rawMap);
-  };
+  let generateNewMap = () => {};
+  gameLib.init().then(() => {
+    const generator = gameLib.createNewMapGenerator();
+    const generateSeed = (): number => getRandomInteger(123, 123456);
+    generateNewMap = () => {
+      const rawMap = gameLib.generateNewRandomMap(generator, generateSeed(), 120, 100);
+      console.log(rawMap);
+    };
+    generateNewMap();
+  });
 
   let cityName = "";
   $: isCityNameValid = cityName.trim().length > 0;

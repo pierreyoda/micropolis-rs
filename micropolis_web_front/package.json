@@ -39,7 +39,6 @@
         "ts-jest": "27.1.3",
         "tslib": "2.3.1",
         "typescript": "4.5.5",
-        "vite-plugin-rsw": "1.10.2",
         "vite-plugin-wasm-pack": "0.1.9"
     }
 }

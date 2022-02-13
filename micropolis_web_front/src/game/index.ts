@@ -4,8 +4,8 @@ import type { WebMapGenerator } from "../../../micropolis_wasm/pkg";
 import init, { create_terrain_generator, generate_new_map } from "../../../micropolis_wasm/pkg";
 
 export class MicropolisCoreLibConnector {
-  constructor() {
-    init();
+  async init() {
+    return init();
   }
 
   get versionInfo(): string {
