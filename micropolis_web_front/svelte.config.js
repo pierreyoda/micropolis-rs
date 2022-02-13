@@ -151,7 +151,7 @@ import { ViteRsw } from "vite-plugin-rsw";
 // import vitePluginWasmPack from "vite-plugin-wasm-pack";
 console.log("isorehrhioeshisreorsehioreshiosreihosreihorioseh");
 import { fileURLToPath } from "url";
-import { dirname, resolve } from "path";
+import { dirname } from "path";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -168,8 +168,6 @@ const config = {
   ],
 
   kit: {
-    // hydrate the <div id="svelte"> element in src/app.html
-    target: "#svelte",
     vite: defineConfig({
       build: {
         minify: false,

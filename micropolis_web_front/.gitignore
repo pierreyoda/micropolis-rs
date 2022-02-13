@@ -11,4 +11,8 @@
 /public/game/*
 /public/utils-output/*
 
+# Svelte(Kit)
+.svelte-kit
 
+# WASM
+.rsw
