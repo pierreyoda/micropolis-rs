@@ -245,7 +245,7 @@ pub fn make_sprite(
     position: &MapPosition,
 ) -> Result<(), String> {
     if let Some(sprite) = sprites.get_sprite_mut(kind) {
-        kind.init_sprite(rng, sprite, None);
+        kind.init_sprite(rng, sprite, None)?;
     } else {
         let sprite = Sprite::new(rng, "".into(), kind, *position, None)?;
         sprites.add_sprite(sprite);
