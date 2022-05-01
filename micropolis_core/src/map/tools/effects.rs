@@ -233,30 +233,30 @@ pub(super) fn build_building(
     // compute top-left 'anchor'
     let anchor = center.with_offset(-1, -1);
     // prepare building site
-    if let Some(prepareResult) = effects.chain_or_return(prepare_building_site(
+    if let Some(prepare_result) = effects.chain_or_return(prepare_building_site(
         map,
         &anchor,
         &building_info.size,
         effects.clone(),
         auto_bulldoze,
     )?) {
-        return Ok(prepareResult);
+        return Ok(prepare_result);
     }
     // put down the building
-    if let Some(buildResult) =
+    if let Some(build_result) =
         effects.chain_or_return(put_down_building(&anchor, &building_info, effects.clone())?)
     {
-        return Ok(buildResult);
+        return Ok(build_result);
     }
     // update surrounding connections
-    if let Some(connectResult) = effects.chain_or_return(check_border(
+    if let Some(connect_result) = effects.chain_or_return(check_border(
         map,
         &anchor,
         &building_info.size,
         effects.clone(),
         auto_bulldoze,
     )?) {
-        return Ok(connectResult);
+        return Ok(connect_result);
     }
     // all good!
     Ok(ToolResult::Succeeded(

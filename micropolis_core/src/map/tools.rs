@@ -115,10 +115,7 @@ pub enum ToolResult {
 
 impl ToolResult {
     pub fn is_success(&self) -> bool {
-        match self {
-            &ToolResult::Succeeded(_) => true,
-            _ => false,
-        }
+        matches!(self, &ToolResult::Succeeded(_))
     }
 
     pub fn effects(self) -> Option<ToolEffects> {
