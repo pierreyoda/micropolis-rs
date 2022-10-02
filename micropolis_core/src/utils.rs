@@ -18,6 +18,11 @@ impl Percentage {
     pub fn value(&self) -> f64 {
         self.0
     }
+
+    /// Increment by 1%.
+    pub fn increment(&mut self) {
+        self.0 += 1f64;
+    }
 }
 
 impl From<f64> for Percentage {

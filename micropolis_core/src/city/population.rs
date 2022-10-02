@@ -1,5 +1,34 @@
 use crate::map::{Map, MapClusteringStrategy, MapPosition, MapRectangle, TileMap};
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum CityClass {
+    /// Population <= 2k citizens.
+    Village,
+    /// Population <= 10k citizens.
+    Town,
+    /// Population <= 50k citizens.
+    City,
+    /// Population <= 100k citizens.
+    Capital,
+    /// Population <= 500k citizens.
+    Metropolis,
+    /// Population > 500k citizens.
+    Megalopolis,
+}
+
+impl CityClass {
+    pub fn from_total_population(total_population: u32) -> Self {
+        match total_population {
+            n if n <= 2000 => CityClass::Village,
+            n if n <= 10000 => CityClass::Town,
+            n if n <= 50000 => CityClass::City,
+            n if n <= 100000 => CityClass::Capital,
+            n if n <= 500000 => CityClass::Metropolis,
+            _ => CityClass::Megalopolis,
+        }
+    }
+}
+
 pub type PopulationDensityMap = Map<u8>;
 
 impl PopulationDensityMap {
@@ -26,10 +55,14 @@ pub struct CityPopulation {
     ///
     /// Depends on the level of zone development.
     industrial: u16,
-    /// Total population.
+    /// Total city population.
     ///
     /// Formula = (residential population) / 8 + (commercial population) + (industrial population).
     total: u32,
+    /// Change in the total city population.
+    total_delta: u32,
+    /// City class, affected by total population.
+    city_class: CityClass,
 }
 
 impl CityPopulation {
@@ -40,6 +73,8 @@ impl CityPopulation {
             commercial: 0,
             industrial: 0,
             total: 0,
+            total_delta: 0,
+            city_class: CityClass::Village,
         }
     }
 
@@ -76,5 +111,21 @@ impl CityPopulation {
 
     pub fn total_population(&self) -> u32 {
         self.total
+    }
+
+    /// Update the city total population and classification.
+    pub fn update(&mut self) {
+        let mut old_total = self.total;
+        self.total = self.compute_total_population();
+        if old_total == -1 {
+            old_total = self.total;
+        }
+
+        self.total_delta = self.total - old_total;
+        self.city_class = CityClass::from_total_population(self.total);
+    }
+
+    fn compute_total_population(&self) -> u32 {
+        (self.residential as u32 + (self.commercial as u32 + self.industrial as u32 * 8)) * 20
     }
 }

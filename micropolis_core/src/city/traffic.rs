@@ -48,6 +48,10 @@ impl CityTraffic {
         }
     }
 
+    pub fn get_density_map(&self) -> &TrafficDensityMap {
+        &self.density_map
+    }
+
     pub fn get_density_map_mut(&mut self) -> &mut TrafficDensityMap {
         &mut self.density_map
     }

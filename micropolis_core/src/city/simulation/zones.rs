@@ -41,8 +41,7 @@ pub fn get_commercial_zone_population(tile_value: u16) -> u16 {
     if tile_value == TileType::CommercialClr.to_u16().unwrap() {
         0
     } else {
-        let cz_den = ((tile_value - TileType::CommercialZoneBase.to_u16().unwrap()) / 9) % 5 + 1;
-        cz_den
+        ((tile_value - TileType::CommercialZoneBase.to_u16().unwrap()) / 9) % 5 + 1
     }
 }
 
@@ -51,7 +50,6 @@ pub fn get_industrial_zone_population(tile_value: u16) -> u16 {
     if tile_value == TileType::IndustrialClr.to_u16().unwrap() {
         0
     } else {
-        let cz_den = (((tile_value - TileType::IndustrialZoneBase.to_u16().unwrap()) / 9) % 4) + 1;
-        cz_den
+        (((tile_value - TileType::IndustrialZoneBase.to_u16().unwrap()) / 9) % 4) + 1
     }
 }

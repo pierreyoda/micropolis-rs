@@ -40,7 +40,7 @@ mod census;
 mod parameters;
 mod scan;
 pub mod sprites;
-mod statistics;
+pub mod statistics;
 mod taxes;
 mod zones;
 
