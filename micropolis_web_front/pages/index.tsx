@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
 import { NextPage } from "next";
+import React, { useState, useEffect } from "react";
+import { MutatingDots } from "react-loader-spinner";
 
 import { MicropolisCoreLibConnector } from "@/game";
 import NewGameScreen from "@/components/game/NewGameScreen";
-import LoaderSpinner from "@/components/common/LoaderSpinner";
 // import { GameCoreLibContext } from "@/components/game/GameCoreLibProvider";
 
 const Home: NextPage = () => {
@@ -24,7 +24,7 @@ const Home: NextPage = () => {
     <div className="flex flex-col items-center justify-center w-full h-full">
       {loading ? (
         <div className="flex flex-col items-center justify-center w-full h-full">
-          <LoaderSpinner width={250} height={250} type="MutatingDots" />
+          <MutatingDots width={250} height={250} />
           <span className="mt-12">Loading game library...</span>
         </div>
       ) : (

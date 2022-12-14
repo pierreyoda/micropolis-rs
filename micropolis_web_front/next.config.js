@@ -2,7 +2,13 @@ const path = require("path");
 const CopyPlugin = require("copy-webpack-plugin");
 const WasmPackPlugin = require("@wasm-tool/wasm-pack-plugin");
 
-module.exports = () => ({
+/** @type {import("next").NextConfig} */
+const nextConfig = {
+  swcMinify: true,
+  reactStrictMode: true,
+  experimental: {
+    appDir: true,
+  },
   trailingSlash: true,
   exportPathMap: () => ({
     "/": { page: "/" },
@@ -52,4 +58,6 @@ module.exports = () => ({
       }),
     ],
   }),
-});
+};
+
+module.exports = nextConfig;
