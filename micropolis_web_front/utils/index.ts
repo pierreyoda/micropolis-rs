@@ -1,9 +1,4 @@
 /**
- * Typescript util to extract a type from a `PromiseLike`.
- */
-export type PromisedType<T> = T extends PromiseLike<infer U> ? U : T;
-
-/**
  * Iterate over a collection by pairs.
  */
 export function* iterate_by_pairs<T>(
@@ -20,7 +15,7 @@ export function* iterate_by_pairs<T>(
 /**
  * Generate a random integer in the given **inclusive** range.
  */
-export const getRandomInt = (min: number, max: number): number => {
+export const getRandomInteger = (min: number, max: number): number => {
   const [intMin, intMax] = [Math.ceil(min), Math.floor(max)];
   return Math.floor(Math.random() * (intMax - intMin + 1)) + intMin;
-}
+};
