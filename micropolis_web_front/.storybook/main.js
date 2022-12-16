@@ -13,6 +13,14 @@ module.exports = {
     storyStoreV7: true,
   },
   addons: [
+    {
+      name: "@storybook/addon-postcss",
+      options: {
+        postcssLoaderOptions: {
+          implementation: require("postcss"),
+        },
+      },
+    },
     "@storybook/addon-essentials",
     "@storybook/addon-a11y",
     "@storybook/addon-docs",
@@ -31,7 +39,7 @@ module.exports = {
         ...(config.module.rules || []),
         {
           test: /\.s[ca]ss$/,
-          use: ["style-loader", "css-loader", "postcss-loader", "sass-loader"],
+          use: ["postcss-loader"],
         },
       ],
     },
