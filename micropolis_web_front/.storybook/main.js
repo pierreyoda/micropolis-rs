@@ -1,16 +1,27 @@
 const path = require("path");
 
+/**
+ * @see https://storybook.js.org/docs/react/configure/overview
+ * @see https://github.com/storybookjs/storybook/blob/next/MIGRATION.md#70-breaking-changes
+ */
 module.exports = {
   core: {
     builder: "webpack5",
   },
+  features: {
+    postcss: true,
+    storyStoreV7: true,
+  },
   addons: [
     "@storybook/addon-essentials",
-    "@storybook/addon-knobs",
     "@storybook/addon-a11y",
     "@storybook/addon-docs",
     "@storybook/addon-controls",
   ],
+  typescript: {
+    check: false,
+    checkOptions: {},
+  },
   stories: ["../components/**/**/*.stories.tsx"],
   webpackFinal: async config => ({
     ...config,
@@ -20,12 +31,7 @@ module.exports = {
         ...(config.module.rules || []),
         {
           test: /\.s[ca]ss$/,
-          use: [
-            "style-loader",
-            "css-loader",
-            "postcss-loader",
-            "sass-loader",
-          ],
+          use: ["style-loader", "css-loader", "postcss-loader", "sass-loader"],
         },
       ],
     },
