@@ -4,9 +4,7 @@ import { RawGameMap } from "./map";
 
 export const importMicropolisCoreWasmLib = async () => import("@/pkg");
 
-export type MicropolisCoreLib = PromisedType<
-  ReturnType<typeof importMicropolisCoreWasmLib>
->;
+export type MicropolisCoreLib = PromisedType<ReturnType<typeof importMicropolisCoreWasmLib>>;
 
 export class MicropolisCoreLibConnector {
   constructor(private readonly coreLib: MicropolisCoreLib) {
@@ -28,4 +26,5 @@ export class MicropolisCoreLibConnector {
   }
 }
 
-export const connectMicropolisCoreLib = (importedCoreLib: MicropolisCoreLib) => new MicropolisCoreLibConnector(importedCoreLib);
+export const connectMicropolisCoreLib = (importedCoreLib: MicropolisCoreLib) =>
+  new MicropolisCoreLibConnector(importedCoreLib);

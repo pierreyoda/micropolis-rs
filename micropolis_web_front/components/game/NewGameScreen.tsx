@@ -4,9 +4,9 @@ import Card from "../common/Card";
 import Button from "../common/Button";
 import MapRenderer from "./MapRenderer";
 import TextInput from "../common/TextInput";
+import { getRandomInt } from "@/utils";
 import { MicropolisCoreLibConnector } from "@/game";
 import { GameMap, gameMapFromRawData } from "@/game/map";
-import { getRandomInt } from "@/utils";
 
 export interface NewGameScreenProps {
   gameLib: MicropolisCoreLibConnector;
@@ -33,18 +33,18 @@ const NewGameScreen: FunctionComponent<NewGameScreenProps> = ({ gameLib }) => {
   };
   useEffect(() => generateNewMap(), []);
 
-  const curentGeneratedMap = useMemo(() => generatedMaps[currentlyViewedMapIndex], [
-    generatedMaps,
-    currentlyViewedMapIndex,
-  ]);
+  const currentGeneratedMap = useMemo(
+    () => generatedMaps[currentlyViewedMapIndex],
+    [generatedMaps, currentlyViewedMapIndex]
+  );
 
   return (
     <div className="flex items-start justify-center">
-      {curentGeneratedMap && (
+      {currentGeneratedMap && (
         <div className="flex flex-col mr-12">
-          <p className="mb-4 text-center text-gray-700">Seed: {curentGeneratedMap.seed}</p>
+          <p className="mb-4 text-center text-gray-700">Seed: {currentGeneratedMap.seed}</p>
           <div className="border-4 border-gray-500">
-            <MapRenderer scale={0.2} map={curentGeneratedMap.gameMap} />
+            <MapRenderer scale={0.2} map={currentGeneratedMap.gameMap} />
           </div>
           <div className="flex items-center justify-between w-full mt-4">
             <Button disabled={currentlyViewedMapIndex === 0} onToggle={() => setCurrentlyViewedMapIndex(i => i - 1)}>
@@ -68,7 +68,7 @@ const NewGameScreen: FunctionComponent<NewGameScreenProps> = ({ gameLib }) => {
           <Button onToggle={generateNewMap} className="w-full mt-10">
             Generate
           </Button>
-          {curentGeneratedMap && (
+          {currentGeneratedMap && (
             <Button disabled={!cityName.length} onToggle={() => {}} className="w-full mt-4 bg-green-500">
               Play this map
             </Button>

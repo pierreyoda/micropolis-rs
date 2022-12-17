@@ -8,12 +8,7 @@ export interface HeadProps {
   ogImage: string;
 }
 
-const Head: FunctionComponent<HeadProps> = ({
-  title,
-  description,
-  url,
-  ogImage,
-}) => (
+const Head: FunctionComponent<HeadProps> = ({ title, description, url, ogImage }) => (
   <NextHead>
     <meta charSet="UTF-8" lang="en" />
     <title>{title}</title>

@@ -4,9 +4,11 @@ import { Meta } from "@storybook/react";
 import Button from "../Button";
 
 export const Primary = () => (
-  <Button onToggle={() => {
-    console.log("Clicked!");
-  }}>
+  <Button
+    onToggle={() => {
+      console.log("Clicked!");
+    }}
+  >
     Click me! 👍
   </Button>
 );

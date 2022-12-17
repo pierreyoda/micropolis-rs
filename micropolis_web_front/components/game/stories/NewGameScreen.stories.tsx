@@ -9,8 +9,4 @@ export default {
   component: NewGameScreen,
 } as Meta;
 
-export const NewGameScreenDemo = () => (
-  <NewGameScreen
-    generateMap={generateMapStub}
-  />
-);
+export const NewGameScreenDemo = () => <NewGameScreen generateMap={generateMapStub} />;

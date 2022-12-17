@@ -14,9 +14,10 @@ export interface TileProps {
 }
 
 const Tile: FunctionComponent<TileProps> = ({ tileIndex, atlasImageUrl, scale }) => {
-  const [atlasX, atlasY] = useMemo(() => [(tileIndex % ATLAS_ROWS) * TILE_SIZE, (tileIndex / ATLAS_ROWS) * TILE_SIZE], [
-    tileIndex,
-  ]);
+  const [atlasX, atlasY] = useMemo(
+    () => [(tileIndex % ATLAS_ROWS) * TILE_SIZE, (tileIndex / ATLAS_ROWS) * TILE_SIZE],
+    [tileIndex]
+  );
 
   return (
     <img

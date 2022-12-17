@@ -12,11 +12,5 @@ export default {
 export const Regular = () => {
   const [value, setValue] = useState("");
 
-  return (
-    <TextInput
-      value={value}
-      onChange={setValue}
-      placeholder={text("Placeholder", "Placeholder")}
-    />
-  );
+  return <TextInput value={value} onChange={setValue} placeholder={text("Placeholder", "Placeholder")} />;
 };

@@ -6,7 +6,8 @@
   .custom-input {
     @apply block w-full leading-normal appearance-none;
     @apply px-4 py-2 bg-white border border-gray-300 rounded-lg;
-    &:hover, &:focus {
+    &:hover,
+    &:focus {
       @apply outline-none;
     }
   }
@@ -15,7 +16,8 @@
     @apply px-8 py-2 rounded focus:outline-none text-lg text-white;
     @apply transform transition duration-200;
     @apply bg-blue-500 ring;
-    &:hover, &:focus {
+    &:hover,
+    &:focus {
       @apply ring-4 scale-105 text-gray-200;
     }
     &:disabled {

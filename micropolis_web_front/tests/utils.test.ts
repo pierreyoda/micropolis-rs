@@ -1,4 +1,4 @@
-import { iterate_by_pairs } from "../utils";
+import { iterate_by_pairs } from "../utils";
 
 describe("Utils test suite", () => {
   it("should properly implement iterate_by_pairs", () => {

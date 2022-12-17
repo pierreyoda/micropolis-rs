@@ -37,11 +37,7 @@ const Toolbar: FunctionComponent<ToolbarProps> = ({ items }) => {
               className="bg-transparent absolute flex flex-col items-start justify-center py-2 mt-1"
             >
               {children.map(({ key: childKey, label: childLabel, onClick }) => (
-                <div
-                  key={childKey}
-                  className="text-black flex items-center justify-start mt-1"
-                  onClick={onClick}
-                >
+                <div key={childKey} className="text-black flex items-center justify-start mt-1" onClick={onClick}>
                   {childLabel}
                 </div>
               ))}
