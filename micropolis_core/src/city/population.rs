@@ -17,7 +17,7 @@ pub enum CityClass {
 }
 
 impl CityClass {
-    pub fn from_total_population(total_population: u32) -> Self {
+    pub fn from_total_population(total_population: i64) -> Self {
         match total_population {
             n if n <= 2000 => CityClass::Village,
             n if n <= 10000 => CityClass::Town,
@@ -58,11 +58,9 @@ pub struct CityPopulation {
     /// Total city population.
     ///
     /// Formula = (residential population) / 8 + (commercial population) + (industrial population).
-    total: u32,
+    total: i64,
     /// Change in the total city population.
-    total_delta: u32,
-    /// City class, affected by total population.
-    city_class: CityClass,
+    total_delta: i64,
 }
 
 impl CityPopulation {
@@ -74,7 +72,6 @@ impl CityPopulation {
             industrial: 0,
             total: 0,
             total_delta: 0,
-            city_class: CityClass::Village,
         }
     }
 
@@ -109,12 +106,12 @@ impl CityPopulation {
         self.industrial
     }
 
-    pub fn total_population(&self) -> u32 {
+    pub fn total_population(&self) -> i64 {
         self.total
     }
 
     /// Update the city total population and classification.
-    pub fn update(&mut self) {
+    pub fn update(&mut self) -> CityClass {
         let mut old_total = self.total;
         self.total = self.compute_total_population();
         if old_total == -1 {
@@ -122,10 +119,10 @@ impl CityPopulation {
         }
 
         self.total_delta = self.total - old_total;
-        self.city_class = CityClass::from_total_population(self.total);
+        CityClass::from_total_population(self.total)
     }
 
-    fn compute_total_population(&self) -> u32 {
-        (self.residential as u32 + (self.commercial as u32 + self.industrial as u32 * 8)) * 20
+    fn compute_total_population(&self) -> i64 {
+        (self.residential as i64 + (self.commercial as i64 + self.industrial as i64 * 8)) * 20
     }
 }

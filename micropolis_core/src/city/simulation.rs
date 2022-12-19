@@ -41,7 +41,7 @@ mod parameters;
 mod scan;
 pub mod sprites;
 pub mod statistics;
-mod taxes;
+pub mod taxes;
 mod zones;
 
 const ZONE_MELTDOWN_TABLE: [i16; 3] = [30000, 20000, 10000];

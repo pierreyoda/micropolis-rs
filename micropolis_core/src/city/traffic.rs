@@ -201,14 +201,12 @@ impl CityTraffic {
                 if Self::is_driving_done(map, &current_position, destination_zone)? {
                     return Ok(true);
                 }
+            } else if self.positions_stack_pointer > 0 {
+                // dead end: backup
+                self.positions_stack_pointer -= 1;
+                distance += 3;
             } else {
-                if self.positions_stack_pointer > 0 {
-                    // dead end: backup
-                    self.positions_stack_pointer -= 1;
-                    distance += 3;
-                } else {
-                    return Ok(false);
-                }
+                return Ok(false);
             }
         }
 
