@@ -1,5 +1,5 @@
 use quick_xml::{events::Event, Reader};
-use std::str;
+use std::{io::Read, iter::FromIterator, str};
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct CityMetadata {
@@ -32,9 +32,10 @@ impl CityMetadata {
     /// has no first-party support for XML and the third-party crate
     /// based on xml-rs apparently would need a nested struct declaration
     /// for every property since they are value-encoded in micropolis.
+    ///
+    /// TODO: now quick-xml integrates with serde's Serialize/Deserialize, can something be done here?
     pub fn decode_from_xml(raw: &str) -> Result<Self, String> {
         let mut reader = Reader::from_str(raw);
-        let mut buffer = vec![];
         let mut in_container_tag = false;
         let mut current_property = Option::<String>::None;
         let mut missing_properties = XML_REQUIRED_PROPERTIES_NAMES.to_vec();
@@ -42,9 +43,9 @@ impl CityMetadata {
 
         reader.trim_text(true);
         loop {
-            match reader.read_event(&mut buffer) {
+            match reader.read_event() {
                 Ok(Event::Start(e)) => {
-                    let name = str::from_utf8(e.name())
+                    let name = str::from_utf8(e.name().into_inner())
                         .map_err(|err| format!("from_utf8 error: {}", err))?;
                     match name {
                         "metaCity" => {
@@ -65,9 +66,11 @@ impl CityMetadata {
                 }
                 Ok(Event::Text(e)) => {
                     if let Some(property) = current_property.as_ref() {
-                        let text = e
-                            .unescape_and_decode(&reader)
-                            .map_err(|err| format!("decoding error: {}", err))?;
+                        let unescaped_event = e
+                            .unescape()
+                            .map_err(|err| format!("unescaping error: {}", err))?;
+                        let text_chars = unescaped_event.chars();
+                        let text = String::from_iter(text_chars);
                         match property.as_str() {
                             "title" => parsed.title = text,
                             "description" => parsed.description = text,
