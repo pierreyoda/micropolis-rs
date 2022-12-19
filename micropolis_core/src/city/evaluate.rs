@@ -162,14 +162,14 @@ impl CityEvaluator {
         &mut self,
         rng: &mut MicropolisRandom,
         land_value_map: &Map<u8>,
-        population: &CityPopulation,
+        population: &mut CityPopulation,
         statistics: &SimulationStatistics,
         taxes: &SimulationTaxes,
         power: &CityPower,
         traffic: &CityTraffic,
     ) {
         if population.total_population() > 0 {
-            let problems_table = HashMap::with_capacity(PROBLEMS_NUMBER as usize);
+            let mut problems_table = HashMap::with_capacity(PROBLEMS_NUMBER as usize);
             for z in 0..PROBLEMS_NUMBER {
                 problems_table.insert(z, 0u16);
             }
@@ -295,7 +295,7 @@ impl CityEvaluator {
 
     /// Assess how well the mayor is doing.
     pub fn vote_on_problems(&mut self, rng: &mut MicropolisRandom) {
-        for z in (0..100) {
+        for z in 0..100 {
             if (rng.get_random(1000) as u16) < self.score.current {
                 self.mayor_approval_rate.increment();
             }
