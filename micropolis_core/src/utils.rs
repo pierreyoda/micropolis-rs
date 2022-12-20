@@ -33,13 +33,7 @@ impl From<f64> for Percentage {
 
 /// Clamp a value between [min, max].
 pub fn clamp<U: Num + Ord>(value: U, lower: U, upper: U) -> U {
-    if value < lower {
-        lower
-    } else if value > upper {
-        upper
-    } else {
-        value
-    }
+    value.clamp(lower, upper)
 }
 
 #[cfg(test)]
