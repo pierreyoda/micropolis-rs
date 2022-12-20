@@ -47,14 +47,20 @@ pub struct CityPopulation {
     ///
     /// Depends on the level of zone development.
     residential: u16,
+    /// Block residential growth?
+    residential_cap: bool,
     /// Number of people in commercial zones.
     ///
     /// Depends on the level of zone development.
     commercial: u16,
+    /// Block commercial growth?
+    commercial_cap: bool,
     /// Number of people in industrial zones.
     ///
     /// Depends on the level of zone development.
     industrial: u16,
+    /// Block industrial growth?
+    industrial_cap: bool,
     /// Total city population.
     ///
     /// Formula = (residential population) / 8 + (commercial population) + (industrial population).
@@ -68,8 +74,11 @@ impl CityPopulation {
         Self {
             density_map: PopulationDensityMap::with_dimensions(&map.bounds(), 0),
             residential: 0,
+            residential_cap: false,
             commercial: 0,
+            commercial_cap: false,
             industrial: 0,
+            industrial_cap: false,
             total: 0,
             total_delta: 0,
         }
@@ -97,13 +106,22 @@ impl CityPopulation {
     pub fn get_residential(&self) -> u16 {
         self.residential
     }
+    pub fn is_residential_capped(&self) -> bool {
+        self.residential_cap
+    }
 
     pub fn get_commercial(&self) -> u16 {
         self.commercial
     }
+    pub fn is_commercial_capped(&self) -> bool {
+        self.commercial_cap
+    }
 
     pub fn get_industrial(&self) -> u16 {
         self.industrial
+    }
+    pub fn is_industrial_capped(&self) -> bool {
+        self.industrial_cap
     }
 
     pub fn total_population(&self) -> i64 {

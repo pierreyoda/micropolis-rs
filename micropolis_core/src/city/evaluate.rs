@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 use crate::{
     map::{Map, WORLD_HEIGHT, WORLD_WIDTH},
-    utils::{random::MicropolisRandom, Percentage},
+    utils::{clamp, random::MicropolisRandom, Percentage},
 };
 
 use super::{
@@ -44,6 +44,19 @@ impl CityVotingProblem {
             5 => Some(Self::Unemployment),
             6 => Some(Self::Fires),
             _ => Option::None,
+        }
+    }
+
+    pub fn to_u8(&self) -> u8 {
+        match self {
+            Self::Crime => 0,
+            Self::Pollution => 1,
+            Self::HousingCosts => 2,
+            Self::Taxes => 3,
+            Self::Traffic => 4,
+            Self::Unemployment => 5,
+            Self::Fires => 6,
+            _ => unreachable!(),
         }
     }
 }
@@ -107,7 +120,7 @@ pub struct CityEvaluator {
     /// Depends on average traffic density of tiles with non-zero land value.
     traffic_average: u16,
     /// Number of votes for each problem.
-    problems_votes: HashMap<CityVotingProblem, u16>,
+    problems_votes: HashMap<u8, u16>,
     /// Order of taken problems, in decreasing order of priority.
     problems_order: [CityVotingProblem; COMPLAINTS_COUNT as usize],
     /// Percentage of people who think the mayor is doing a good job.
@@ -146,7 +159,7 @@ impl CityEvaluator {
 
         let mut problems_votes = HashMap::with_capacity(CITY_VOTING_PROBLEMS.len());
         for problem in &CITY_VOTING_PROBLEMS {
-            problems_votes.insert(problem.clone(), 0);
+            problems_votes.insert(problem.to_u8(), 0);
         }
         self.problems_votes = problems_votes;
 
@@ -177,6 +190,7 @@ impl CityEvaluator {
             self.assessed_value = Self::compute_accessed_value(power, statistics);
             self.class = population.update();
             self.prioritize_problems(
+                rng,
                 &mut problems_table,
                 land_value_map,
                 population,
@@ -184,8 +198,8 @@ impl CityEvaluator {
                 taxes,
                 traffic,
             );
-            self.score = self.compute_score();
-            self.vote_on_problems(rng);
+            self.score = self.compute_score(population, &problems_table);
+            self.vote_on_mayor(rng);
             self.change_evaluation();
         } else {
             self.init();
@@ -213,7 +227,36 @@ impl CityEvaluator {
     }
 
     /// Compute the total score of the city.
-    pub fn compute_score(&self) -> CityScore {
+    pub fn compute_score(
+        &self,
+        population: &CityPopulation,
+        problems_table: &HashMap<u8, u16>,
+    ) -> CityScore {
+        let mut x = 0;
+        let last_city_score = self.score.current;
+
+        for z in 0..PROBLEMS_COUNT {
+            // add the 7 problems
+            x += problems_table
+                .get(&z)
+                .expect("CityEvaluator.compute_score: problems_table was properly filled.");
+        }
+
+        x = x / 3;
+        x = cmp::min(x, 256);
+        let mut partial_score = clamp((256 - x) * 4, 0, 1000);
+
+        if population.is_residential_capped() {
+            partial_score = (partial_score * 0.85) as u16;
+        }
+        if population.is_commercial_capped() {
+            partial_score = (partial_score * 0.85) as u16;
+        }
+        if population.is_industrial_capped() {
+            partial_score = (partial_score * 0.85) as u16;
+        }
+
+        // TODO:...
         todo!()
     }
 
@@ -231,6 +274,7 @@ impl CityEvaluator {
     /// important ones.
     pub fn prioritize_problems(
         &mut self,
+        rng: &mut MicropolisRandom,
         problems_table: &mut HashMap<u8, u16>,
         land_value_map: &Map<u8>,
         population: &CityPopulation,
@@ -266,6 +310,7 @@ impl CityEvaluator {
             CityVotingProblem::Fires as u8,
             Self::get_fire_severity(statistics),
         );
+        self.vote_on_problems(rng, problems_table);
 
         for z in 0..COMPLAINTS_COUNT {
             // Find biggest problem not taken yet
@@ -274,7 +319,7 @@ impl CityEvaluator {
                 let problem = CityVotingProblem::from_u8(i).expect(
                     "CityEvaluator.prioritize_problems: can convert u8 to CityVotingProblem.",
                 );
-                if let Some(votes) = self.problems_votes.get(&problem) {
+                if let Some(votes) = self.problems_votes.get(&problem.to_u8()) {
                     if *votes > max_votes && !problems_taken.get(&i).expect("CityEvaluator.prioritize_problems: problems_table was properly initialized.") {
                         best_problem_index = i;
                         max_votes = *votes;
@@ -293,8 +338,43 @@ impl CityEvaluator {
         }
     }
 
-    /// Assess how well the mayor is doing.
-    pub fn vote_on_problems(&mut self, rng: &mut MicropolisRandom) {
+    /// Vote on the problems of the city.
+    fn vote_on_problems(
+        &mut self,
+        rng: &mut MicropolisRandom,
+        problems_table: &mut HashMap<u8, u16>,
+    ) {
+        for z in 0..PROBLEMS_NUMBER {
+            self.problems_votes.insert(z, 0);
+        }
+
+        let (mut voting_on_problem_number, mut votes_count, mut loops_counter) = (0, 0, 0);
+        while votes_count < 100 && loops_counter < 600 {
+            if (rng.get_random(300) as u16)
+                < *problems_table.get(&voting_on_problem_number).expect(
+                    "CityEvaluator.vote_on_problems: problems_table must be initialized properly.",
+                )
+            {
+                let problem_votes = self
+                    .problems_votes
+                    .get_mut(&voting_on_problem_number)
+                    .unwrap();
+                *problem_votes += 1;
+                votes_count += 1;
+            }
+
+            voting_on_problem_number += 1;
+            if voting_on_problem_number > PROBLEMS_NUMBER {
+                voting_on_problem_number = 0;
+            }
+
+            loops_counter += 1;
+        }
+    }
+
+    /// Vote on how well the mayor is doing.
+    fn vote_on_mayor(&mut self, rng: &mut MicropolisRandom) {
+        self.mayor_approval_rate = Percentage::from_integer(0).unwrap();
         for z in 0..100 {
             if (rng.get_random(1000) as u16) < self.score.current {
                 self.mayor_approval_rate.increment();
@@ -302,14 +382,7 @@ impl CityEvaluator {
         }
     }
 
-    pub fn count_problems(&self) -> usize {
-        self.problems_order
-            .iter()
-            .filter(|problem| *problem != &None)
-            .count()
-    }
-
-    pub fn get_problem_from_priority(&self, priority_index: u8) -> Option<&CityVotingProblem> {
+    fn get_problem_from_priority(&self, priority_index: u8) -> Option<&CityVotingProblem> {
         if priority_index >= COMPLAINTS_COUNT {
             self.problems_order.get(priority_index as usize)
         } else {
@@ -319,8 +392,8 @@ impl CityEvaluator {
 
     /// Get the number of votes to solve the worst (by priority index) problem.
     pub fn get_problem_votes(&self, priority_index: u8) -> Option<u16> {
-        self.problems_votes
-            .get(self.get_problem_from_priority(priority_index)?)
+        self.get_problem_from_priority(priority_index)
+            .and_then(|problem| self.problems_votes.get(&problem.to_u8()))
             .cloned()
     }
 
