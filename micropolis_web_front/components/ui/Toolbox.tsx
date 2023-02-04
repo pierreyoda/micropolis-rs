@@ -1,9 +1,8 @@
+import clsx from "clsx";
 import React, { useMemo, FunctionComponent } from "react";
 
 import { iterate_by_pairs } from "@/utils";
 import { ToolboxActionID, toolboxActionsIDs } from "@/game/toolbox";
-import clsx from "clsx";
-import { useCallback } from "@storybook/addons";
 
 interface ToolboxActionProps {
   actionID: ToolboxActionID;
@@ -30,7 +29,7 @@ const ToolboxAction: FunctionComponent<ToolboxActionProps> = ({ iconImg: iconSrc
   </div>
 );
 
-export const toolboxActionsRegistry: Record<ToolboxActionID, Omit<ToolboxActionProps, "actionID" | "onClick">> = {
+export const toolboxActionsRegistry: Record<ToolboxActionID, Omit<ToolboxActionProps, "actionID" | "onClick" | "selected">> = {
   bulldozer: { iconImg: "bulldozer.png", tooltip: "Bulldozer Tool" },
   eraser: { iconImg: "eraser.png", tooltip: "Eraser Tool" },
   wire: { iconImg: "wire.png", tooltip: "Wire Tool" },

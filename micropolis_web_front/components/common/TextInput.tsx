@@ -1,4 +1,4 @@
-import React, { useCallback, FunctionComponent } from "react";
+import React, { FunctionComponent } from "react";
 
 export interface TextInputProps {
   value: string;
@@ -12,7 +12,7 @@ const TextInput: FunctionComponent<TextInputProps> = ({ value, onChange, placeho
     tabIndex={0}
     type="text"
     value={value}
-    onChange={useCallback(e => onChange(e.target.value), [onChange])}
+    onChange={e => onChange(e.target.value)}
     placeholder={placeholder}
   />
 );
