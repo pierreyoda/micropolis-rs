@@ -42,9 +42,9 @@ impl CityMetadata {
 
         reader.trim_text(true);
         loop {
-            match reader.read_event(&mut buffer) {
+            match reader.read_event_into(&mut buffer) {
                 Ok(Event::Start(e)) => {
-                    let name = str::from_utf8(e.name())
+                    let name = str::from_utf8(e.name().into_inner())
                         .map_err(|err| format!("from_utf8 error: {}", err))?;
                     match name {
                         "metaCity" => {
@@ -66,8 +66,9 @@ impl CityMetadata {
                 Ok(Event::Text(e)) => {
                     if let Some(property) = current_property.as_ref() {
                         let text = e
-                            .unescape_and_decode(&reader)
-                            .map_err(|err| format!("decoding error: {}", err))?;
+                            .unescape()
+                            .map_err(|err| format!("decoding error: {}", err))?
+                            .to_string();
                         match property.as_str() {
                             "title" => parsed.title = text,
                             "description" => parsed.description = text,
