@@ -244,16 +244,16 @@ impl CityEvaluator {
 
         x = x / 3;
         x = cmp::min(x, 256);
-        let mut partial_score = clamp((256 - x) * 4, 0, 1000);
+        let mut partial_score = clamp((256 - x) * 4, 0, 1000) as f64;
 
         if population.is_residential_capped() {
-            partial_score = (partial_score * 0.85) as u16;
+            partial_score = partial_score * 0.85;
         }
         if population.is_commercial_capped() {
-            partial_score = (partial_score * 0.85) as u16;
+            partial_score = partial_score * 0.85;
         }
         if population.is_industrial_capped() {
-            partial_score = (partial_score * 0.85) as u16;
+            partial_score = partial_score * 0.85;
         }
 
         // TODO:...

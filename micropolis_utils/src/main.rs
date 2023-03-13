@@ -38,9 +38,9 @@ enum SubCommand {
 /// A subcommand for controlling testing
 #[derive(Parser, Debug)]
 struct GenerateBasicJsonTileMapOptions {
-    #[clap(short)]
+    #[clap(long)]
     width: usize,
-    #[clap(short)]
+    #[clap(long)]
     height: usize,
 }
 

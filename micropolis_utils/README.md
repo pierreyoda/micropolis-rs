@@ -5,5 +5,5 @@ A bin crate containing various utilities.
 ## export-random-map
 
 ```bash
-cargo run -- export-random-map -w 120 -h 100
+cargo run -- export-random-map --width 120 --height 100
 ```
