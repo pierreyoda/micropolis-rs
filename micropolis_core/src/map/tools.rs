@@ -52,6 +52,7 @@ pub enum EditingTool {
 
 impl EditingTool {
     pub fn cost(self) -> MoneyValue {
+        use EditingTool::*;
         match self {
             Residential => 100,
             Commercial => 100,
@@ -77,6 +78,7 @@ impl EditingTool {
 
     // TODO: remove duplicate constants with BuildingType
     pub fn size(self) -> u16 {
+        use EditingTool::*;
         match self {
             Residential => 3,
             Commercial => 3,
