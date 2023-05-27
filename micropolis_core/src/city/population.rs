@@ -40,6 +40,7 @@ impl PopulationDensityMap {
     }
 }
 
+// TODO: dedicated struct for valves?
 pub struct CityPopulation {
     /// Population density map.
     density_map: Map<u8>,
@@ -49,18 +50,21 @@ pub struct CityPopulation {
     residential: u16,
     /// Block residential growth?
     residential_cap: bool,
+    residential_valve: i16,
     /// Number of people in commercial zones.
     ///
     /// Depends on the level of zone development.
     commercial: u16,
     /// Block commercial growth?
     commercial_cap: bool,
+    commercial_valve: i16,
     /// Number of people in industrial zones.
     ///
     /// Depends on the level of zone development.
     industrial: u16,
     /// Block industrial growth?
     industrial_cap: bool,
+    industrial_valve: i16,
     /// Total city population.
     ///
     /// Formula = (residential population) / 8 + (commercial population) + (industrial population).
@@ -75,10 +79,13 @@ impl CityPopulation {
             density_map: PopulationDensityMap::with_dimensions(&map.bounds(), 0),
             residential: 0,
             residential_cap: false,
+            residential_valve: 0,
             commercial: 0,
             commercial_cap: false,
+            commercial_valve: 0,
             industrial: 0,
             industrial_cap: false,
+            industrial_valve: 0,
             total: 0,
             total_delta: 0,
         }
@@ -106,12 +113,18 @@ impl CityPopulation {
     pub fn get_residential(&self) -> u16 {
         self.residential
     }
+    pub fn get_residential_valve(&self) -> i16 {
+        self.commercial_valve
+    }
     pub fn is_residential_capped(&self) -> bool {
         self.residential_cap
     }
 
     pub fn get_commercial(&self) -> u16 {
         self.commercial
+    }
+    pub fn get_commercial_valve(&self) -> i16 {
+        self.commercial_valve
     }
     pub fn is_commercial_capped(&self) -> bool {
         self.commercial_cap
@@ -120,12 +133,19 @@ impl CityPopulation {
     pub fn get_industrial(&self) -> u16 {
         self.industrial
     }
+    pub fn get_industrial_valve(&self) -> i16 {
+        self.industrial_valve
+    }
     pub fn is_industrial_capped(&self) -> bool {
         self.industrial_cap
     }
 
     pub fn total_population(&self) -> i64 {
         self.total
+    }
+
+    pub fn delta_population(&self) -> i64 {
+        self.total_delta
     }
 
     /// Update the city total population and classification.

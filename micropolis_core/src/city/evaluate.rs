@@ -2,6 +2,7 @@ use std::cmp;
 use std::collections::HashMap;
 
 use crate::{
+    city::simulation::parameters::{MAX_FIRE_EFFECT, MAX_ROAD_EFFECT},
     map::{Map, WORLD_HEIGHT, WORLD_WIDTH},
     utils::{clamp, random::MicropolisRandom, Percentage},
 };
@@ -9,7 +10,11 @@ use crate::{
 use super::{
     population::CityClass,
     power::CityPower,
-    simulation::{statistics::SimulationStatistics, taxes::SimulationTaxes},
+    simulation::{
+        parameters::{SimulationParameters, MAX_POLICE_EFFECT},
+        statistics::SimulationStatistics,
+        taxes::SimulationTaxes,
+    },
     traffic::CityTraffic,
     CityPopulation,
 };
@@ -208,7 +213,9 @@ impl CityEvaluator {
         }
     }
 
-    fn change_evaluation(&mut self) {}
+    fn change_evaluation(&mut self) {
+        self.evaluation_updated = true;
+    }
 
     /// Access the value of the city.
     pub fn compute_accessed_value(power: &CityPower, statistics: &SimulationStatistics) -> u32 {
@@ -231,6 +238,9 @@ impl CityEvaluator {
         &self,
         population: &CityPopulation,
         problems_table: &HashMap<u8, u16>,
+        parameters: &SimulationParameters,
+        statistics: &SimulationStatistics,
+        taxes: &SimulationTaxes,
     ) -> CityScore {
         let mut x = 0;
         let last_city_score = self.score.current;
@@ -244,19 +254,65 @@ impl CityEvaluator {
 
         x = x / 3;
         x = cmp::min(x, 256);
-        let mut partial_score = clamp((256 - x) * 4, 0, 1000) as f64;
+        let mut partial_score = clamp((256 - x) * 4, 0, 1000) as i132;
 
         if population.is_residential_capped() {
-            partial_score = partial_score * 0.85;
+            partial_score = (partial_score as f64 * 0.85).floor() as i32;
         }
         if population.is_commercial_capped() {
-            partial_score = partial_score * 0.85;
+            partial_score = (partial_score as f64 * 0.85).floor() as i32;
         }
         if population.is_industrial_capped() {
-            partial_score = partial_score * 0.85;
+            partial_score = (partial_score as f64 * 0.85).floor();
         }
 
-        // TODO:...
+        if parameters.get_road_effect() < MAX_ROAD_EFFECT {
+            partial_score -= MAX_ROAD_EFFECT as f64 - parameters.get_road_effect() as f64;
+        }
+        if parameters.get_police_effect() < MAX_POLICE_EFFECT {
+            // 10.0001 = 10000.1 / 1000, 1/10.0001 is about 0.1
+            partial_score = (partial_score
+                * (0.9
+                    + (parameters.get_police_effect() as f64
+                        / (10.0001 * MAX_POLICE_EFFECT as f64))))
+                .floor();
+        }
+        if parameters.get_fire_effect() < MAX_FIRE_EFFECT {
+            // 10.0001 = 10000.1 / 1000, 1/10.0001 is about 0.1
+            partial_score = (partial_score
+                * (0.9
+                    + (parameters.get_fire_effect() as f64 / (10.0001 * MAX_FIRE_EFFECT as f64))))
+                .floor();
+        }
+
+        if population.get_residential_valve() < -1000 {
+            partial_score = (partial_score * 0.85).floor();
+        }
+        if population.get_commercial_valve() < -1000 {
+            partial_score = (partial_score * 0.85).floor();
+        }
+        if population.get_industrial_valve() < -1000 {
+            partial_score = (partial_score * 0.85).floor();
+        }
+
+        let mut sm = 1.0;
+        let (population, delta_population) =
+            (population.total_population(), population.delta_population());
+        if population == 0 || delta_population == 0 {
+            // there is nobody or no migration happened
+            sm = 1.0;
+        } else if delta_population == population {
+            // city sprang into existence or doubled in size
+            sm == 1.0;
+        } else if delta_population > 0 {
+            sm = 1.0 + delta_population as f64 / population as f64;
+        } else if delta_population < 0 {
+            sm = 0.95 + population as f64 / (population as f64 - delta_population as f64);
+        }
+        partial_score = ((partial_score as f64) * sm).floor() as u32;
+
+        partial_score -= Self::get_fire_severity(statistics) - taxes.city_tax; // fires and taxes decrease the score
+
         todo!()
     }
 

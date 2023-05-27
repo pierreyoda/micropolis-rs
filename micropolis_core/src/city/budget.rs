@@ -50,7 +50,7 @@ impl CityBudget {
         let mut available_budget = tax_funds + total_funds;
 
         if available_budget > total {
-            // TODO: why are we not substracting from the available budget as below
+            // TODO: why are we not subtracting from the available budget as below
             self.fire_department.value = budget_fire;
             self.police_department.value = budget_police;
             self.roads.value = budget_roads;

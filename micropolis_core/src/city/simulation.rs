@@ -37,7 +37,7 @@ use crate::{
 };
 
 mod census;
-mod parameters;
+pub mod parameters;
 mod scan;
 pub mod sprites;
 pub mod statistics;
@@ -932,7 +932,7 @@ impl Simulation {
         Ok(Tile::from_raw(tile_raw as u16)?)
     }
 
-    /// Generate a airplane or helicopter every now and then.
+    /// Generate an airplane or helicopter every now and then.
     fn do_airport(
         rng: &mut MicropolisRandom,
         sprites: &mut ActiveSpritesList,
