@@ -1,10 +1,9 @@
-import { PromisedType } from "@/utils";
 import { WebMapGenerator } from "@/pkg/";
 import { RawGameMap } from "./map";
 
 export const importMicropolisCoreWasmLib = async () => import("@/pkg");
 
-export type MicropolisCoreLib = PromisedType<ReturnType<typeof importMicropolisCoreWasmLib>>;
+export type MicropolisCoreLib = Awaited<ReturnType<typeof importMicropolisCoreWasmLib>>;
 
 export class MicropolisCoreLibConnector {
   constructor(private readonly coreLib: MicropolisCoreLib) {

@@ -4,7 +4,6 @@ import { MutatingDots } from "react-loader-spinner";
 
 import { MicropolisCoreLibConnector } from "@/game";
 import NewGameScreen from "@/components/game/NewGameScreen";
-// import { GameCoreLibContext } from "@/components/game/GameCoreLibProvider";
 
 const Home: NextPage = () => {
   const [loading, setLoading] = useState(true);
@@ -20,7 +19,6 @@ const Home: NextPage = () => {
   }, []);
 
   return (
-    // <GameCoreLibContext.Provider value={gameLib}>
     <div className="flex flex-col items-center justify-center w-full h-full">
       {loading ? (
         <div className="flex flex-col items-center justify-center w-full h-full">
@@ -31,7 +29,6 @@ const Home: NextPage = () => {
         <NewGameScreen gameLib={gameLib!} />
       )}
     </div>
-    // </GameCoreLibContext.Provider>
   );
 };
 
