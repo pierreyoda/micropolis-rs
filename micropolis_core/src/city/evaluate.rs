@@ -263,7 +263,7 @@ impl CityEvaluator {
 
         x = x / 3;
         x = cmp::min(x, 256);
-        let mut partial_score = clamp((256 - x) * 4, 0, 1000) as i132;
+        let mut partial_score = clamp((256 - x) * 4, 0, 1000) as i32;
 
         if population.is_residential_capped() {
             partial_score = (partial_score as f64 * 0.85).floor() as i32;
@@ -272,36 +272,36 @@ impl CityEvaluator {
             partial_score = (partial_score as f64 * 0.85).floor() as i32;
         }
         if population.is_industrial_capped() {
-            partial_score = (partial_score as f64 * 0.85).floor();
+            partial_score = (partial_score as f64 * 0.85).floor() as i32;
         }
 
         if parameters.get_road_effect() < MAX_ROAD_EFFECT {
-            partial_score -= MAX_ROAD_EFFECT as f64 - parameters.get_road_effect() as f64;
+            partial_score -= MAX_ROAD_EFFECT as i32 - parameters.get_road_effect() as i32;
         }
         if parameters.get_police_effect() < MAX_POLICE_EFFECT {
             // 10.0001 = 10000.1 / 1000, 1/10.0001 is about 0.1
-            partial_score = (partial_score
+            partial_score = (partial_score as f64
                 * (0.9
                     + (parameters.get_police_effect() as f64
                         / (10.0001 * MAX_POLICE_EFFECT as f64))))
-                .floor();
+                .floor() as i32;
         }
         if parameters.get_fire_effect() < MAX_FIRE_EFFECT {
             // 10.0001 = 10000.1 / 1000, 1/10.0001 is about 0.1
-            partial_score = (partial_score
+            partial_score = (partial_score as f64
                 * (0.9
                     + (parameters.get_fire_effect() as f64 / (10.0001 * MAX_FIRE_EFFECT as f64))))
-                .floor();
+                .floor() as i32;
         }
 
         if population.get_residential_valve() < -1000 {
-            partial_score = (partial_score * 0.85).floor();
+            partial_score = (partial_score as f64 * 0.85).floor() as i32;
         }
         if population.get_commercial_valve() < -1000 {
-            partial_score = (partial_score * 0.85).floor();
+            partial_score = (partial_score as f64 * 0.85).floor() as i32;
         }
         if population.get_industrial_valve() < -1000 {
-            partial_score = (partial_score * 0.85).floor();
+            partial_score = (partial_score as f64 * 0.85).floor() as i32;
         }
 
         let mut sm = 1.0;
@@ -318,24 +318,24 @@ impl CityEvaluator {
         } else if delta_population < 0 {
             sm = 0.95 + population as f64 / (population as f64 - delta_population as f64);
         }
-        partial_score = ((partial_score as f64) * sm).floor() as u32;
+        partial_score = ((partial_score as f64) * sm).floor() as i32;
 
-        partial_score -= Self::get_fire_severity(statistics) - taxes.city_tax; // fires and taxes decrease the score
+        partial_score -= Self::get_fire_severity(statistics) as i32 - taxes.city_tax as i32; // fires and taxes decrease the score
 
         let tm = power.get_unpowered_zone_count() + power.get_powered_zone_count(); // decreasing score for unpowered zones
         if tm > 0 {
             partial_score = (partial_score as f64
                 * (power.get_powered_zone_count() as f64 / tm as f64))
-                .floor();
+                .floor() as i32;
         }
 
         partial_score = clamp(partial_score, 0, 1000);
 
         let last_city_score = self.score.current;
-        let city_score = (self.score.current + partial_score) / 2
+        let city_score = ((self.score.current as i32 + partial_score) / 2) as u16;
         CityScore {
             current: city_score,
-            delta: city_score- last_city_score,
+            delta: city_score - last_city_score,
         }
     }
 
