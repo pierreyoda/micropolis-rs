@@ -1,5 +1,5 @@
-use std::cmp;
 use std::collections::HashMap;
+use std::{cmp, thread::current};
 
 use crate::{
     city::simulation::parameters::{MAX_FIRE_EFFECT, MAX_ROAD_EFFECT},
@@ -180,6 +180,7 @@ impl CityEvaluator {
         &mut self,
         rng: &mut MicropolisRandom,
         land_value_map: &Map<u8>,
+        parameters: &SimulationParameters,
         population: &mut CityPopulation,
         statistics: &SimulationStatistics,
         taxes: &SimulationTaxes,
@@ -203,7 +204,14 @@ impl CityEvaluator {
                 taxes,
                 traffic,
             );
-            self.score = self.compute_score(population, &problems_table);
+            self.score = self.compute_score(
+                population,
+                &problems_table,
+                parameters,
+                statistics,
+                taxes,
+                power,
+            );
             self.vote_on_mayor(rng);
             self.change_evaluation();
         } else {
@@ -241,6 +249,7 @@ impl CityEvaluator {
         parameters: &SimulationParameters,
         statistics: &SimulationStatistics,
         taxes: &SimulationTaxes,
+        power: &CityPower,
     ) -> CityScore {
         let mut x = 0;
         let last_city_score = self.score.current;
@@ -313,7 +322,21 @@ impl CityEvaluator {
 
         partial_score -= Self::get_fire_severity(statistics) - taxes.city_tax; // fires and taxes decrease the score
 
-        todo!()
+        let tm = power.get_unpowered_zone_count() + power.get_powered_zone_count(); // decreasing score for unpowered zones
+        if tm > 0 {
+            partial_score = (partial_score as f64
+                * (power.get_powered_zone_count() as f64 / tm as f64))
+                .floor();
+        }
+
+        partial_score = clamp(partial_score, 0, 1000);
+
+        let last_city_score = self.score.current;
+        let city_score = (self.score.current + partial_score) / 2
+        CityScore {
+            current: city_score,
+            delta: city_score- last_city_score,
+        }
     }
 
     pub fn survey_mayor_approval(&mut self, rng: &mut MicropolisRandom, score: CityScore) {
