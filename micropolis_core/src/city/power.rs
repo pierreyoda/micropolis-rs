@@ -35,6 +35,10 @@ pub struct CityPower {
     power_stack_pointer: usize,
     /// Stack of map positions for traversing setting the power grid.
     power_stack: [MapPosition; POWER_STACK_SIZE],
+    /// Number of powered tiles in all zones.
+    powered_zone_count: i16,
+    /// Number of unpowered tiles in all zones.
+    unpowered_zone_count: i16,
 }
 
 impl CityPower {
@@ -45,7 +49,18 @@ impl CityPower {
             nuclear_generators_count: 0,
             power_stack_pointer: 0,
             power_stack: [MapPosition::new(0, 0); POWER_STACK_SIZE],
+            // TODO: tracking of these values
+            powered_zone_count: 0,
+            unpowered_zone_count: 0,
         }
+    }
+
+    pub fn get_powered_zone_count(&self) -> i16 {
+        return self.powered_zone_count;
+    }
+
+    pub fn get_unpowered_zone_count(&self) -> i16 {
+        return self.unpowered_zone_count;
     }
 
     /// Push the given position onto the power stack if there is room.

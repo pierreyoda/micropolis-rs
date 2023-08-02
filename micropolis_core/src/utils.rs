@@ -18,6 +18,11 @@ impl Percentage {
     pub fn value(&self) -> f64 {
         self.0
     }
+
+    /// Increment by 1%.
+    pub fn increment(&mut self) {
+        self.0 += 1f64;
+    }
 }
 
 impl From<f64> for Percentage {
@@ -28,13 +33,7 @@ impl From<f64> for Percentage {
 
 /// Clamp a value between [min, max].
 pub fn clamp<U: Num + Ord>(value: U, lower: U, upper: U) -> U {
-    if value < lower {
-        lower
-    } else if value > upper {
-        upper
-    } else {
-        value
-    }
+    value.clamp(lower, upper)
 }
 
 #[cfg(test)]

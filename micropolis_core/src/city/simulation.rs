@@ -37,11 +37,11 @@ use crate::{
 };
 
 mod census;
-mod parameters;
+pub mod parameters;
 mod scan;
 pub mod sprites;
-mod statistics;
-mod taxes;
+pub mod statistics;
+pub mod taxes;
 mod zones;
 
 const ZONE_MELTDOWN_TABLE: [i16; 3] = [30000, 20000, 10000];
@@ -932,7 +932,7 @@ impl Simulation {
         Ok(Tile::from_raw(tile_raw as u16)?)
     }
 
-    /// Generate a airplane or helicopter every now and then.
+    /// Generate an airplane or helicopter every now and then.
     fn do_airport(
         rng: &mut MicropolisRandom,
         sprites: &mut ActiveSpritesList,

@@ -46,11 +46,11 @@ impl CityBudget {
             (self.police_department.value as f64 * self.police_department.percentage.value())
                 as MoneyValue,
         ];
-        let mut total = budget_roads + budget_fire + budget_police;
+        let total = budget_roads + budget_fire + budget_police;
         let mut available_budget = tax_funds + total_funds;
 
         if available_budget > total {
-            // TODO: why are we not substracting from the available budget as below
+            // TODO: why are we not subtracting from the available budget as below
             self.fire_department.value = budget_fire;
             self.police_department.value = budget_police;
             self.roads.value = budget_roads;
