@@ -11,8 +11,8 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 micropolis_rs_core = { path = "../micropolis_core" }
-serde = "1.0.171"
-serde_derive = "1.0.171"
+serde = "1.0.183"
+serde_derive = "1.0.183"
 console_error_panic_hook = "0.1.7"
 
 [dependencies.wasm-bindgen]
