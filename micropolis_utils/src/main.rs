@@ -2,6 +2,7 @@ use core::panic;
 use std::{fs::File, io::Write, path::PathBuf};
 
 use clap::Parser;
+use serde::Serialize;
 use serde_json;
 
 use micropolis_rs_core::{
@@ -44,6 +45,12 @@ struct GenerateBasicJsonTileMapOptions {
     height: usize,
 }
 
+#[derive(Debug, Serialize)]
+struct ExportedTestTileMap {
+    seed: i32,
+    tiles_data: Vec<Vec<u16>>,
+}
+
 fn main() {
     let opts: Opts = Opts::parse();
 
@@ -63,6 +70,7 @@ fn main() {
             let tiles = terrain.generated_terrain.tiles();
 
             // export
+            let seed = rng.get_seed();
             let tiles_data: Vec<Vec<u16>> = tiles
                 .iter()
                 .map(|t| {
@@ -77,7 +85,8 @@ fn main() {
                         .collect()
                 })
                 .collect();
-            let json = serde_json::to_string(&tiles_data).unwrap();
+            let exported = ExportedTestTileMap { seed, tiles_data };
+            let json = serde_json::to_string(&exported).unwrap();
 
             // output
             let mut filepath = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
