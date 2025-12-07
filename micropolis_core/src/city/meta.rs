@@ -1,5 +1,5 @@
 use quick_xml::{events::Event, Reader};
-use std::{io::Read, iter::FromIterator, str};
+use std::str;
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct CityMetadata {
@@ -41,12 +41,13 @@ impl CityMetadata {
         let mut missing_properties = XML_REQUIRED_PROPERTIES_NAMES.to_vec();
         let mut parsed = CityMetadata::default();
 
-        reader.trim_text(true);
+        // reader.trim_text(true);
         loop {
             match reader.read_event() {
                 Ok(Event::Start(e)) => {
                     let name = str::from_utf8(e.name().into_inner())
                         .map_err(|err| format!("from_utf8 error: {}", err))?;
+                    println!("name {}", name);
                     match name {
                         "metaCity" => {
                             in_container_tag = match in_container_tag {
@@ -65,27 +66,24 @@ impl CityMetadata {
                     }
                 }
                 Ok(Event::Text(e)) => {
+                    let value_cow = e
+                        .decode()
+                        .map_err(|err| format!("text event decoding error: {}", err))?;
+                    let value = value_cow.trim();
+                    if value.is_empty() {
+                        continue;
+                    }
+                    println!("value {}", value);
                     if let Some(property) = current_property.as_ref() {
-                        let unescaped_event = e
-                            .unescape()
-                            .map_err(|err| format!("unescaping error: {}", err))?;
-                        let text_chars = unescaped_event.chars();
-                        let text = String::from_iter(text_chars);
                         match property.as_str() {
-                            "title" => parsed.title = text,
-                            "description" => parsed.description = text,
-                            "saveFileName" => parsed.save_file_name = text,
-                            "readOnly" => {
-                                parsed.is_read_only = match text.as_str() {
-                                    "true" => true,
-                                    "false" => false,
-                                    _ => return Err(format!("invalid boolean value '{}'", text)),
-                                }
-                            }
+                            "title" => parsed.title = value.to_string(),
+                            "description" => parsed.description = value.to_string(),
+                            "saveFileName" => parsed.save_file_name = value.to_string(),
+                            "readOnly" if value == "true" => parsed.is_read_only = true,
+                            "readOnly" if value == "false" => parsed.is_read_only = false,
+                            "readOnly" => return Err(format!("invalid boolean value '{}'", value)),
                             _ => unreachable!(),
                         }
-                    } else {
-                        return Err("not inside any known property tag".into());
                     }
                 }
                 Ok(Event::Eof) => break,
@@ -103,7 +101,7 @@ impl CityMetadata {
         match missing_properties.len() {
             0 => Ok(parsed),
             n => Err(format!(
-                "missing {} propertie(s): {}",
+                "missing {} properties): {}",
                 n,
                 missing_properties.join(", ")
             )),
@@ -147,6 +145,7 @@ mod tests {
             </metaCity>
         "#;
         let result = CityMetadata::decode_from_xml(meta_xml);
+        println!("{:?}", result);
         assert_eq!(result.is_ok(), true);
         assert_eq!(
             result.unwrap(),
