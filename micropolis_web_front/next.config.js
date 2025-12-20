@@ -49,6 +49,7 @@ module.exports = () => ({
           path.resolve(__dirname, "../micropolis_wasm"),
         ],
         forceWatch: true,
+        extraArgs: "--target web",
       }),
     ],
   }),
