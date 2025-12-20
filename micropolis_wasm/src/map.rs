@@ -1,6 +1,6 @@
 use wasm_bindgen::prelude::*;
 
-use micropolis_rs_core::map::{Map, MapRectangle, Tile, TileMap};
+use micropolis_rs_core::map::MapRectangle;
 use micropolis_rs_core::utils::Percentage;
 use micropolis_rs_core::{
     map::generator::{GeneratorCreateIsland, MapGenerator},
@@ -39,7 +39,7 @@ pub fn generate_new_map(
         .random_map_terrain(&mut rng, seed, &dimensions);
     if let Ok(generated) = result {
         let tilemap = generated.generated_terrain.tiles();
-        Ok(JsValue::from_serde(&tilemap).unwrap())
+        Ok(serde_wasm_bindgen::to_value(tilemap).unwrap())
     } else {
         Err(JsValue::from_str(&result.err().unwrap()[..]))
     }
