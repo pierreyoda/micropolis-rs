@@ -3,7 +3,7 @@ import { useState, useCallback, FunctionComponent } from "react";
 export interface ToolbarItem {
   key: string;
   label: string;
-  children: ToolbarItemChild[];
+  children: readonly ToolbarItemChild[];
   onClick?: () => void;
 }
 

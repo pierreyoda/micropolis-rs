@@ -1,17 +1,16 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { NextPage } from "next";
 
-import { MicropolisCoreLibConnector } from "@/game";
 import NewGameScreen from "@/components/game/NewGameScreen";
 import LoaderSpinner from "@/components/common/LoaderSpinner";
-// import { GameCoreLibContext } from "@/components/game/GameCoreLibProvider";
+import { importMicropolisCoreWasmLib, MicropolisCoreLibConnector } from "@/game";
 
 const Home: NextPage = () => {
   const [loading, setLoading] = useState(true);
   const [gameLib, setGameLib] = useState<MicropolisCoreLibConnector | null>(null);
   useEffect(() => {
     const loadCoreLibrary = async () => {
-      const coreModule = await import(/* webpackMode: "lazy" */ "../pkg/");
+      const coreModule = await importMicropolisCoreWasmLib();
       const coreConnector = new MicropolisCoreLibConnector(coreModule);
       setGameLib(coreConnector);
       setLoading(false);
