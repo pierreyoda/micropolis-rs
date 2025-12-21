@@ -1,8 +1,7 @@
-import React from "react";
 import { Meta } from "@storybook/react";
 
-import "@/assets/styles/tailwind.css";
 import MainLayout from "./main";
+import "@/assets/styles/tailwind.css";
 
 export default {
   title: "Layout",

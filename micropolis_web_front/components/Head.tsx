@@ -1,5 +1,5 @@
-import React, { FunctionComponent } from "react";
 import NextHead from "next/head";
+import { FunctionComponent } from "react";
 
 export interface HeadProps {
   title: string;

@@ -1,4 +1,4 @@
-import React, { useMemo, FunctionComponent } from "react";
+import { useMemo, FunctionComponent } from "react";
 
 export const TILE_SIZE = 16; // in pixels
 const ATLAS_ROWS = 16;

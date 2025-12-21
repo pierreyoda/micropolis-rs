@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from "react";
+import { FunctionComponent } from "react";
 import Loader from "react-loader-spinner";
 
 export const loaderSpinnerTypes = [

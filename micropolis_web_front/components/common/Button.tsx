@@ -1,10 +1,11 @@
 import clsx from "clsx";
-import React, { FunctionComponent, useMemo } from "react";
+import { FunctionComponent, ReactNode, useMemo } from "react";
 
 interface ButtonProps {
   onToggle: () => void;
   disabled?: boolean;
   className?: string;
+  children?: ReactNode;
 }
 
 const Button: FunctionComponent<ButtonProps> = ({

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, FunctionComponent } from "react";
+import { useState, useCallback, FunctionComponent } from "react";
 
 export interface ToolbarItem {
   key: string;

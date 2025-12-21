@@ -1,6 +1,5 @@
-import React from "react";
-import { select, boolean, number, color } from "@storybook/addon-knobs";
 import { Meta } from "@storybook/react";
+import { select, boolean, number, color } from "@storybook/addon-knobs";
 
 import LoaderSpinner, { loaderSpinnerTypes } from "../LoaderSpinner";
 

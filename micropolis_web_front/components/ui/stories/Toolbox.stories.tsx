@@ -1,5 +1,5 @@
-import React, { FunctionComponent, useState } from "react";
-import { Meta } from "@storybook/react/types-6-0";
+import { Meta } from "@storybook/react";
+import { FunctionComponent, useState } from "react";
 
 import { ToolboxActionID, toolboxActionsIDs } from "@/game/toolbox";
 import Toolbox, { toolboxActionsRegistry } from "../Toolbox";

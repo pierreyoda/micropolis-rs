@@ -1,4 +1,3 @@
-import React from "react";
 import { Meta } from "@storybook/react";
 
 import NewGameScreen from "../NewGameScreen";
@@ -9,8 +8,9 @@ export default {
   component: NewGameScreen,
 } as Meta;
 
-export const NewGameScreenDemo = () => (
-  <NewGameScreen
-    generateMap={generateMapStub}
-  />
-);
+// FIXME: fix
+// export const NewGameScreenDemo = () => (
+//   <NewGameScreen
+//     generateMap={generateMapStub}
+//   />
+// );

@@ -1,5 +1,5 @@
-import { TileMeta, MapPayload } from "@/components/game/MapRenderer";
 import TestMap from "@/public/utils-output/test-front-map";
+import { TileMeta, MapPayload } from "@/components/game/MapRenderer";
 
 export const testMapFromParsedJson = (
   parsedJson: readonly number[][],

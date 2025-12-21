@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import React, { FunctionComponent } from "react";
+import { FunctionComponent, ReactNode } from "react";
 
 import Button from "./Button";
 
@@ -8,6 +8,7 @@ export interface CardProps {
   closable?: boolean;
   className?: string;
   onClose?: () => void;
+  children?: ReactNode;
 }
 
 const Card: FunctionComponent<CardProps> = ({ children, title, className, closable = false, onClose = () => {} }) => (
