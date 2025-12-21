@@ -1,15 +1,9 @@
-import React, { createContext } from "react";
 import dynamic from "next/dynamic";
+import { createContext } from "react";
 
-import {
-  importMicropolisCoreWasmLib,
-  connectMicropolisCoreLib,
-  MicropolisCoreLibConnector,
-} from "@/game";
+import { connectMicropolisCoreLib, MicropolisCoreLibConnector, importMicropolisCoreWasmLib } from "@/game";
 
-export const GameCoreLibContext = createContext<MicropolisCoreLibConnector | null>(
-  null
-);
+export const GameCoreLibContext = createContext<MicropolisCoreLibConnector | null>(null);
 GameCoreLibContext.displayName = "MicropolisGameCoreLib";
 
 const GameCoreLibProvider = dynamic({
@@ -17,9 +11,7 @@ const GameCoreLibProvider = dynamic({
   loader: async () => {
     const coreLib = await importMicropolisCoreWasmLib();
     const gameCoreLib = connectMicropolisCoreLib(coreLib);
-    const GameCoreLibContextProvider = () => (
-      <GameCoreLibContext.Provider value={gameCoreLib} />
-    );
+    const GameCoreLibContextProvider = () => <GameCoreLibContext.Provider value={gameCoreLib} />;
     return GameCoreLibContextProvider;
   },
   ssr: false,

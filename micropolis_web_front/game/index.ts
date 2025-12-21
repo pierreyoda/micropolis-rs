@@ -1,8 +1,12 @@
-import { PromisedType } from "@/utils";
-import { WebMapGenerator } from "@/pkg/";
 import { RawGameMap } from "./map";
+import { PromisedType } from "@/utils";
+import { WebMapGenerator } from "@/public/game/pkg";
 
-export const importMicropolisCoreWasmLib = async () => import("@/pkg");
+export const importMicropolisCoreWasmLib = async () => {
+  const response = await fetch("/pkg/index.wasm");
+  const buffer = await response.arrayBuffer;
+  return WebAssembly.instantiate(buffer);
+};
 
 export type MicropolisCoreLib = PromisedType<
   ReturnType<typeof importMicropolisCoreWasmLib>

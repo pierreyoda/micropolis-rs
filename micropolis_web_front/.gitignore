@@ -14,3 +14,4 @@
 # game assets
 /public/game/*
 /public/utils-output/*
+/public/game/pkg/*

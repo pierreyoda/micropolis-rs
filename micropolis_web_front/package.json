@@ -3,8 +3,11 @@
     "version": "0.1.0",
     "private": true,
     "scripts": {
-        "dev": "NODE_OPTIONS=--openssl-legacy-provider next dev",
-        "build": "NODE_OPTIONS=--openssl-legacy-provider next build",
+        "wasm:build": "wasm-pack build ../micropolis_wasm/ --out-dir ../micropolis_web_front/public/game/pkg/ --out-name index --target web",
+        "wasm:build-dev": "yarn wasm:build --dev",
+        "game:prepare": "cp -a ../img/ ./public/game && cp -a ../micropolis_utils/output/ ./public/utils-output",
+        "dev": "yarn game:prepare && yarn wasm:build-dev && NODE_OPTIONS=--openssl-legacy-provider next dev",
+        "build": "yarn game:prepare && yarn wasm:build && NODE_OPTIONS=--openssl-legacy-provider next build",
         "start": "next start",
         "export": "APP_ENV=production next build && next export",
         "lint": "eslint --ignore-path .gitignore --ext .js --ext .jsx --ext .ts --ext .tsx .",
